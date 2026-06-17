@@ -8,3 +8,4 @@ compose_*.png
 cat_*.png
 *.png
 package*.json
+_pixcat.py

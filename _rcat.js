@@ -26,7 +26,7 @@ const states=[
  const b=await puppeteer.launch({args:['--no-sandbox']});
  const p=await b.newPage();
  await p.setViewport({width:200,height:200,deviceScaleFactor:2});
- const doc=`<!doctype html><meta charset=utf8><style>body{margin:0;background:#efe9f7}.stage{width:200px;height:200px;display:flex;align-items:center;justify-content:center}#catChar{width:150px;height:auto}${CSS}</style><div class=stage>${svg}</div>`;
+ const doc=`<!doctype html><meta charset=utf8><style>body{margin:0;background:#efe9f7}.stage{width:200px;height:200px;display:flex;align-items:center;justify-content:center}#catChar{width:160px;image-rendering:pixelated;height:auto}${CSS}</style><div class=stage>${svg}</div>`;
  await p.setContent(doc,{waitUntil:'load'});
  for(const [n,cls] of states){
    await p.evaluate(c=>{document.getElementById('catChar').setAttribute('class','cat-char '+c);},cls);
