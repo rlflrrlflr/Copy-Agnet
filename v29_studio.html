@@ -940,11 +940,25 @@ var S3={
 var ARCH={
   impact:{label:"임팩트 세일",keyFont:"'Black Han Sans','Pretendard',sans-serif",keyW:900,keyScale:.128,subScale:.039,ctaScale:.034,anchor:"bl",align:"left",scrim:.62,accentDefault:"#ffd24a",lh:1.0,under:true,kick:"tag",deco:"spark"},
   clean:{label:"클린 프리미엄",keyFont:"'Nanum Myeongjo','Gowun Dodum',serif",keyW:800,keyScale:.088,subScale:.032,ctaScale:.029,anchor:"center",align:"center",scrim:.42,accentDefault:"#e9c46a",lh:1.28,under:false,kick:"line",deco:"frame"},
-  price:{label:"가격 강조",keyFont:"'Do Hyeon','Black Han Sans',sans-serif",keyW:900,keyScale:.118,subScale:.037,ctaScale:.033,anchor:"bl",align:"left",scrim:.56,accentDefault:"#ff3b30",lh:1.02,under:true,kick:"tag",deco:"ticks"}
+  price:{label:"가격 강조",keyFont:"'Do Hyeon','Black Han Sans',sans-serif",keyW:900,keyScale:.118,subScale:.037,ctaScale:.033,anchor:"bl",align:"left",scrim:.56,accentDefault:"#ff3b30",lh:1.02,under:true,kick:"tag",deco:"ticks"},
+  timer:{label:"타임 특가",keyFont:"'Black Han Sans','Pretendard',sans-serif",keyW:900,keyScale:.122,subScale:.036,ctaScale:.032,anchor:"bl",align:"left",scrim:.66,accentDefault:"#2bff88",lh:1.0,under:true,kick:"tag",deco:"spark"},
+  pop:{label:"팝 신상",keyFont:"'Jua','Pretendard',sans-serif",keyW:800,keyScale:.112,subScale:.036,ctaScale:.032,anchor:"bl",align:"left",scrim:.5,accentDefault:"#ff5da2",lh:1.06,under:true,kick:"tag",deco:"ticks"}
 };
 var FUNNEL_KICK={"인지":"NEW 신상","유입":"지금 이벤트","구매고려":"비교 체크","전환":"한정 혜택","리타겟팅":"앵콜 특가"};
 var ARCH_ORDER=["impact","clean","price"];
 var Design={
+  // 브리프(퍼널/뱃지)에 따라 3개 아키타입 선택 — 브리프마다 디자인 세트가 달라짐(다양성)
+  pickArchs(d){
+    var f=(d.intent&&d.intent.funnel)||"",pool;
+    if(f==="전환"||f==="리타겟팅")pool=["price","timer","impact"];
+    else if(f==="인지")pool=["pop","clean","impact"];
+    else if(f==="유입")pool=["pop","impact","clean"];
+    else if(f==="구매고려")pool=["clean","price","impact"];
+    else pool=["impact","clean","price"];
+    var hasPrice=d.layers.some(function(l){return l.type==="badge"&&/[%원]/.test(l.text||"");});
+    if(hasPrice&&pool.indexOf("price")<0)pool[2]="price";
+    return pool;
+  },
   content(d){
     function txt(role){var l=d.layers.filter(function(x){return x.role===role&&x.type!=="badge";})[0];return l?(l.text||""):"";}
     var badges=d.layers.filter(function(l){return l.type==="badge";}).map(function(b){return {text:b.text,sub:b.sub,style:b.style,color:b.color,color2:b.color2};});
@@ -1051,9 +1065,10 @@ var S4={
   async generate(){
     $("s4gen").textContent="디자인 완성 중…";
     var d=App.doc;App.final.variants=[];
-    for(var i=0;i<ARCH_ORDER.length;i++){
+    var archs=Design.pickArchs(d);
+    for(var i=0;i<archs.length;i++){
       var url=await Engine.gen("final",{layoutType:d.intent.layoutType,seedHue:d.bgHue+i*16,idx:i});
-      App.final.variants.push({bg:url,arch:ARCH_ORDER[i]});
+      App.final.variants.push({bg:url,arch:archs[i]});
     }
     App.final.pick=0;S4.renderVariants();S4.paintFinal();
     $("s4gen").textContent="완성본 생성 / 다시";
