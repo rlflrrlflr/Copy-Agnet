@@ -286,7 +286,12 @@ kbd{font-family:ui-monospace,monospace;font-size:10px;background:var(--card);bor
         <div class="panel"><div class="panel-h">💬 고른 안에만 피드백</div><div class="panel-b col">
           <textarea id="s4fb" class="in" rows="2" placeholder="예: 여백 더 주고 톤을 차분하게"></textarea>
           <button class="btn full" onclick="S4.refine()">피드백 반영해 다듬기</button>
-          <button class="btn full" onclick="S4.download()">⬇ 완성본 PNG 저장</button>
+        </div></div>
+        <div class="panel"><div class="panel-h">⬇ 내보내기 <span class="tiny muted" style="font-weight:600;margin-left:auto">마케터 즉시 셋팅 · 디자이너 전달</span></div><div class="panel-b col">
+          <div class="tool"><button class="btn sm" style="flex:1" onclick="S4.download()">🖼 완성본 PNG</button><button class="btn sm" style="flex:1" onclick="S4.downloadBg()">🌄 배경만 (텍스트 없음)</button></div>
+          <div class="tool"><button class="btn sm" style="flex:1" onclick="S4.downloadSVG()">✏️ SVG (디자이너 편집)</button><button class="btn sm" style="flex:1" onclick="S4.downloadSpec()">📋 디자인 스펙</button></div>
+          <button class="btn full sm" onclick="S4.toStage3()">↩ 이 디자인을 3단계로 보내 직접 편집</button>
+          <p class="hint">SVG·스펙은 실제 디자이너가 폰트·색·위치를 그대로 받아 편집할 수 있어요. 배경만 PNG는 텍스트 없는 비주얼.</p>
         </div></div>
       </div>
     </div>
@@ -969,6 +974,99 @@ var Design={
   },
   wrap(x,text,maxW){var out=[];(text||"").split("\n").forEach(function(par){var w=par.split(/(\s+)/),cur="";w.forEach(function(t){if(x.measureText(cur+t).width>maxW&&cur){out.push(cur.trim());cur=t.replace(/^\s+/,"");}else cur+=t;});out.push(cur.trim());});out=out.filter(function(s){return s.length;});return out.length?out:[""];},
   _ink(hex){hex=(hex||"#e60023").replace("#","");if(hex.length===3)hex=hex.replace(/(.)/g,"$1$1");var r=parseInt(hex.slice(0,2),16),g=parseInt(hex.slice(2,4),16),b=parseInt(hex.slice(4,6),16);return (0.299*r+0.587*g+0.114*b)>150?"#191919":"#ffffff";},
+  _mc:null,
+  _ctx(){if(!Design._mc)Design._mc=document.createElement("canvas");return Design._mc.getContext("2d");},
+  /* layout: 캔버스/SVG 공용 프리미티브(op) — 단일 소스(디자이너 SVG가 마케터 PNG와 일치) */
+  layout(d,a,c,W,H,M,accent){
+    var x=Design._ctx(),ops=[];
+    ops.push({t:"scrim",kind:(a.anchor==="center"?"radial":"linear"),scrim:a.scrim});
+    function star(px,py,r){var p=[];for(var i=0;i<8;i++){var an=Math.PI*i/4,rr=(i%2?r*0.38:r);p.push([px+Math.cos(an)*rr,py+Math.sin(an)*rr]);}return p;}
+    if(a.deco==="spark"){[[M+H*0.01,H*0.105,H*0.019],[W*0.30,H*0.06,H*0.012],[W*0.46,H*0.12,H*0.0095]].forEach(function(s){ops.push({t:"poly",pts:star(s[0],s[1],s[2]),fill:accent,alpha:.92});});}
+    else if(a.deco==="frame"){[H*0.135,H*0.865].forEach(function(yy){ops.push({t:"line",x1:W*0.5-W*0.155,y1:yy,x2:W*0.5+W*0.155,y2:yy,stroke:accent,sw:Math.max(1,H*0.0016),alpha:.55});});ops.push({t:"poly",pts:star(W*0.5,H*0.105,H*0.011),fill:accent,alpha:.9});}
+    else if(a.deco==="ticks"){for(var ti=0;ti<3;ti++)ops.push({t:"rect",x:M+ti*H*0.03,y:H*0.075,w:H*0.018,h:H*0.018,fill:accent,alpha:.9});}
+    var maxW=(a.anchor==="center")?W*0.82:W-M*2;
+    var keySize=H*a.keyScale;x.font=a.keyW+" "+keySize+"px "+a.keyFont;
+    var lines=Design.wrap(x,c.key,maxW),lh=keySize*a.lh,subSize=H*a.subScale,ctaSize=H*a.ctaScale;
+    var kickSize=H*0.026,kickH=(c.kicker?kickSize*2.4:0);
+    var blockH=kickH+lines.length*lh+(a.under?keySize*0.46:keySize*0.1)+(c.sub?subSize*1.9:0)+(c.cta?ctaSize*3.0:0);
+    var cx=(a.align==="center")?W/2:M,startY=(a.anchor==="center")?(H*0.52-blockH*0.5):(H*(1-0.085)-blockH);
+    var KF=a.keyFont,PF="'Pretendard',sans-serif",y=startY;
+    if(c.kicker){x.font="800 "+kickSize+"px "+PF;
+      if(a.kick==="tag"){var kw=x.measureText(c.kicker).width,kpad=kickSize*0.7,kx=(a.align==="center")?cx-(kw+kpad*2)/2:cx;
+        ops.push({t:"rect",x:kx,y:y,w:kw+kpad*2,h:kickSize*1.7,r:kickSize*0.4,fill:accent});
+        ops.push({t:"text",x:kx+kpad,y:y+kickSize*0.9,anchor:"left",family:PF,weight:800,size:kickSize,fill:Design._ink(accent),text:c.kicker,baseline:"middle"});}
+      else{var sp=c.kicker.split("").join(" "),lw2=x.measureText(sp).width;
+        ops.push({t:"text",x:cx,y:y+kickSize,anchor:"center",family:PF,weight:800,size:kickSize,fill:accent,text:sp,baseline:"middle"});
+        ops.push({t:"line",x1:cx-lw2/2-kickSize*1.4,y1:y+kickSize,x2:cx-lw2/2-kickSize*0.5,y2:y+kickSize,stroke:accent,sw:Math.max(1,kickSize*0.06)});
+        ops.push({t:"line",x1:cx+lw2/2+kickSize*0.5,y1:y+kickSize,x2:cx+lw2/2+kickSize*1.4,y2:y+kickSize,stroke:accent,sw:Math.max(1,kickSize*0.06)});}
+      y+=kickH;}
+    y+=keySize;
+    lines.forEach(function(ln){ops.push({t:"text",x:cx,y:y,anchor:a.align,family:KF,weight:a.keyW,size:keySize,fill:"#fff",text:ln,shadow:true,baseline:"alphabetic"});y+=lh;});
+    if(a.under){x.font=a.keyW+" "+keySize+"px "+a.keyFont;var lw=Math.min(x.measureText(lines[lines.length-1]).width,maxW),uw=lw*0.5,ux=(a.align==="center")?cx-uw/2:cx;
+      ops.push({t:"rect",x:ux,y:y-lh+keySize*0.18,w:uw,h:keySize*0.15,r:keySize*0.075,fill:accent});y+=keySize*0.3;}
+    if(c.sub){x.font="600 "+subSize+"px "+PF;var sl=Design.wrap(x,c.sub,maxW);y+=subSize*0.5;sl.forEach(function(ln){ops.push({t:"text",x:cx,y:y+subSize,anchor:a.align,family:PF,weight:600,size:subSize,fill:"rgba(255,255,255,.92)",text:ln,baseline:"alphabetic"});y+=subSize*1.34;});}
+    if(c.cta){x.font="800 "+ctaSize+"px "+PF;var tw=x.measureText(c.cta).width,padX=ctaSize*0.95,padY=ctaSize*0.62,bw=tw+padX*2+ctaSize*1.2,bh=ctaSize+padY*2,bx=(a.align==="center")?cx-bw/2:cx,by=y+ctaSize*0.6;
+      ops.push({t:"rect",x:bx,y:by,w:bw,h:bh,r:bh/2,fill:accent,shadow:true});
+      var ink=Design._ink(accent);
+      ops.push({t:"text",x:bx+padX,y:by+bh/2,anchor:"left",family:PF,weight:800,size:ctaSize,fill:ink,text:c.cta,baseline:"middle"});
+      var ax=bx+padX+tw+ctaSize*0.55,ay=by+bh/2;
+      ops.push({t:"line",x1:ax,y1:ay,x2:ax+ctaSize*0.34,y2:ay,stroke:ink,sw:ctaSize*0.1,cap:"round"});
+      ops.push({t:"line",x1:ax+ctaSize*0.18,y1:ay-ctaSize*0.16,x2:ax+ctaSize*0.34,y2:ay,stroke:ink,sw:ctaSize*0.1,cap:"round"});
+      ops.push({t:"line",x1:ax+ctaSize*0.34,y1:ay,x2:ax+ctaSize*0.18,y2:ay+ctaSize*0.16,stroke:ink,sw:ctaSize*0.1,cap:"round"});}
+    var R=H*0.085;
+    c.badges.slice(0,2).forEach(function(b,i){var bcx=W-M-R,bcy=M+R+i*(R*2.2),col=b.color||"#e60023";
+      if(b.style==="burst"){var P=14,pts=[];for(var k=0;k<P*2;k++){var an=Math.PI*k/P-Math.PI/2,rr=(k%2?R*0.78:R);pts.push([bcx+Math.cos(an)*rr,bcy+Math.sin(an)*rr]);}ops.push({t:"poly",pts:pts,fill:col,shadow:true});}
+      else if(b.style==="ribbon"||b.style==="tag"){ops.push({t:"rect",x:bcx-R*1.35,y:bcy-R*0.66,w:R*2.7,h:R*1.32,r:R*0.22,fill:col,shadow:true});}
+      else{ops.push({t:"circle",cx:bcx,cy:bcy,r:R,fill:col,shadow:true});}
+      if(b.style!=="ribbon"&&b.style!=="tag")ops.push({t:"circle",cx:bcx,cy:bcy,r:R*0.82,stroke:"rgba(255,255,255,.6)",sw:R*0.06});
+      var bc2=b.color2||"#fff";
+      if(b.sub)ops.push({t:"text",x:bcx,y:bcy-R*0.22,anchor:"center",family:PF,weight:800,size:R*0.34,fill:bc2,text:b.sub,baseline:"alphabetic"});
+      ops.push({t:"text",x:bcx,y:bcy+(b.sub?R*0.28:0),anchor:"center",family:"'Black Han Sans','Pretendard',sans-serif",weight:900,size:R*0.82,fill:bc2,text:b.text||"",baseline:"middle"});});
+    return {ops:ops,W:W,H:H};
+  },
+  paintOps(x,L){var W=L.W,H=L.H;
+    L.ops.forEach(function(o){x.save();
+      if(o.alpha!=null)x.globalAlpha=o.alpha;
+      if(o.shadow){x.shadowColor="rgba(0,0,0,.42)";x.shadowBlur=H*0.013;x.shadowOffsetY=H*0.005;}
+      if(o.t==="scrim"){if(o.kind==="radial"){var rg=x.createRadialGradient(W/2,H*.55,H*.1,W/2,H*.55,H*.78);rg.addColorStop(0,"rgba(0,0,0,"+(o.scrim*.7)+")");rg.addColorStop(1,"rgba(0,0,0,0)");x.fillStyle=rg;}else{var sg=x.createLinearGradient(0,H*.32,0,H);sg.addColorStop(0,"rgba(0,0,0,0)");sg.addColorStop(.65,"rgba(0,0,0,"+(o.scrim*.78)+")");sg.addColorStop(1,"rgba(0,0,0,"+o.scrim+")");x.fillStyle=sg;}x.fillRect(0,0,W,H);}
+      else if(o.t==="rect"){x.fillStyle=o.fill;S3.roundRect(x,o.x,o.y,o.w,o.h,o.r||0);x.fill();}
+      else if(o.t==="circle"){x.beginPath();x.arc(o.cx,o.cy,o.r,0,7);if(o.fill){x.fillStyle=o.fill;x.fill();}if(o.stroke){x.strokeStyle=o.stroke;x.lineWidth=o.sw;x.stroke();}}
+      else if(o.t==="poly"){x.beginPath();o.pts.forEach(function(p,i){i?x.lineTo(p[0],p[1]):x.moveTo(p[0],p[1]);});x.closePath();x.fillStyle=o.fill;x.fill();}
+      else if(o.t==="line"){x.strokeStyle=o.stroke;x.lineWidth=o.sw;if(o.cap)x.lineCap=o.cap;x.beginPath();x.moveTo(o.x1,o.y1);x.lineTo(o.x2,o.y2);x.stroke();}
+      else if(o.t==="text"){x.fillStyle=o.fill;x.font=o.weight+" "+o.size+"px "+o.family;x.textAlign=o.anchor;x.textBaseline=o.baseline||"alphabetic";x.fillText(o.text,o.x,o.y);}
+      x.restore();});
+  },
+  _col(c){if(/^rgba?\(/.test(c)){var m=c.match(/rgba?\(([^)]+)\)/)[1].split(",");return ["rgb("+m[0].trim()+","+m[1].trim()+","+m[2].trim()+")",m.length>3?parseFloat(m[3]):1];}return [c,1];},
+  toSVGString(L,bgHref){
+    var W=L.W,H=L.H,defs="",body="",gid=0;
+    function n(v){return (Math.round(v*10)/10);}
+    function fam(f){return f.replace(/"/g,"&quot;");}
+    defs+='<filter id="ds" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="'+n(H*0.005)+'" stdDeviation="'+n(H*0.009)+'" flood-color="#000" flood-opacity="0.42"/></filter>';
+    if(bgHref)body+='<image href="'+bgHref+'" x="0" y="0" width="'+W+'" height="'+H+'" preserveAspectRatio="xMidYMid slice"/>';
+    else body+='<rect width="'+W+'" height="'+H+'" fill="#222"/>';
+    L.ops.forEach(function(o){
+      var op=(o.alpha!=null)?(' opacity="'+o.alpha+'"'):"",fil=o.shadow?' filter="url(#ds)"':"";
+      if(o.t==="scrim"){var id="g"+(gid++);
+        if(o.kind==="radial")defs+='<radialGradient id="'+id+'" cx="0.5" cy="0.55" r="0.6"><stop offset="0" stop-color="#000" stop-opacity="'+(o.scrim*0.7)+'"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>';
+        else defs+='<linearGradient id="'+id+'" x1="0" y1="'+n(H*0.32)+'" x2="0" y2="'+H+'" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="0.65" stop-color="#000" stop-opacity="'+(o.scrim*0.78)+'"/><stop offset="1" stop-color="#000" stop-opacity="'+o.scrim+'"/></linearGradient>';
+        body+='<rect x="0" y="0" width="'+W+'" height="'+H+'" fill="url(#'+id+')"/>';}
+      else if(o.t==="rect"){var f=Design._col(o.fill);body+='<rect x="'+n(o.x)+'" y="'+n(o.y)+'" width="'+n(o.w)+'" height="'+n(o.h)+'" rx="'+n(o.r||0)+'" fill="'+f[0]+'"'+(f[1]<1?' fill-opacity="'+f[1]+'"':"")+op+fil+'/>';}
+      else if(o.t==="circle"){var ff=o.fill?Design._col(o.fill):null,ss=o.stroke?Design._col(o.stroke):null;body+='<circle cx="'+n(o.cx)+'" cy="'+n(o.cy)+'" r="'+n(o.r)+'" '+(ff?('fill="'+ff[0]+'"'+(ff[1]<1?' fill-opacity="'+ff[1]+'"':"")):'fill="none"')+(ss?(' stroke="'+ss[0]+'" stroke-width="'+n(o.sw)+'"'+(ss[1]<1?' stroke-opacity="'+ss[1]+'"':"")):"")+op+fil+'/>';}
+      else if(o.t==="poly"){var pf=Design._col(o.fill);body+='<polygon points="'+o.pts.map(function(p){return n(p[0])+","+n(p[1]);}).join(" ")+'" fill="'+pf[0]+'"'+(pf[1]<1?' fill-opacity="'+pf[1]+'"':"")+op+fil+'/>';}
+      else if(o.t==="line"){var ls=Design._col(o.stroke);body+='<line x1="'+n(o.x1)+'" y1="'+n(o.y1)+'" x2="'+n(o.x2)+'" y2="'+n(o.y2)+'" stroke="'+ls[0]+'" stroke-width="'+n(o.sw)+'"'+(ls[1]<1?' stroke-opacity="'+ls[1]+'"':"")+(o.cap?' stroke-linecap="'+o.cap+'"':"")+op+'/>';}
+      else if(o.t==="text"){var tf=Design._col(o.fill),anchor=o.anchor==="left"?"start":(o.anchor==="right"?"end":"middle"),db=o.baseline==="middle"?' dominant-baseline="central"':"";body+='<text x="'+n(o.x)+'" y="'+n(o.y)+'" text-anchor="'+anchor+'"'+db+' font-family="'+fam(o.family)+'" font-weight="'+o.weight+'" font-size="'+n(o.size)+'" fill="'+tf[0]+'"'+(tf[1]<1?' fill-opacity="'+tf[1]+'"':"")+(o.shadow?' filter="url(#ds)"':"")+'>'+esc(o.text)+'</text>';}
+    });
+    return '<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'"><defs>'+defs+'</defs>'+body+'</svg>';
+  },
+  toSVG(variant,d){var a=ARCH[variant.arch]||ARCH.impact,c=Design.content(d),wh=RATIOS[d.ratio],W=wh[0],H=wh[1],M=W*0.072,accent=variant.accent||c.accent||a.accentDefault;return Design.toSVGString(Design.layout(d,a,c,W,H,M,accent),variant.bg);},
+  applyToDoc(d,v){
+    var a=ARCH[v.arch]||ARCH.impact,wh=RATIOS[d.ratio],H=wh[1],fam=a.keyFont.split(",")[0].replace(/'/g,"");
+    function set(role,size,ny,font){var l=d.layers.filter(function(x){return x.role===role&&x.type!=="badge";})[0];if(!l)return;l.font=font;l.align=a.align;l.size=Math.round(size);l.ny=ny;l.nx=0.07;l.wx=0.86;l.color="#ffffff";l.rot=0;}
+    set("key",H*a.keyScale,a.anchor==="center"?0.40:0.58,fam);
+    set("sub",H*a.subScale,a.anchor==="center"?0.60:0.76,"Pretendard");
+    var cta=d.layers.filter(function(x){return x.role==="cta";})[0];if(cta){cta.bg=v.accent||cta.bg;cta.ny=a.anchor==="center"?0.74:0.87;cta.nx=0.07;}
+    d.intent.archApplied=a.label;
+  },
   render(canvas,variant,d){
     var a=ARCH[variant.arch]||ARCH.impact, c=Design.content(d);
     var wh=RATIOS[d.ratio];canvas.width=wh[0];canvas.height=wh[1];
@@ -976,12 +1074,7 @@ var Design={
     function paint(im){
       if(im){var s=Math.max(W/im.width,H/im.height);x.drawImage(im,(W-im.width*s)/2,(H-im.height*s)/2,im.width*s,im.height*s);}
       else{x.fillStyle="#222";x.fillRect(0,0,W,H);}
-      if(a.anchor==="center"){var rg=x.createRadialGradient(W/2,H*.55,H*.1,W/2,H*.55,H*.78);rg.addColorStop(0,"rgba(0,0,0,"+(a.scrim*.7)+")");rg.addColorStop(1,"rgba(0,0,0,0)");x.fillStyle=rg;}
-      else{var sg=x.createLinearGradient(0,H*.32,0,H);sg.addColorStop(0,"rgba(0,0,0,0)");sg.addColorStop(.65,"rgba(0,0,0,"+(a.scrim*.78)+")");sg.addColorStop(1,"rgba(0,0,0,"+a.scrim+")");x.fillStyle=sg;}
-      x.fillRect(0,0,W,H);
-      Design._decor(x,W,H,M,a,accent);
-      Design._text(x,W,H,M,a,c,accent);
-      Design._badges(x,W,H,M,c.badges);
+      Design.paintOps(x,Design.layout(d,a,c,W,H,M,(variant.accent||accent)));
     }
     var url=variant.bg;
     if(url&&S3._img[url])paint(S3._img[url]);
@@ -1096,7 +1189,25 @@ var S4={
     if(v){delete S3._img[v.bg];v.bg=url;delete S3._img[url];}
     S4.intent();S4.renderVariants();S4.paintFinal();
   },
-  download(){var c=$("finalCanvas");var a=el("a");a.href=c.toDataURL("image/png");a.download="소재냥인_완성.png";a.click();}
+  download(){var c=$("finalCanvas");S4._dl(c.toDataURL("image/png"),"소재냥인_완성.png");toast("완성본 PNG 저장");},
+  _dl(href,name){var a=el("a");a.href=href;a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){a.remove();if(/^blob:/.test(href))URL.revokeObjectURL(href);},100);},
+  downloadBg(){var v=App.final.variants[App.final.pick];if(!v||!v.bg){toast("배경이 없어요");return;}S4._dl(v.bg,"소재냥인_배경_텍스트없음.png");toast("텍스트 없는 배경 PNG 저장(디자이너용)");},
+  downloadSVG(){var v=App.final.variants[App.final.pick];if(!v){toast("완성안을 먼저 생성");return;}var svg=Design.toSVG(v,App.doc);S4._dl(URL.createObjectURL(new Blob([svg],{type:"image/svg+xml;charset=utf-8"})),"소재냥인_완성_편집가능.svg");toast("편집 가능한 SVG 저장(Figma/AI)");},
+  downloadSpec(){
+    var d=App.doc,v=App.final.variants[App.final.pick]||{},a=ARCH[v.arch]||ARCH.impact,c=Design.content(d),wh=RATIOS[d.ratio],L=[];
+    L.push("# 소재냥인 디자인 스펙 (디자이너 전달용)");L.push("생성: "+new Date().toLocaleString("ko-KR"));L.push("");
+    L.push("## 캔버스");L.push("- 비율: "+d.ratio+"  ("+wh[0]+" x "+wh[1]+" px)");L.push("- 디자인 아키타입: "+a.label+" ("+v.arch+")");L.push("- 악센트 컬러: "+(v.accent||c.accent||a.accentDefault));L.push("");
+    L.push("## 카피 (배경 이미지엔 글자 없음 — 합성/편집 자유)");
+    L.push('- 메인(KEY): "'+c.key+'"');L.push("   · 폰트 "+a.keyFont.split(",")[0].replace(/'/g,"")+" / 크기 약 "+Math.round(wh[1]*a.keyScale)+"px / 흰색+그림자"+(a.under?" / 악센트 언더라인":""));
+    if(c.kicker)L.push('- 키커: "'+c.kicker+'" (악센트 '+(a.kick==="tag"?"태그":"라인")+')');
+    if(c.sub)L.push('- 서브(SUB): "'+c.sub+'" / Pretendard 600 / 약 '+Math.round(wh[1]*a.subScale)+"px");
+    if(c.cta)L.push('- CTA: "'+c.cta+'" / 악센트 버튼 + 화살표 / Pretendard 800');
+    L.push("");
+    if(c.badges.length){L.push("## 뱃지");c.badges.forEach(function(b,i){L.push("- "+(i+1)+") "+(b.sub?b.sub+" ":"")+b.text+" / 모양 "+b.style+" / 색 "+b.color+" / 우상단");});L.push("");}
+    L.push("## 핸드오프 메모");L.push("- '배경만 PNG'(텍스트·뱃지 없음) 별도 제공.");L.push("- 'SVG'를 열면 텍스트가 편집 가능한 벡터(폰트·색·위치 그대로).");L.push("- 세이프 영역 좌우/하단 여백 약 7%.");
+    S4._dl(URL.createObjectURL(new Blob([L.join("\n")],{type:"text/plain;charset=utf-8"})),"소재냥인_디자인스펙.txt");toast("디자인 스펙(.txt) 저장");
+  },
+  toStage3(){var v=App.final.variants[App.final.pick];if(!v){toast("완성안을 먼저 생성");return;}Design.applyToDoc(App.doc,v);App.doc.bgImage=v.bg;delete S3._img[v.bg];UI.go(3);toast("디자인을 3단계 레이어로 — 직접 편집하세요");}
 };
 
 /* ============================================================
