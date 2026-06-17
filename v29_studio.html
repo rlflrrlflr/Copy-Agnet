@@ -938,9 +938,9 @@ var S3={
    각 아키타입 = 서로 다른 디자인(다양성).
    ============================================================ */
 var ARCH={
-  impact:{label:"임팩트 세일",keyFont:"'Black Han Sans','Pretendard',sans-serif",keyW:900,keyScale:.128,subScale:.039,ctaScale:.034,anchor:"bl",align:"left",scrim:.62,accentDefault:"#ffd24a",lh:1.0,under:true,kick:"tag"},
-  clean:{label:"클린 프리미엄",keyFont:"'Nanum Myeongjo','Gowun Dodum',serif",keyW:800,keyScale:.088,subScale:.032,ctaScale:.029,anchor:"center",align:"center",scrim:.42,accentDefault:"#e9c46a",lh:1.28,under:false,kick:"line"},
-  price:{label:"가격 강조",keyFont:"'Do Hyeon','Black Han Sans',sans-serif",keyW:900,keyScale:.118,subScale:.037,ctaScale:.033,anchor:"bl",align:"left",scrim:.56,accentDefault:"#ff3b30",lh:1.02,under:true,kick:"tag"}
+  impact:{label:"임팩트 세일",keyFont:"'Black Han Sans','Pretendard',sans-serif",keyW:900,keyScale:.128,subScale:.039,ctaScale:.034,anchor:"bl",align:"left",scrim:.62,accentDefault:"#ffd24a",lh:1.0,under:true,kick:"tag",deco:"spark"},
+  clean:{label:"클린 프리미엄",keyFont:"'Nanum Myeongjo','Gowun Dodum',serif",keyW:800,keyScale:.088,subScale:.032,ctaScale:.029,anchor:"center",align:"center",scrim:.42,accentDefault:"#e9c46a",lh:1.28,under:false,kick:"line",deco:"frame"},
+  price:{label:"가격 강조",keyFont:"'Do Hyeon','Black Han Sans',sans-serif",keyW:900,keyScale:.118,subScale:.037,ctaScale:.033,anchor:"bl",align:"left",scrim:.56,accentDefault:"#ff3b30",lh:1.02,under:true,kick:"tag",deco:"ticks"}
 };
 var FUNNEL_KICK={"인지":"NEW 신상","유입":"지금 이벤트","구매고려":"비교 체크","전환":"한정 혜택","리타겟팅":"앵콜 특가"};
 var ARCH_ORDER=["impact","clean","price"];
@@ -965,6 +965,7 @@ var Design={
       if(a.anchor==="center"){var rg=x.createRadialGradient(W/2,H*.55,H*.1,W/2,H*.55,H*.78);rg.addColorStop(0,"rgba(0,0,0,"+(a.scrim*.7)+")");rg.addColorStop(1,"rgba(0,0,0,0)");x.fillStyle=rg;}
       else{var sg=x.createLinearGradient(0,H*.32,0,H);sg.addColorStop(0,"rgba(0,0,0,0)");sg.addColorStop(.65,"rgba(0,0,0,"+(a.scrim*.78)+")");sg.addColorStop(1,"rgba(0,0,0,"+a.scrim+")");x.fillStyle=sg;}
       x.fillRect(0,0,W,H);
+      Design._decor(x,W,H,M,a,accent);
       Design._text(x,W,H,M,a,c,accent);
       Design._badges(x,W,H,M,c.badges);
     }
@@ -1003,6 +1004,14 @@ var Design={
       var ax=bx+padX+tw+ctaSize*0.55,ay=by+bh/2;x.strokeStyle=ink;x.lineWidth=ctaSize*0.1;x.lineCap="round";x.lineJoin="round";
       x.beginPath();x.moveTo(ax,ay);x.lineTo(ax+ctaSize*0.34,ay);x.moveTo(ax+ctaSize*0.18,ay-ctaSize*0.16);x.lineTo(ax+ctaSize*0.34,ay);x.lineTo(ax+ctaSize*0.18,ay+ctaSize*0.16);x.stroke();
       x.textAlign=a.align;}
+  },
+  _decor(x,W,H,M,a,accent){
+    x.save();
+    function star(px,py,r){x.beginPath();for(var i=0;i<8;i++){var an=Math.PI*i/4,rr=(i%2?r*0.38:r),sx=px+Math.cos(an)*rr,sy=py+Math.sin(an)*rr;i?x.lineTo(sx,sy):x.moveTo(sx,sy);}x.closePath();x.fill();}
+    if(a.deco==="spark"){x.fillStyle=accent;x.globalAlpha=.92;star(M+H*0.01,H*0.105,H*0.019);star(W*0.30,H*0.06,H*0.012);star(W*0.46,H*0.12,H*0.0095);}
+    else if(a.deco==="frame"){x.strokeStyle=accent;x.globalAlpha=.55;x.lineWidth=Math.max(1,H*0.0016);[H*0.135,H*0.865].forEach(function(yy){x.beginPath();x.moveTo(W*0.5-W*0.155,yy);x.lineTo(W*0.5+W*0.155,yy);x.stroke();});x.globalAlpha=.9;star(W*0.5,H*0.105,H*0.011);}
+    else if(a.deco==="ticks"){x.fillStyle=accent;x.globalAlpha=.9;for(var i=0;i<3;i++){x.fillRect(M+i*H*0.03,H*0.075,H*0.018,H*0.018);}}
+    x.globalAlpha=1;x.restore();
   },
   _badges(x,W,H,M,badges){var R=H*0.085;badges.slice(0,2).forEach(function(b,i){Design._badge(x,b,W-M-R,M+R+i*(R*2.2),R);});},
   _badge(x,b,cx,cy,R){
