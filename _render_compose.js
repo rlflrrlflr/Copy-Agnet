@@ -25,7 +25,7 @@ const fileUrl='file://'+require('path').resolve('v27_copy_engine.html');
      inp('composeSub', s.sub||'');
      inp('composeCta', s.cta||'');
      // reset & apply composeState
-     window.composeState = Object.assign({letter:'A',bg:'gradient',ratio:'1:1',pos:'bottom',textColor:'light',hAlign:'left',bgImage:null}, s.state||{});
+     composeState = Object.assign({letter:'A',bg:'gradient',ratio:'1:1',pos:'bottom',textColor:'light',hAlign:'left',bgImage:null}, s.state||{});
      try{ if(typeof getOverlayLogos!=='function') window.getOverlayLogos=function(){return [];}; }catch(e){}
      // build canvas
      const W=s.W||1080,H=s.H||1080;
