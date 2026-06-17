@@ -3285,16 +3285,19 @@ function positionOverlay(){
     }else{_ovEditor.style.display='none';}
   }
 }
+/* v28 task3: 텍스트 파트 선택 헬퍼 (key/sub/cta 독립) */
+function _isTSel(s){return s==='text'||s==='key'||s==='sub'||s==='cta';}
+function _hitP(b,x,y){return b&&x>=b.x-7&&x<=b.x+b.w+7&&y>=b.y-7&&y<=b.y+b.h+7;}
 function _composeSelect(e){
   var canvas=document.getElementById('composeCanvas');var r=canvas.getBoundingClientRect();var p=_evt(e);
   var x=(p.x-r.left)*(canvas.width/Math.max(1,r.width)),y=(p.y-r.top)*(canvas.height/Math.max(1,r.height));
   var hit=null;
   for(var i=_cLogoBoxes.length-1;i>=0;i--){if(_hit(_cLogoBoxes[i],x,y)){hit=_cLogoBoxes[i].id;break;}}
-  if(!hit&&_hit(_cTextBox,x,y))hit='text';
-  if(!hit&&typeof _cTextParts!=='undefined'&&_cTextParts&&_cTextParts.cta&&_hit(_cTextParts.cta,x,y))hit='text';
+  if(!hit&&typeof _cTextParts!=='undefined'&&_cTextParts){['cta','sub','key'].forEach(function(pp){if(!hit&&_hitP(_cTextParts[pp],x,y))hit=pp;});}
+  if(!hit&&_hit(_cTextBox,x,y))hit='key';
   if(!hit&&composeState.bgImage)hit='image';
   composeState.sel=hit;
-  if(hit==='text'){var el=document.getElementById('composeKeyPt');if(el)el.value=composeState.keyPt||42;showPanel('text');}
+  if(_isTSel(hit)){var el=document.getElementById('composeKeyPt');if(el)el.value=composeState.keyPt||42;showPanel('text');}
   else if(hit==='image'){showPanel('image');}
   else if(hit){showPanel('logo');}
   else{showPanel(composeState.bgImage?'default':'image');}
@@ -3999,13 +4002,14 @@ function _ensureOverlay(canvas){
   pipe('ieKey','composeKey');pipe('ieSub','composeSub');pipe('ieCta','composeCta');
   var st=null;
   function curPos(){
+    if(_isTSel(composeState.sel)&&composeState.sel!=='text'){var ppp=(composeState.partPos&&composeState.partPos[composeState.sel])||null;if(ppp)return {x:ppp.x,y:ppp.y};var bb=_cTextParts&&_cTextParts[composeState.sel];return bb?{x:bb.x/canvas.width,y:bb.y/canvas.height}:{x:0.1,y:0.5};}
     if(composeState.sel==='text'){var p=composeState.textPos||{x:(_cTextBox?_cTextBox.x/canvas.width:0.06),y:(_cTextBox?_cTextBox.y/canvas.height:0.7)};return {x:p.x,y:p.y};}
     if(composeState.sel==='image')return {dx:_cImgBox?_cImgBox.dx:0,dy:_cImgBox?_cImgBox.dy:0,dw:_cImgBox?_cImgBox.dw:canvas.width,dh:_cImgBox?_cImgBox.dh:canvas.height};
     var p2=composeState.logoPos[composeState.sel];if(p2)return {x:p2.x,y:p2.y};
     var b=_findLogoBox(composeState.sel);return b?{x:b.x/canvas.width,y:b.y/canvas.height}:{x:0.05,y:0.05};
   }
   function curSize(){
-    if(composeState.sel==='text')return {pt:composeState.keyPt||42,spt:composeState.subPt||21,cpt:composeState.ctaPt||19,w:(composeState.textBoxW||(_cTextBox?_cTextBox.w/canvas.width:0.5)),bx:(_cTextBox?_cTextBox.x/canvas.width:0.06),by:(_cTextBox?_cTextBox.y/canvas.height:0.7)};
+    if(_isTSel(composeState.sel))return {pt:composeState.keyPt||42,spt:composeState.subPt||21,cpt:composeState.ctaPt||19,w:(composeState.textBoxW||(_cTextBox?_cTextBox.w/canvas.width:0.5)),bx:(_cTextBox?_cTextBox.x/canvas.width:0.06),by:(_cTextBox?_cTextBox.y/canvas.height:0.7)};
     if(composeState.sel==='image')return {sc:composeState.imgScale||1};
     var b=_findLogoBox(composeState.sel);return {sz:(composeState.logoSize[composeState.sel]||(b?b.w/canvas.width:0.133))};
   }
@@ -4031,12 +4035,14 @@ function _ensureOverlay(canvas){
         if(Math.abs(spanX)<=1&&Math.abs(spanY)<=1){var hint=document.getElementById('imgMoveHint');if(hint)hint.classList.remove('hidden');}
       }else{
         var nx=Math.max(0,Math.min(0.98,st.start.x+dx/W)),ny=Math.max(0,Math.min(0.98,st.start.y+dy/H));
-        if(composeState.sel==='text')composeState.textPos={x:nx,y:ny};else composeState.logoPos[composeState.sel]={x:nx,y:ny};
+        if(composeState.sel==='text')composeState.textPos={x:nx,y:ny};
+        else if(_isTSel(composeState.sel)){composeState.partPos=composeState.partPos||{};composeState.partPos[composeState.sel]={x:nx,y:ny};}
+        else composeState.logoPos[composeState.sel]={x:nx,y:ny};
       }
     }
     else{
       var hx=st.hx,hy=st.hy;
-      if(composeState.sel==='text'){
+      if(_isTSel(composeState.sel)){
         if(hx!==0){
           var grow=dx*hx; /* 오른쪽 핸들: 오른쪽으로 +, 왼쪽 핸들: 왼쪽으로 + */
           var nwPx=Math.max(0.18*W,Math.min(0.96*W,st.start.w*W+grow));
@@ -4581,7 +4587,7 @@ function _ce17Close(commit){
 function positionOverlay(){
   var canvas=document.getElementById('composeCanvas');if(!canvas||!_ovBox)return;
   if(!composeState.sel){_ovBox.style.display='none';if(_ovEditor)_ovEditor.style.display='none';return;}
-  var b;if(composeState.sel==='text')b=_cTextBox;else if(composeState.sel==='image')b={x:0,y:0,w:canvas.width,h:canvas.height};else b=_findLogoBox(composeState.sel);
+  var b;if(composeState.sel==='text')b=_cTextBox;else if(_isTSel(composeState.sel))b=(_cTextParts&&_cTextParts[composeState.sel])||_cTextBox;else if(composeState.sel==='image')b={x:0,y:0,w:canvas.width,h:canvas.height};else b=_findLogoBox(composeState.sel);
   if(!b){_ovBox.style.display='none';if(_ovEditor)_ovEditor.style.display='none';return;}
   var sc=Math.max(1,canvas.clientWidth)/canvas.width;
   _ovBox.style.display='block';
