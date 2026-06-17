@@ -304,6 +304,7 @@ kbd{font-family:ui-monospace,monospace;font-size:10px;background:var(--card);bor
         <div class="panel"><div class="panel-h">⬇ 내보내기 <span class="tiny muted" style="font-weight:600;margin-left:auto">마케터 즉시 셋팅 · 디자이너 전달</span></div><div class="panel-b col">
           <div class="tool"><button class="btn sm" style="flex:1" onclick="S4.download()">🖼 완성본 PNG</button><button class="btn sm" style="flex:1" onclick="S4.downloadBg()">🌄 배경만 (텍스트 없음)</button></div>
           <div class="tool"><button class="btn sm" style="flex:1" onclick="S4.downloadSVG()">✏️ SVG (디자이너 편집)</button><button class="btn sm" style="flex:1" onclick="S4.downloadSpec()">📋 디자인 스펙</button></div>
+          <button class="btn full sm" onclick="S4.downloadAllRatios()">📐 전 비율 PNG (1:1 · 4:5 · 16:9) — 모든 지면</button>
           <button class="btn full sm" onclick="S4.toStage3()">↩ 이 디자인을 3단계로 보내 직접 편집</button>
           <p class="hint">SVG·스펙은 실제 디자이너가 폰트·색·위치를 그대로 받아 편집할 수 있어요. 배경만 PNG는 텍스트 없는 비주얼.</p>
         </div></div>
@@ -1241,7 +1242,17 @@ var S4={
     L.push("## 핸드오프 메모");L.push("- '배경만 PNG'(텍스트·뱃지 없음) 별도 제공.");L.push("- 'SVG'를 열면 텍스트가 편집 가능한 벡터(폰트·색·위치 그대로).");L.push("- 세이프 영역 좌우/하단 여백 약 7%.");
     S4._dl(URL.createObjectURL(new Blob([L.join("\n")],{type:"text/plain;charset=utf-8"})),"소재냥인_디자인스펙.txt");toast("디자인 스펙(.txt) 저장");
   },
-  toStage3(){var v=App.final.variants[App.final.pick];if(!v){toast("완성안을 먼저 생성");return;}Design.applyToDoc(App.doc,v);App.doc.bgImage=v.bg;delete S3._img[v.bg];UI.go(3);toast("디자인을 3단계 레이어로 — 직접 편집하세요");}
+  toStage3(){var v=App.final.variants[App.final.pick];if(!v){toast("완성안을 먼저 생성");return;}Design.applyToDoc(App.doc,v);App.doc.bgImage=v.bg;delete S3._img[v.bg];UI.go(3);toast("디자인을 3단계 레이어로 — 직접 편집하세요");},
+  async downloadAllRatios(){
+    var v=App.final.variants[App.final.pick];if(!v){toast("완성안을 먼저 생성");return;}
+    var orig=App.doc.ratio,ratios=["1:1","4:5","16:9"];toast("전 비율 렌더링…");
+    for(var i=0;i<ratios.length;i++){
+      App.doc.ratio=ratios[i];var c=document.createElement("canvas");
+      Design.render(c,v,App.doc);await new Promise(function(r){setTimeout(r,260);});Design.render(c,v,App.doc);await new Promise(function(r){setTimeout(r,60);});
+      S4._dl(c.toDataURL("image/png"),"소재냥인_"+ratios[i].replace(":","x")+".png");await new Promise(function(r){setTimeout(r,150);});
+    }
+    App.doc.ratio=orig;S4.paintFinal();toast("1:1 · 4:5 · 16:9 PNG 저장(모든 지면)");
+  }
 };
 
 /* ============================================================
