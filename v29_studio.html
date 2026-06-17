@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>소재냥인 Studio v29 — 카피 · 기획 · 완성</title>
+<!-- 디자인 폰트(점진적 향상 · 오프라인이면 시스템 폰트로 폴백) -->
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Do+Hyeon&family=Jua&family=Gowun+Dodum&family=Nanum+Myeongjo:wght@700;800&family=Gothic+A1:wght@700;800;900&display=swap" rel="stylesheet">
 <style>
 /* ============================================================
    소재냥인 Studio v29 — 구조 전면 재설계 (단일 파일 · 무의존 · 시뮬레이터 우선)
@@ -935,17 +938,20 @@ var S3={
    각 아키타입 = 서로 다른 디자인(다양성).
    ============================================================ */
 var ARCH={
-  impact:{label:"임팩트 세일",keyFont:"'Black Han Sans','Pretendard',sans-serif",keyW:900,keyScale:.128,subScale:.039,ctaScale:.034,anchor:"bl",align:"left",scrim:.62,accentDefault:"#ffd24a",lh:1.0,under:true},
-  clean:{label:"클린 프리미엄",keyFont:"'Gowun Dodum','Pretendard',sans-serif",keyW:800,keyScale:.094,subScale:.034,ctaScale:.03,anchor:"center",align:"center",scrim:.4,accentDefault:"#ffffff",lh:1.16,under:false},
-  price:{label:"가격 강조",keyFont:"'Do Hyeon','Pretendard',sans-serif",keyW:900,keyScale:.118,subScale:.037,ctaScale:.033,anchor:"bl",align:"left",scrim:.56,accentDefault:"#ff3b30",lh:1.02,under:true}
+  impact:{label:"임팩트 세일",keyFont:"'Black Han Sans','Pretendard',sans-serif",keyW:900,keyScale:.128,subScale:.039,ctaScale:.034,anchor:"bl",align:"left",scrim:.62,accentDefault:"#ffd24a",lh:1.0,under:true,kick:"tag"},
+  clean:{label:"클린 프리미엄",keyFont:"'Nanum Myeongjo','Gowun Dodum',serif",keyW:800,keyScale:.088,subScale:.032,ctaScale:.029,anchor:"center",align:"center",scrim:.42,accentDefault:"#e9c46a",lh:1.28,under:false,kick:"line"},
+  price:{label:"가격 강조",keyFont:"'Do Hyeon','Black Han Sans',sans-serif",keyW:900,keyScale:.118,subScale:.037,ctaScale:.033,anchor:"bl",align:"left",scrim:.56,accentDefault:"#ff3b30",lh:1.02,under:true,kick:"tag"}
 };
+var FUNNEL_KICK={"인지":"NEW 신상","유입":"지금 이벤트","구매고려":"비교 체크","전환":"한정 혜택","리타겟팅":"앵콜 특가"};
 var ARCH_ORDER=["impact","clean","price"];
 var Design={
   content(d){
     function txt(role){var l=d.layers.filter(function(x){return x.role===role&&x.type!=="badge";})[0];return l?(l.text||""):"";}
     var badges=d.layers.filter(function(l){return l.type==="badge";}).map(function(b){return {text:b.text,sub:b.sub,style:b.style,color:b.color,color2:b.color2};});
     var ctaL=d.layers.filter(function(x){return x.role==="cta";})[0];
-    return {key:txt("key"),sub:txt("sub"),cta:txt("cta"),badges:badges,accent:(ctaL&&ctaL.bg)||null};
+    var it=d.intent||{};var kicker=FUNNEL_KICK[it.funnel]||"";
+    if(badges.some(function(b){return /[%원]/.test(b.text||"");}))kicker="단독 특가";
+    return {key:txt("key"),sub:txt("sub"),cta:txt("cta"),badges:badges,accent:(ctaL&&ctaL.bg)||null,kicker:kicker};
   },
   wrap(x,text,maxW){var out=[];(text||"").split("\n").forEach(function(par){var w=par.split(/(\s+)/),cur="";w.forEach(function(t){if(x.measureText(cur+t).width>maxW&&cur){out.push(cur.trim());cur=t.replace(/^\s+/,"");}else cur+=t;});out.push(cur.trim());});out=out.filter(function(s){return s.length;});return out.length?out:[""];},
   _ink(hex){hex=(hex||"#e60023").replace("#","");if(hex.length===3)hex=hex.replace(/(.)/g,"$1$1");var r=parseInt(hex.slice(0,2),16),g=parseInt(hex.slice(2,4),16),b=parseInt(hex.slice(4,6),16);return (0.299*r+0.587*g+0.114*b)>150?"#191919":"#ffffff";},
@@ -971,10 +977,23 @@ var Design={
     var maxW=(a.anchor==="center")?W*0.82:W-M*2;
     var keySize=H*a.keyScale;x.font=a.keyW+" "+keySize+"px "+a.keyFont;
     var lines=Design.wrap(x,c.key,maxW),lh=keySize*a.lh,subSize=H*a.subScale,ctaSize=H*a.ctaScale;
-    var blockH=lines.length*lh+(a.under?keySize*0.46:keySize*0.1)+(c.sub?subSize*1.9:0)+(c.cta?ctaSize*3.0:0);
+    var kickSize=H*0.026, kickH=(c.kicker?kickSize*2.4:0);
+    var blockH=kickH+lines.length*lh+(a.under?keySize*0.46:keySize*0.1)+(c.sub?subSize*1.9:0)+(c.cta?ctaSize*3.0:0);
     var cx=(a.align==="center")?W/2:M, startY=(a.anchor==="center")?(H*0.52-blockH*0.5):(H*(1-0.085)-blockH);
     x.textAlign=a.align;x.textBaseline="alphabetic";
-    var y=startY+keySize;
+    var y=startY;
+    // 키커(아이브로우)
+    if(c.kicker){
+      x.font="800 "+kickSize+"px 'Pretendard',sans-serif";
+      if(a.kick==="tag"){var kw=x.measureText(c.kicker).width,kpad=kickSize*0.7;var kx=(a.align==="center")?cx-(kw+kpad*2)/2:cx;
+        x.fillStyle=accent;S3.roundRect(x,kx,y,kw+kpad*2,kickSize*1.7,kickSize*0.4);x.fill();
+        x.fillStyle=Design._ink(accent);x.textAlign="left";x.textBaseline="middle";x.fillText(c.kicker,kx+kpad,y+kickSize*0.9);x.textAlign=a.align;x.textBaseline="alphabetic";}
+      else{ // line: 글자 간격 넓힌 라벨 + 양옆 라인
+        var sp=c.kicker.split("").join(" ");x.fillStyle=accent;x.textBaseline="middle";x.fillText(sp,cx,y+kickSize);
+        var lw2=x.measureText(sp).width;x.strokeStyle=accent;x.lineWidth=Math.max(1,kickSize*0.06);x.beginPath();x.moveTo(cx-lw2/2-kickSize*1.4,y+kickSize);x.lineTo(cx-lw2/2-kickSize*0.5,y+kickSize);x.moveTo(cx+lw2/2+kickSize*0.5,y+kickSize);x.lineTo(cx+lw2/2+kickSize*1.4,y+kickSize);x.stroke();x.textBaseline="alphabetic";}
+      y+=kickH;
+    }
+    y+=keySize;
     lines.forEach(function(ln){x.font=a.keyW+" "+keySize+"px "+a.keyFont;x.save();x.shadowColor="rgba(0,0,0,.5)";x.shadowBlur=keySize*0.13;x.shadowOffsetY=keySize*0.03;x.fillStyle="#fff";x.fillText(ln,cx,y);x.restore();y+=lh;});
     if(a.under){x.font=a.keyW+" "+keySize+"px "+a.keyFont;var lw=Math.min(x.measureText(lines[lines.length-1]).width,maxW);var uw=lw*0.5,ux=(a.align==="center")?cx-uw/2:cx;x.fillStyle=accent;S3.roundRect(x,ux,y-lh+keySize*0.18,uw,keySize*0.15,keySize*0.075);x.fill();y+=keySize*0.3;}
     if(c.sub){x.font="600 "+subSize+"px 'Pretendard',sans-serif";x.fillStyle="rgba(255,255,255,.92)";var sl=Design.wrap(x,c.sub,maxW);y+=subSize*0.5;sl.forEach(function(ln){x.fillText(ln,cx,y+subSize);y+=subSize*1.34;});}
