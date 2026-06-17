@@ -2,10 +2,12 @@ node_modules/
 _verify.js
 _render_cat.js
 _render_compose.js
+_render_stage.js
 _rcat.js
-k_*.png
-compose_*.png
-cat_*.png
-*.png
-package*.json
 _pixcat.py
+_pixcat2.py
+_pixcat3.py
+*.png
+*.npy
+package*.json
+bigpaw*.txt
