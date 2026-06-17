@@ -459,6 +459,9 @@ details[open] .chev{transform:rotate(180deg)}
               <div class="space-y-0.5"><span class="text-[9px] font-bold text-mute">서브</span><input type="number" id="composeSubPt" min="6" max="160" step="1" value="21" oninput="setComposeSubPt(this.value)" class="w-full p-2 text-xs bg-white border border-line rounded-xl text-ink focus:ring-2 focus:ring-pin-500 focus:outline-none"></div>
               <div class="space-y-0.5"><span class="text-[9px] font-bold text-mute">CTA</span><input type="number" id="composeCtaPt" min="6" max="160" step="1" value="19" oninput="setComposeCtaPt(this.value)" class="w-full p-2 text-xs bg-white border border-line rounded-xl text-ink focus:ring-2 focus:ring-pin-500 focus:outline-none"></div>
             </div>
+            <details class="border-t border-line pt-2">
+            <summary class="text-[10px] font-extrabold text-mute cursor-pointer select-none list-none flex items-center gap-1">🅰 글꼴 · 정렬 · CTA 모양 <span class="font-normal text-ash">(자주 안 바꾸는 설정 · 펼치기)</span></summary>
+            <div class="space-y-2 pt-2">
             <div class="grid grid-cols-2 gap-1.5">
               <div class="space-y-0.5"><span class="text-[9px] font-bold text-mute">메인 폰트</span>
                 <select id="fontKey" onchange="setComposeFont('key',this.value)" class="w-full p-2 text-xs bg-white border border-line rounded-xl text-ink focus:outline-none">
@@ -511,6 +514,8 @@ details[open] .chev{transform:rotate(180deg)}
                 <button onclick="setCtaShape('bar')" id="ctaBar" class="text-[10px] font-bold py-2 rounded-xl border border-line text-body hover:border-pin-500">하단 바</button>
               </div>
             </div>
+            </div>
+            </details>
           </div>
         </div>
       </div>
@@ -4648,6 +4653,11 @@ function _ce17Build(basePrompt,fb,v,cons,spec,prodSide,txtSide,composite,hasProd
   var p=basePrompt||'';
   p+='\n\n[Master frame - WIDE] Render ONE large square (1:1) master image as a WIDE SHOT, as if photographed from further away: the main subject occupies only ~25-35% of the frame, fully visible with generous environment and breathing room around it. It will be cropped to 1:1, 4:5 and 16:9 and zoomed afterwards, so keep ALL critical content inside the central 55% safe area and keep the outer band simple (background only).';
   p+='\n\n[Campaign intent] Copy headline: "'+(fb.key||'')+'". Sub: "'+(fb.sub||'')+'". Build a purposeful scene that supports THIS message and its mood/season - NOT a bare product cutout on empty white. Image should carry: '+((v&&v.visualCarries)||'product in a fitting context')+'.'+((cons&&cons.brandVoice)?(' Brand tone: '+cons.brandVoice+'.'):'');
+  /* 3단계 기획안을 기획자의 의도로 반영: 레이아웃 아키타입 + 뱃지 의도 */
+  try{var _LA={'product-shot':'a product-hero shot','app-ui-screen':'an app / device UI screen shown in a believable context','persona-scenario':'a person-in-situation lifestyle scene','data-visual':'a clean data / number-driven visual'};
+    var _pi=[];if(v&&v.layoutType&&_LA[v.layoutType])_pi.push('Compose it as '+_LA[v.layoutType]);
+    if(v&&v.badgeCarries)_pi.push('A promo badge/logo will be overlaid afterward carrying "'+v.badgeCarries+'" - leave a calm uncluttered spot for it and do NOT render that text inside the image');
+    if(_pi.length)p+='\n\n[Planner intent - honor these deliberate plan decisions] '+_pi.join('. ')+'.';}catch(e){}
   try{p+=_seasonBlock()+_premiumBlock()+_framingHint();}catch(e){}
   if(spec){p+='\n\n[Art direction] Scene: '+(spec.background||'')+' Lighting: '+(spec.lighting||'')+' Camera: '+(spec.camera||'')+' Color story: '+(spec.palette||'')+(spec.props?(' Subtle supporting props (max 2-3, restrained): '+spec.props):'');}
   if(composite){
