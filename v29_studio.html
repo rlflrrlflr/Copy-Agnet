@@ -238,6 +238,7 @@ kbd{font-family:ui-monospace,monospace;font-size:10px;background:var(--card);bor
       <div><div class="sec-h"><span class="bar"></span>3단계 · 기획안 (캔바처럼 자유 편집)</div><div class="sub">레이어를 클릭→드래그 이동, 모서리로 크기, 더블클릭으로 글자 수정. 가이드선에 자동 스냅돼요.</div></div>
       <div class="row" style="margin-left:auto;gap:8px">
         <button class="btn sm" onclick="S3.addText()">＋ 텍스트</button>
+        <button class="btn sm" onclick="S3.addBadge()">＋ 뱃지</button>
         <button class="btn sm" onclick="document.getElementById('bgUp').click()">🖼 배경</button>
         <input type="file" id="bgUp" class="hidden" accept="image/*" onchange="S3.bgUpload(event)">
         <button class="btn sm" onclick="S3.genImage()">✨ 이미지 생성</button>
@@ -651,6 +652,9 @@ var Doc={
     lh:o.lh||1.16,runs:[],z:Doc._z(),hidden:false,locked:false};},
   cta(t,o){o=o||{};return{id:uid(),type:"cta",role:"cta",text:t||"자세히 보기",nx:o.nx!=null?o.nx:.07,ny:o.ny||.85,
     size:o.size||26,font:"Pretendard",weight:800,color:"#ffffff",bg:"#e60023",align:"left",shape:"pill",z:Doc._z(),hidden:false,locked:false};},
+  badge(o){o=o||{};return{id:uid(),type:"badge",role:"badge",style:o.style||"disc",text:o.text||"50%",sub:o.sub||"최대",
+    nx:o.nx!=null?o.nx:.64,ny:o.ny!=null?o.ny:.07,size:o.size||175,color:o.color||"#e60023",color2:o.color2||"#ffffff",
+    rot:o.rot||0,z:Doc._z(),hidden:false,locked:false};},
   _z(){var m=0;if(App.doc)App.doc.layers.forEach(function(l){if(l.z>m)m=l.z;});return m+1;},
   byId(id){return App.doc.layers.filter(function(l){return l.id===id;})[0];},
   add(l){App.doc.layers.push(l);App.sel=l.id;},
@@ -705,6 +709,7 @@ var S3={
     if(l.type==="cta"){x.font=S3.fontSpec(l);var tw=x.measureText(l.text||" ").width;var padX=l.size*.85,padY=l.size*.55;
       return {x:l.nx*W,y:l.ny*H,w:tw+padX*2,h:l.size+padY*2};}
     if(l.type==="image"){return {x:l.nx*W,y:l.ny*H,w:l.wx*W,h:(l.wx*W)*(l.ar||1)};}
+    if(l.type==="badge"){var s=l.size,w=s,h=s;if(l.style==="ribbon"){w=s*2.2;h=s*0.82;}else if(l.style==="tag"){w=s*1.7;h=s*0.96;}return {x:l.nx*W,y:l.ny*H,w:w,h:h};}
     var m=S3.measure(x,l,W);
     var bx=l.nx*W; if(l.align==="center")bx=l.nx*W; // nx는 좌상단 기준 유지
     return {x:bx,y:l.ny*H,w:m.w<l.wx*W?l.wx*W:m.w,h:m.h};
@@ -716,6 +721,7 @@ var S3={
       x.fillText(l.text||"",b.x+l.size*.85,b.y+b.h/2+1);return;
     }
     if(l.type==="image"&&S3._img[l.src]){var im=S3._img[l.src];var b=S3.bbox(l);x.drawImage(im,b.x,b.y,b.w,b.h);return;}
+    if(l.type==="badge"){S3.drawBadge(x,l);return;}
     // text (key/sub) — runs 부분색 지원
     var m=S3.measure(x,l,W);x.font=S3.fontSpec(l);x.textBaseline="alphabetic";x.textAlign="left";
     var bx=l.nx*W, boxW=Math.max(m.w,l.wx*W);
@@ -729,6 +735,27 @@ var S3={
       for(var k=0;k<line.length;k++){var col=S3.runColor(l,gi+k)||l.color;x.fillStyle=col;var ch=line[k];x.fillText(ch,cx,yy);cx+=x.measureText(ch).width;}
       ci+=line.length;
     });
+  },
+  drawBadge(x,l){
+    var b=S3.bbox(l),cx=b.x+b.w/2,cy=b.y+b.h/2,R=Math.min(b.w,b.h)/2,tagDx=0;
+    x.save();x.fillStyle=l.color;
+    if(l.style==="burst"){ // 스타버스트(폭발형)
+      var P=12;x.beginPath();for(var i=0;i<P*2;i++){var a=Math.PI*i/P-Math.PI/2,rr=(i%2?R*0.72:R);var px=cx+Math.cos(a)*rr,py=cy+Math.sin(a)*rr;i?x.lineTo(px,py):x.moveTo(px,py);}x.closePath();x.fill();
+    } else if(l.style==="ribbon"){ // 리본 배너
+      var n=b.h*0.3;x.beginPath();x.moveTo(b.x,b.y);x.lineTo(b.x+b.w,b.y);x.lineTo(b.x+b.w-n,cy);x.lineTo(b.x+b.w,b.y+b.h);x.lineTo(b.x,b.y+b.h);x.lineTo(b.x+n,cy);x.closePath();x.fill();
+    } else if(l.style==="tag"){ // 가격표
+      S3.roundRect(x,b.x,b.y,b.w,b.h,b.h*0.16);x.fill();
+      x.fillStyle="rgba(255,255,255,.85)";x.beginPath();x.arc(b.x+b.h*0.34,cy,b.h*0.1,0,7);x.fill();tagDx=b.h*0.28;
+    } else { // 원형 할인율
+      x.beginPath();x.arc(cx,cy,R,0,7);x.fill();
+      x.strokeStyle="rgba(255,255,255,.55)";x.lineWidth=Math.max(2,R*0.05);x.beginPath();x.arc(cx,cy,R*0.84,0,7);x.stroke();
+    }
+    // 텍스트(서브 + 메인 숫자)
+    x.fillStyle=l.color2||"#fff";x.textAlign="center";
+    var scale=(l.style==="ribbon")?b.h/2:(l.style==="tag")?b.h/2:R;
+    if(l.sub){x.textBaseline="alphabetic";x.font="800 "+(scale*0.4)+"px 'Pretendard',sans-serif";x.fillText(l.sub,cx+tagDx,cy-scale*0.2);}
+    x.textBaseline="middle";x.font="900 "+(scale*0.92)+"px 'Black Han Sans','Pretendard',sans-serif";x.fillText(l.text||"",cx+tagDx,cy+(l.sub?scale*0.28:0));
+    x.restore();
   },
   runColor(l,i){if(!l.runs)return null;for(var r=0;r<l.runs.length;r++){if(i>=l.runs[r].s&&i<l.runs[r].e)return l.runs[r].c;}return null;},
   roundRect(x,X,Y,w,h,r){r=Math.min(r,h/2,w/2);x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+w,Y,X+w,Y+h,r);x.arcTo(X+w,Y+h,X,Y+h,r);x.arcTo(X,Y+h,X,Y,r);x.arcTo(X,Y,X+w,Y,r);x.closePath();},
@@ -809,7 +836,7 @@ var S3={
     S3.draw();S3.overlay();
   },
   onUp(e){ if(S3.drag){S3.drag=null;S3.renderAll();} },
-  onDbl(e){var p=S3.canvasPoint(e);var id=S3.hit(p);if(!id)return;App.sel=id;var l=Doc.byId(id);if(l.type==="image")return;S3.inlineEdit(l);},
+  onDbl(e){var p=S3.canvasPoint(e);var id=S3.hit(p);if(!id)return;App.sel=id;var l=Doc.byId(id);if(l.type==="image"||l.type==="badge")return;S3.inlineEdit(l);},
   inlineEdit(l){
     var cv=$("editCanvas");var sc=cv.clientWidth/cv.width;var b=S3.bbox(l);var host=$("canvasHost");
     var ta=el("textarea","inline-ed");var hr=cv.getBoundingClientRect(),pr=host.getBoundingClientRect();
@@ -831,11 +858,19 @@ var S3={
     $("propHead").innerHTML="🎛 "+l.role.toUpperCase()+" 속성";
     // T1 상시: 텍스트/색/크기
     if(l.type!=="image"){
-      var tw=el("div","col");tw.appendChild(el("label","mini-lab","텍스트"));
-      var t=el("textarea","in");t.rows=2;t.value=l.text;t.oninput=function(){l.text=t.value;S3.draw();S3.layers();};tw.appendChild(t);body.appendChild(tw);
+      var tw=el("div","col");tw.appendChild(el("label","mini-lab",l.type==="badge"?"숫자/문구 (예: 76%)":"텍스트"));
+      var t=el("textarea","in");t.rows=l.type==="badge"?1:2;t.value=l.text;t.oninput=function(){l.text=t.value;S3.draw();S3.layers();};tw.appendChild(t);body.appendChild(tw);
     }
-    // 색 스와치 (T1)
-    var cw=el("div","col");cw.appendChild(el("label","mini-lab","색"));
+    if(l.type==="badge"){
+      var sw2=el("div","col");sw2.appendChild(el("label","mini-lab","윗줄 (예: 최대 · 할인 · 쿠폰)"));
+      var si=el("input","in");si.value=l.sub||"";si.oninput=function(){l.sub=si.value;S3.draw();};sw2.appendChild(si);body.appendChild(sw2);
+      var st=el("div","col");st.appendChild(el("label","mini-lab","뱃지 모양"));var sg2=el("div","seg");
+      [["disc","● 원형"],["burst","✸ 폭발"],["ribbon","▰ 리본"],["tag","🏷 가격표"]].forEach(function(s){var bb=el("button",l.style===s[0]?"on":"",s[1]);bb.style.fontSize="10px";bb.onclick=function(){l.style=s[0];[].forEach.call(sg2.children,function(x){x.classList.toggle("on",x===bb);});S3.renderAll();};sg2.appendChild(bb);});
+      st.appendChild(sg2);body.appendChild(st);
+      var tc=el("div","col");tc.appendChild(el("label","mini-lab","글자 색"));var tci=el("input");tci.type="color";tci.value=(l.color2||"#ffffff").length===7?l.color2:"#ffffff";tci.oninput=function(){l.color2=tci.value;S3.draw();};tc.appendChild(tci);body.appendChild(tc);
+    }
+    // 색 스와치 (T1) — 뱃지는 '배경색'
+    var cw=el("div","col");cw.appendChild(el("label","mini-lab",l.type==="badge"?"뱃지 색":"색"));
     var sw=el("div","tool");SWATCHES.forEach(function(col){var b=el("button","swatch"+(l.color===col?" on":""));b.style.background=col;b.onclick=function(){l.color=col;S3.renderAll();};sw.appendChild(b);});
     var cp=el("input");cp.type="color";cp.value=l.color.length===7?l.color:"#ffffff";cp.oninput=function(){l.color=cp.value;S3.renderAll();};sw.appendChild(cp);
     cw.appendChild(sw);body.appendChild(cw);
@@ -848,7 +883,7 @@ var S3={
     // T2 접기: 글꼴/정렬/CTA모양/부분색
     var det=el("details","fold");det.appendChild(el("summary",null,"글꼴 · 정렬 · 고급 <span class='ar'>▾</span>"));
     var fb=el("div","fold-b");
-    if(l.type!=="image"){
+    if(l.type!=="image"&&l.type!=="badge"){
       var frow=el("div","col");frow.appendChild(el("label","mini-lab","글꼴"));var fs=el("select","in");FONTS.forEach(function(f){var o=el("option",null,f);o.value=f;if(f===l.font)o.selected=true;fs.appendChild(o);});fs.onchange=function(){l.font=fs.value;S3.renderAll();};frow.appendChild(fs);fb.appendChild(frow);
       var arow=el("div","col");arow.appendChild(el("label","mini-lab","정렬"));var seg=el("div","seg");[["left","왼"],["center","가운데"],["right","오른"]].forEach(function(a){var bb=el("button",l.align===a[0]?"on":"",a[1]);bb.onclick=function(){l.align=a[0];[].forEach.call(seg.children,function(x){x.classList.toggle("on",x===bb);});S3.renderAll();};seg.appendChild(bb);});arow.appendChild(seg);fb.appendChild(arow);
     }
@@ -887,6 +922,7 @@ var S3={
 
   /* ---------- 툴바 액션 ---------- */
   addText(){Doc.add(Doc.text("sub","새 텍스트",{ny:.4,size:40}));S3.renderAll();},
+  addBadge(){Doc.add(Doc.badge({}));S3.renderAll();},
   ratio(r){App.doc.ratio=r;[].forEach.call($("ratioSeg").children,function(b){b.classList.toggle("on",b.dataset.r===r);});S3.renderAll();},
   bgUpload(e){var f=e.target.files[0];if(!f)return;var rd=new FileReader();rd.onload=function(){App.doc.bgImage=rd.result;delete S3._img[rd.result];S3.draw();};rd.readAsDataURL(f);},
   async genImage(){toast(App.live?"이미지 생성 중…":"시뮬 배경 생성");var url=await Engine.gen("image",{layoutType:App.doc.intent.layoutType,seedHue:App.doc.bgHue+30});App.doc.bgHue=(App.doc.bgHue+30)%360;App.doc.bgImage=url;delete S3._img[url];S3.draw();}
@@ -907,7 +943,7 @@ var S4={
       ["메인 의도",(Doc.byId(App.sel)||d.layers[0]).text||d.intent.copyCarries],
       ["이미지가 보여줄 것",d.intent.visualCarries],
       ["무드",d.intent.mood],
-      ["뱃지",d.intent.badgeText||"(없음)"],
+      ["뱃지",(function(){var bs=d.layers.filter(function(L){return L.type==="badge";});return bs.length?bs.map(function(L){return (L.sub?L.sub+" ":"")+L.text+"("+L.style+")";}).join(", "):(d.intent.badgeText||"(없음)");})()],
       ["수동 조정","위치·색·글꼴 등 "+d.layers.length+"개 레이어 배치 그대로 존중"]
     ];
     rows.forEach(function(r){var row=el("div","intent-row","<b>"+esc(r[0])+"</b><span>"+esc(r[1]||"-")+"</span>");box.appendChild(row);});
@@ -946,7 +982,9 @@ var S4={
       var sg=x.createLinearGradient(0,H*.4,0,H);sg.addColorStop(0,"rgba(0,0,0,0)");sg.addColorStop(1,"rgba(0,0,0,.5)");x.fillStyle=sg;x.fillRect(0,0,W,H);
       d.layers.slice().sort(function(a,b){return a.z-b.z;}).forEach(function(l){if(l.hidden)return;if(l.rot){var bb=S3.bbox(l),cx=bb.x+bb.w/2,cy=bb.y+bb.h/2;x.save();x.translate(cx,cy);x.rotate(l.rot*Math.PI/180);x.translate(-cx,-cy);S3.drawLayer(x,l,W,H);x.restore();}else S3.drawLayer(x,l,W,H);});
       // 뱃지 의도가 있으면 우상단에 칩으로 얹음(완성 단계 보강)
-      if(d.intent.badgeText){x.font="800 "+(W*.035)+"px 'Pretendard',sans-serif";var bw=x.measureText(d.intent.badgeText).width+W*.05;x.fillStyle="#e60023";S3.roundRect(x,W-bw-W*.05,H*.05,bw,W*.07,W*.018);x.fill();x.fillStyle="#fff";x.textBaseline="middle";x.textAlign="left";x.fillText(d.intent.badgeText,W-bw-W*.05+W*.025,H*.05+W*.035);}
+      // 뱃지 레이어가 없을 때만 레거시 칩(이제 뱃지는 레이어로 합성됨)
+      var hasBadgeLayer=d.layers.some(function(L){return L.type==="badge";});
+      if(d.intent.badgeText&&!hasBadgeLayer){x.font="800 "+(W*.035)+"px 'Pretendard',sans-serif";var bw=x.measureText(d.intent.badgeText).width+W*.05;x.fillStyle="#e60023";S3.roundRect(x,W-bw-W*.05,H*.05,bw,W*.07,W*.018);x.fill();x.fillStyle="#fff";x.textBaseline="middle";x.textAlign="left";x.fillText(d.intent.badgeText,W-bw-W*.05+W*.025,H*.05+W*.035);}
     }
     if(S3._img[bgUrl])paint(S3._img[bgUrl]);
     else{var im=new Image();im.onload=function(){S3._img[bgUrl]=im;paint(im);};im.onerror=function(){paint(null);};im.src=bgUrl;}
