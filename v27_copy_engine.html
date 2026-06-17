@@ -548,81 +548,72 @@ details[open] .chev{transform:rotate(180deg)}
         <span class="paper p1"></span><span class="paper p2"></span><span class="paper p3"></span><span class="paper p4"></span><span class="paper p5"></span>
         <span class="pen">✏️</span>
       </div>
-      <svg class="cat-char" id="catChar" viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="고양이" style="height:auto;overflow:visible">
+      <svg class="cat-char" id="catChar" viewBox="0 0 300 290" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="고양이" style="height:auto;overflow:visible">
         <defs>
-          <radialGradient id="catBelly" cx="50%" cy="36%" r="66%"><stop offset="0%" stop-color="#d6dbe1"/><stop offset="100%" stop-color="#9aa0a8"/></radialGradient>
+          <style>#catChar .ol{stroke:#4a4039;stroke-width:4.5;stroke-linejoin:round;stroke-linecap:round}</style>
         </defs>
         <!-- tail -->
-        <path d="M85 120 C113 117 119 83 96 73 C85 68 76 79 83 90" fill="none" stroke="#9aa0a8" stroke-width="11" stroke-linecap="round"/>
-        <path d="M99 79 C104 83 103 91 98 95 M95 87 C99 89 98 94 94 96" fill="none" stroke="#6f757e" stroke-width="2.6" stroke-linecap="round" opacity=".55"/>
-        <!-- body -->
-        <path d="M60 62 C38 62 28 88 30 111 C31 128 45 137 60 137 C75 137 89 128 90 111 C92 88 82 62 60 62 Z" fill="#9aa0a8"/>
-        <ellipse cx="60" cy="110" rx="22" ry="25" fill="url(#catBelly)"/>
-        <!-- resting front paws (default, no game) -->
+        <path class="ol" d="M70 252 C26 256 8 206 30 180 C46 161 76 172 72 200 C70 214 60 222 50 218" fill="#bdb6b0"/>
+        <path d="M28 196 q10 4 13 12 M22 178 q12 2 16 10" stroke="#9d958d" stroke-width="5" stroke-linecap="round" fill="none"/>
+        <!-- ears (behind head) -->
+        <path class="ol" d="M92 44 C66 14 40 24 50 56 C56 74 78 72 100 58 Z" fill="#bdb6b0"/>
+        <path class="ol" d="M208 44 C234 14 260 24 250 56 C244 74 222 72 200 58 Z" fill="#bdb6b0"/>
+        <path d="M88 46 C72 30 58 36 64 54 C68 64 80 62 92 54 Z" fill="#f1c3c4" stroke="none"/>
+        <path d="M212 46 C228 30 242 36 236 54 C232 64 220 62 208 54 Z" fill="#f1c3c4" stroke="none"/>
+        <!-- head + body single chubby silhouette -->
+        <path class="ol" d="M150 20 C94 20 56 54 56 104 C56 130 50 136 45 154 C26 196 36 284 150 284 C264 284 274 196 255 154 C250 136 244 130 244 104 C244 54 206 20 150 20 Z" fill="#f8f4ee"/>
+        <!-- grey cap with scalloped lower edge -->
+        <path class="ol" d="M60 100 C60 54 98 22 150 22 C202 22 240 54 240 100 C229 92 222 106 209 99 C198 93 191 106 178 100 C168 95 160 106 150 100 C140 106 132 95 122 100 C109 106 102 93 91 99 C78 106 71 92 60 100 Z" fill="#bdb6b0"/>
+        <path d="M128 40 q3 14 0 26 M150 36 q3 15 0 28 M172 40 q-3 14 0 26" stroke="#9d958d" stroke-width="5.5" stroke-linecap="round" fill="none"/>
+        <!-- cheeks -->
+        <ellipse cx="98" cy="156" rx="21" ry="13" fill="#f1c3c4" stroke="none"/>
+        <ellipse cx="202" cy="156" rx="21" ry="13" fill="#f1c3c4" stroke="none"/>
+        <!-- resting paws + belly scallop (default) -->
         <g id="catArmRest">
-          <ellipse cx="47" cy="128" rx="11" ry="9" fill="#aeb4bb"/>
-          <ellipse cx="73" cy="128" rx="11" ry="9" fill="#aeb4bb"/>
-          <path d="M43 127v-4M47 128v-4M51 127v-4" stroke="#7c828b" stroke-width="1.4" stroke-linecap="round"/>
-          <path d="M69 127v-4M73 128v-4M77 127v-4" stroke="#7c828b" stroke-width="1.4" stroke-linecap="round"/>
+          <path d="M150 252 C144 224 110 222 98 244 M150 252 C156 224 190 222 202 244" stroke="#4a4039" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+          <ellipse class="ol" cx="108" cy="266" rx="26" ry="19" fill="#f8f4ee"/>
+          <ellipse class="ol" cx="192" cy="266" rx="26" ry="19" fill="#f8f4ee"/>
+          <g fill="#e6a7a9" stroke="none"><ellipse cx="108" cy="270" rx="8" ry="6"/><circle cx="98" cy="259" r="3.4"/><circle cx="108" cy="256" r="3.6"/><circle cx="118" cy="259" r="3.4"/><ellipse cx="192" cy="270" rx="8" ry="6"/><circle cx="182" cy="259" r="3.4"/><circle cx="192" cy="256" r="3.6"/><circle cx="202" cy="259" r="3.4"/></g>
         </g>
-        <!-- ears -->
-        <path d="M34 32 L39 7 L59 29 Z" fill="#9aa0a8"/>
-        <path d="M86 32 L81 7 L61 29 Z" fill="#9aa0a8"/>
-        <path d="M40 27 L43 14 L53 26 Z" fill="#f7c2cf"/>
-        <path d="M80 27 L77 14 L67 26 Z" fill="#f7c2cf"/>
-        <!-- head -->
-        <circle cx="60" cy="47" r="33" fill="#9aa0a8"/>
-        <!-- tabby M + side stripes -->
-        <path d="M48 34 L53 22 L60 30 L67 22 L72 34" fill="none" stroke="#6f757e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity=".6"/>
-        <path d="M28 44 q7 1 10 7M92 44 q-7 1 -10 7M27 54 q7 0 10 4M93 54 q-7 0 -10 4" fill="none" stroke="#6f757e" stroke-width="2.4" stroke-linecap="round" opacity=".5"/>
         <!-- ===== FACE: neutral ===== -->
         <g class="face-neutral">
-          <ellipse cx="47" cy="50" rx="5.5" ry="7" fill="#353a42"/>
-          <ellipse cx="73" cy="50" rx="5.5" ry="7" fill="#353a42"/>
-          <circle cx="49" cy="47" r="2" fill="#fff"/><circle cx="75" cy="47" r="2" fill="#fff"/>
-          <ellipse cx="40" cy="59" rx="5" ry="3" fill="#f6b3c2" opacity=".7"/>
-          <ellipse cx="80" cy="59" rx="5" ry="3" fill="#f6b3c2" opacity=".7"/>
-          <path d="M56 58 L64 58 L60 63 Z" fill="#ea7d96"/>
-          <path d="M60 63 q-5 5 -10 2M60 63 q5 5 10 2" fill="none" stroke="#6f757e" stroke-width="2" stroke-linecap="round"/>
-          <path d="M22 53 l15 1M22 59 l15 -2M98 53 l-15 1M98 59 l-15 -2" fill="none" stroke="#bfc4cb" stroke-width="1.3" stroke-linecap="round"/>
+          <ellipse cx="119" cy="138" rx="11" ry="14" fill="#423b35" stroke="none"/>
+          <ellipse cx="181" cy="138" rx="11" ry="14" fill="#423b35" stroke="none"/>
+          <circle cx="123" cy="133" r="3.4" fill="#fff" stroke="none"/><circle cx="185" cy="133" r="3.4" fill="#fff" stroke="none"/>
+          <path d="M138 151 q6 8 12 0 q6 8 12 0" stroke="#423b35" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
         </g>
         <!-- ===== FACE: sad (이김=시무룩) ===== -->
         <g class="face-sad" style="display:none">
-          <path d="M41 46 l10 4M79 46 l-10 4" fill="none" stroke="#6f757e" stroke-width="2.4" stroke-linecap="round"/>
-          <path d="M42 53 q5 5 11 1M67 53 q5 5 11 1" fill="none" stroke="#353a42" stroke-width="3" stroke-linecap="round"/>
-          <path d="M56 58 L64 58 L60 63 Z" fill="#ea7d96"/>
-          <path d="M53 67 Q60 61 67 67" fill="none" stroke="#6f757e" stroke-width="2.2" stroke-linecap="round"/>
-          <path d="M40 56 q-3 5 0 8 q3 -3 0 -8Z" fill="#7ec8f0"/>
+          <path d="M106 126 l24 7 M194 126 l-24 7" stroke="#423b35" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+          <path d="M108 140 q11 9 22 0 M170 140 q11 9 22 0" stroke="#423b35" stroke-width="5.5" stroke-linecap="round" fill="none"/>
+          <path d="M140 158 q10 -8 20 0" stroke="#423b35" stroke-width="3.6" stroke-linecap="round" fill="none"/>
+          <path d="M103 146 q-6 10 0 17 q6 -7 0 -17Z" fill="#8fd0f2" stroke="#5fb8e6" stroke-width="1.5"/>
         </g>
         <!-- ===== FACE: happy (짐=신남) ===== -->
         <g class="face-happy" style="display:none">
-          <path d="M42 53 q5.5 -7 11 0M67 53 q5.5 -7 11 0" fill="none" stroke="#353a42" stroke-width="3" stroke-linecap="round"/>
-          <ellipse cx="38" cy="59" rx="6" ry="3.4" fill="#f29ab0" opacity=".85"/>
-          <ellipse cx="82" cy="59" rx="6" ry="3.4" fill="#f29ab0" opacity=".85"/>
-          <path d="M56 58 L64 58 L60 63 Z" fill="#ea7d96"/>
-          <path d="M49 62 Q60 78 71 62 Q60 67 49 62 Z" fill="#5b3a3f"/>
-          <ellipse cx="60" cy="69" rx="5" ry="3.4" fill="#f4889c"/>
-          <path d="M30 40 l2 4 l4 1 l-4 1 l-2 4 l-2 -4 l-4 -1 l4 -1 Z" fill="#ffd24a"/>
+          <path d="M108 142 q11 -9 22 0 M170 142 q11 -9 22 0" stroke="#423b35" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+          <path d="M134 150 Q150 172 166 150 Q150 158 134 150 Z" fill="#b9636a" stroke="none"/>
+          <ellipse cx="150" cy="160" rx="7" ry="5" fill="#f0939b" stroke="none"/>
+          <path d="M214 116 l3 7 l7 3 l-7 3 l-3 7 l-3 -7 l-7 -3 l7 -3 Z" fill="#ffd24a" stroke="none"/>
         </g>
-        <!-- ===== raised arm + RPS paw (on top; shown only during the game) ===== -->
+        <!-- ===== raised RPS paw (on top) ===== -->
         <g id="catPaw">
-          <path d="M77 113 C86 96 96 86 101 78" fill="none" stroke="#9aa0a8" stroke-width="13" stroke-linecap="round"/>
+          <path d="M196 250 C214 214 232 186 246 168" stroke="#4a4039" stroke-width="42" stroke-linecap="round" fill="none"/>
+          <path d="M196 250 C214 214 232 186 246 168" stroke="#f8f4ee" stroke-width="33" stroke-linecap="round" fill="none"/>
           <g class="paw-rock">
-            <circle cx="104" cy="68" r="13" fill="#aeb4bb"/>
-            <path d="M97 66q7 -6 14 0M97 70q7 -5 14 0" fill="none" stroke="#7c828b" stroke-width="1.6" stroke-linecap="round"/>
-            <ellipse cx="104" cy="74" rx="4.5" ry="3.2" fill="#f2a8ba"/>
+            <ellipse class="ol" cx="250" cy="150" rx="30" ry="27" fill="#f8f4ee"/>
+            <g stroke="none" fill="#e6a7a9"><ellipse cx="250" cy="158" rx="9" ry="6.5"/><circle cx="238" cy="144" r="4"/><circle cx="250" cy="140" r="4.3"/><circle cx="262" cy="144" r="4"/></g>
           </g>
           <g class="paw-paper">
-            <ellipse cx="104" cy="72" rx="13" ry="11" fill="#aeb4bb"/>
-            <circle cx="93" cy="60" r="4.2" fill="#aeb4bb"/><circle cx="100" cy="56" r="4.6" fill="#aeb4bb"/><circle cx="108" cy="56" r="4.6" fill="#aeb4bb"/><circle cx="115" cy="60" r="4.2" fill="#aeb4bb"/>
-            <ellipse cx="104" cy="74" rx="5" ry="3.6" fill="#f2a8ba"/>
-            <circle cx="93" cy="60" r="1.7" fill="#f2a8ba"/><circle cx="100" cy="56" r="1.8" fill="#f2a8ba"/><circle cx="108" cy="56" r="1.8" fill="#f2a8ba"/><circle cx="115" cy="60" r="1.7" fill="#f2a8ba"/>
+            <ellipse class="ol" cx="250" cy="156" rx="30" ry="25" fill="#f8f4ee"/>
+            <ellipse class="ol" cx="232" cy="130" rx="10" ry="13" fill="#f8f4ee"/><ellipse class="ol" cx="250" cy="124" rx="10" ry="14" fill="#f8f4ee"/><ellipse class="ol" cx="268" cy="130" rx="10" ry="13" fill="#f8f4ee"/>
+            <g stroke="none" fill="#e6a7a9"><ellipse cx="250" cy="160" rx="10" ry="7"/><ellipse cx="232" cy="130" rx="4" ry="5"/><ellipse cx="250" cy="124" rx="4" ry="5.5"/><ellipse cx="268" cy="130" rx="4" ry="5"/></g>
           </g>
           <g class="paw-scissors">
-            <circle cx="105" cy="74" r="11" fill="#aeb4bb"/>
-            <rect x="91" y="48" width="8" height="22" rx="4" transform="rotate(-18 95 59)" fill="#aeb4bb"/>
-            <rect x="107" y="48" width="8" height="22" rx="4" transform="rotate(14 111 59)" fill="#aeb4bb"/>
-            <ellipse cx="105" cy="76" rx="4.4" ry="3.1" fill="#f2a8ba"/>
+            <ellipse class="ol" cx="252" cy="158" rx="27" ry="24" fill="#f8f4ee"/>
+            <rect class="ol" x="226" y="108" width="20" height="52" rx="10" transform="rotate(-20 236 134)" fill="#f8f4ee"/>
+            <rect class="ol" x="258" y="108" width="20" height="52" rx="10" transform="rotate(16 268 134)" fill="#f8f4ee"/>
+            <ellipse cx="252" cy="162" rx="9" ry="6.5" stroke="none" fill="#e6a7a9"/>
           </g>
         </g>
       </svg>
