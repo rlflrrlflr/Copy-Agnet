@@ -107,6 +107,18 @@ main{padding:22px 0 60px}
 .copy-card .s{font-size:12.5px;color:var(--body);min-height:34px}
 .copy-card .c{display:inline-block;margin-top:10px;font-size:11px;font-weight:800;color:#fff;background:var(--pin);padding:6px 12px;border-radius:8px}
 .copy-card .why{font-size:10.5px;color:var(--mute);margin-top:10px;border-top:1px dashed var(--line);padding-top:8px}
+.copy-card .rank{position:absolute;top:-10px;right:14px;font-size:9.5px;font-weight:800;padding:3px 8px;border-radius:7px;background:#0a7d4d;color:#fff}
+.copy-card .rank.alt{background:var(--mute)}
+.copy-card.alt{padding:14px;background:#fbfbfc;border-style:dashed}
+.copy-card.alt .k{font-size:15px}
+.copy-card.alt .s{font-size:11.5px;min-height:24px}
+.copy-card .k[contenteditable],.copy-card .s[contenteditable],.copy-card .c[contenteditable]{outline:none;border-radius:6px;transition:box-shadow .12s,background .12s;cursor:text}
+.copy-card .k[contenteditable]:hover,.copy-card .s[contenteditable]:hover{background:var(--pin-50)}
+.copy-card .k[contenteditable]:focus,.copy-card .s[contenteditable]:focus{background:#fff;box-shadow:0 0 0 2px var(--pin)}
+.copy-card .c[contenteditable]:focus{box-shadow:0 0 0 2px #fff,0 0 0 4px var(--pin)}
+.copy-card .pick-btn{display:block;width:100%;margin-top:12px;padding:9px;font-size:12px;font-weight:800;color:var(--pin);background:var(--pin-50);border:1px solid var(--pin-100);border-radius:9px;cursor:pointer}
+.copy-card .pick-btn:hover{background:var(--pin);color:#fff}
+.copy-card .edit-hint{font-size:9.5px;color:var(--mute);margin-top:6px}
 /* ---- stage3 editor ---- */
 .editor{display:grid;grid-template-columns:200px 1fr 290px;gap:14px;align-items:start}
 @media(max-width:1100px){.editor{grid-template-columns:1fr}}
@@ -276,12 +288,12 @@ kbd{font-family:ui-monospace,monospace;font-size:10px;background:var(--card);bor
       </details>
     </div>
     <div class="row" style="gap:8px"><button class="btn lg" style="flex:0 0 auto" onclick="S1.sample()">🎲 예시로 채우기</button>
-    <button class="btn p lg grow" onclick="S1.analyze()"><span id="s1btn">분석 시작 → 페인·톤·카피 3안</span></button></div>
+    <button class="btn p lg grow" onclick="S1.analyze()"><span id="s1btn">분석 시작 → 페인·톤·카피 5안</span></button></div>
   </section>
 
   <!-- ===================== STAGE 2 ===================== -->
   <section id="stage2" class="card pad col hidden" style="gap:16px">
-    <div class="row"><div><div class="sec-h"><span class="bar"></span>2단계 · 카피 3안</div><div class="sub" id="s2sub">선택된 페인·톤 위에서 3개 관점으로 만들었어요. 하나를 고르면 3단계 기획으로 넘어갑니다.</div></div>
+    <div class="row"><div><div class="sec-h"><span class="bar"></span>2단계 · 카피 5안 (TOP 3 + 보조 2)</div><div class="sub" id="s2sub">성과 순으로 5안 — 위 3개가 TOP3, 아래 2개는 보조 변주. <b>카피는 직접 수정 가능</b>(클릭해 고치면 3단계·이미지에 그대로 반영). ‘이 안으로 기획 →’을 누르면 넘어갑니다.</div></div>
       <button class="btn sm" style="margin-left:auto" onclick="S2.regen()">🔄 다시 생성</button></div>
     <details class="fold"><summary>분석 근거 — 페인포인트 · 톤 (펼치기) <span class="ar">▾</span></summary><div class="fold-b" id="s2analysis"></div></details>
     <div id="copyGrid" class="copy-grid"></div>
@@ -550,8 +562,8 @@ var Engine={
     // copies
     var lim=CH_LIMIT[p.channel||""]||CH_LIMIT[""];
     return {
-      sys:"너는 한국 퍼포먼스 DA 배너 카피라이터다. 메인(KEY)·서브(SUB)·CTA 3요소로 된 광고 카피 3안을 서로 다른 톤·각도로 만든다. 메인은 "+lim.k+"자, 서브 "+lim.s+"자, CTA "+lim.c+"자 내외. 클리셰 금지, 구체 수치/직격 화법 선호. 한국어.",
-      user:"타겟:\n"+(p.target||"")+"\n\n오퍼:\n"+(p.offer||"")+"\n\n페인포인트:\n"+(p.pains||[]).join(" / ")+"\n\n톤 후보: "+(p.tones||[]).join(", ")+"\n"+(p.seedKey?("\n기존 메인(안 A로 고정·발전): "+p.seedKey):"")+Ctx.block()+"\n\n3안을 JSON으로. 각 안: key, sub, cta, tone, why(왜 이 안인지 한 줄)."
+      sys:"너는 한국 퍼포먼스 DA 배너 카피라이터다. 메인(KEY)·서브(SUB)·CTA 3요소로 된 광고 카피 5안을 서로 다른 톤·각도로 만든다. 메인은 "+lim.k+"자, 서브 "+lim.s+"자, CTA "+lim.c+"자 내외. 클리셰 금지, 구체 수치/직격 화법 선호. 한국어.\n중요: 메인 또는 서브에 실제 '제품·카테고리 명사'(오퍼에서 추출, 예: 트렁크 매트 / 직소싱 / 구독)를 최소 1회 분명히 넣어라. 추상적 베네핏·감정어만 쓰지 말 것 — 무엇을 파는지 글에서 바로 드러나야 한다.",
+      user:"타겟:\n"+(p.target||"")+"\n\n오퍼:\n"+(p.offer||"")+"\n\n페인포인트:\n"+(p.pains||[]).join(" / ")+"\n\n톤 후보: "+(p.tones||[]).join(", ")+"\n"+(p.seedKey?("\n기존 메인(안 A로 고정·발전): "+p.seedKey):"")+Ctx.block()+"\n\n5안을 '광고 성과가 좋을 순서'로 정렬해(가장 강한 안이 1번, 위 3개가 TOP3) JSON으로. 각 안: key, sub, cta, tone, why(왜 이 안인지 한 줄)."
     };
   },
   _schema(kind){
@@ -563,8 +575,8 @@ var Engine={
   },
   _coerce(kind,obj){
     if(kind==="analyze") return {pains:(obj.pains||[]).slice(0,3),tones:(obj.tones||[]).slice(0,3)};
-    var arr=(obj.copies||obj.list||[]).slice(0,3);
-    return arr.map(function(b,i){b.id=["A","B","C"][i];return b;});
+    var arr=(obj.copies||obj.list||[]).slice(0,5);
+    return arr.map(function(b,i){b.id=["A","B","C","D","E"][i]||("X"+i);return b;});
   },
 
   /* ---------- Claude (텍스트) — 브라우저 직접 호출 ---------- */
@@ -654,12 +666,15 @@ var Engine={
     if(kind==="copies"){
       var lim=CH_LIMIT[p.channel||""]||CH_LIMIT[""];
       var seed=p.seedKey;
+      var noun=prodNoun(p.offer)||"이 제품";
       var base=[
-        {key:seed||"열심히 팔았는데 왜 마진이 없지?", sub:"사입·수수료 떼면 적자. 직소싱이면 마진 30%.", cta:"직소싱 시작하기", tone:p.tones[0]||"직격추궁형", why:"페인 직격 — 가장 아픈 질문으로 멈춰 세움"},
-        {key:"남는 게 없는 장사, 이제 그만", sub:"공장과 바로 거래해 수수료 0. PB도 소량부터.", cta:"무료로 견적받기", tone:p.tones[1]||"자조넋두리형", why:"공감 후 해법 — 자조 톤으로 거리감↓"},
-        {key:"마진 5% → 35%, 직소싱의 차이", sub:"중간 유통 없이 공장가 그대로. 오늘 시작 가능.", cta:"지금 비교하기", tone:p.tones[2]||"숫자증거형", why:"숫자 증거 — 전환 단계에 강함"}
+        {key:seed||(noun+", 왜 마진이 안 남죠?"), sub:"사입·수수료 떼면 적자. "+noun+"로 마진 30%.", cta:"지금 시작하기", tone:p.tones[0]||"직격추궁형", why:"페인 직격 + 제품 명사를 메인에 노출"},
+        {key:noun+"으로 남는 장사 시작", sub:"공장과 바로 거래해 수수료 0. 소량부터 가능.", cta:"무료로 견적받기", tone:p.tones[1]||"해법제시형", why:"해법 — 제품명+핵심 베네핏"},
+        {key:"마진 5% → 35%, "+noun+"의 차이", sub:"중간 유통 없이 공장가 그대로. 오늘 시작.", cta:"지금 비교하기", tone:p.tones[2]||"숫자증거형", why:"숫자 증거 — 전환 단계에 강함"},
+        {key:noun+", 이제 제대로 고르세요", sub:"후기 4.8점, 재구매율 높은 선택.", cta:"후기 보러가기", tone:"신뢰증거형", why:"신뢰·후기 보강(보조 안)"},
+        {key:"아직도 "+noun+" 없이 버티세요?", sub:"바꾼 사람만 아는 차이, 지금 확인.", cta:"차이 확인하기", tone:"FOMO형", why:"FOMO — 보조 변주"}
       ];
-      return base.map(function(b,i){ b.id=["A","B","C"][i]; b.key=cut(b.key,lim.k+6); return b; });
+      return base.map(function(b,i){ b.id=["A","B","C","D","E"][i]; b.key=cut(b.key,lim.k+8); return b; });
     }
     if(kind==="image"){ return Engine._scene(p.layoutType,p.seedHue); }
     if(kind==="final"){ return Engine._scene(p.layoutType,(p.seedHue||0)+p.idx*40); }
@@ -681,6 +696,8 @@ var Engine={
   }
 };
 function kw(s){s=String(s||"").trim();var m=s.split(/[\s,·.]/).filter(Boolean);return m.slice(0,3).join(" ")||s.slice(0,12);}
+/* 오퍼에서 '제품·카테고리 명사'를 추정(시뮬용) — 구분자 앞 선두구의 끝 1~2단어 */
+function prodNoun(offer){var s=String(offer||"").split(/[—–\-:|·,\n(]/)[0].trim();var w=s.split(/\s+/).filter(Boolean);if(!w.length)return "이 제품";return w.slice(-2).join(" ");}
 function cut(s,n){s=String(s||"");return s.length>n?s.slice(0,n):s;}
 
 /* ============================================================
@@ -760,7 +777,7 @@ var S1={
     $("s1btn").innerHTML="분석 중…";
     App.analysis=await Engine.gen("analyze",b);
     await S2.regen(true);
-    $("s1btn").textContent="분석 시작 → 페인·톤·카피 3안";
+    $("s1btn").textContent="분석 시작 → 페인·톤·카피 5안";
     UI.go(2);
   }
 };
@@ -774,7 +791,7 @@ var S2={
     App.copies=await Engine.gen("copies",{channel:b.channel,seedKey:b.seedKey,tones:a.tones,pains:a.pains,target:b.target,offer:b.offer,funnel:b.funnel});
     App.copies.forEach(function(c){Log.push("copy","pair",c.key,c.sub);});
     S2.render();
-    if(!silent)toast("카피 3안 새로 생성");
+    if(!silent)toast("카피 5안 새로 생성");
   },
   render(){
     var an=$("s2analysis");an.innerHTML="";
@@ -785,13 +802,28 @@ var S2={
     pc.appendChild(el("div","tiny",(App.analysis.tones||[]).map(esc).join(" · ")));
     an.appendChild(pc);
     var g=$("copyGrid");g.innerHTML="";
-    App.copies.forEach(function(c){
-      var card=el("div","copy-card");card.dataset.id=c.id;
-      card.innerHTML="<span class='tag'>안 "+c.id+" · "+esc(c.tone)+"</span><div class='k'>"+esc(c.key)+"</div><div class='s'>"+esc(c.sub)+"</div><div class='c'>"+esc(c.cta)+"</div><div class='why'>왜 이 안? "+esc(c.why)+"</div>";
-      card.onclick=function(){S2.choose(c.id);};
+    App.copies.forEach(function(c,i){
+      var top=i<3;
+      var card=el("div","copy-card"+(top?" top":" alt")+(c.id===App.pick?" on":""));card.dataset.id=c.id;
+      card.innerHTML="<span class='tag'>안 "+c.id+" · "+esc(c.tone)+"</span>"
+        +(top?"<span class='rank'>TOP "+(i+1)+"</span>":"<span class='rank alt'>보조</span>")
+        +"<div class='k' contenteditable='true' data-f='key' spellcheck='false'>"+esc(c.key)+"</div>"
+        +"<div class='s' contenteditable='true' data-f='sub' spellcheck='false'>"+esc(c.sub)+"</div>"
+        +"<div class='c' contenteditable='true' data-f='cta' spellcheck='false'>"+esc(c.cta)+"</div>"
+        +"<div class='why'>왜 이 안? "+esc(c.why)+"</div>"
+        +"<button class='pick-btn'>이 안으로 기획 →</button>";
+      [].forEach.call(card.querySelectorAll('[contenteditable]'),function(ed){
+        ed.addEventListener('input',function(){c[ed.dataset.f]=ed.textContent;});
+        ed.addEventListener('click',function(e){e.stopPropagation();});
+        ed.addEventListener('keydown',function(e){e.stopPropagation();});
+        ed.addEventListener('blur',function(){c[ed.dataset.f]=ed.textContent.trim();try{Store.save();}catch(e){}});
+      });
+      card.querySelector('.pick-btn').onclick=function(e){e.stopPropagation();S2.choose(c.id);};
+      card.onclick=function(){S2.highlight(c.id);};
       g.appendChild(card);
     });
   },
+  highlight(id){App.pick=id;[].forEach.call($("copyGrid").children,function(x){x.classList.toggle("on",x.dataset.id===id);});},
   choose(id){
     App.pick=id;
     [].forEach.call($("copyGrid").children,function(x){x.classList.toggle("on",x.dataset.id===id);});
