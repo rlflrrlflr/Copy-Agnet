@@ -177,30 +177,47 @@ kbd{font-family:ui-monospace,monospace;font-size:10px;background:var(--card);bor
 /* ---- 로딩 고양이 ---- */
 #catOv{position:fixed;inset:0;z-index:300;background:rgba(20,16,28,.62);backdrop-filter:blur(5px);display:none;align-items:center;justify-content:center}
 #catOv.on{display:flex}
-.cat-card{width:340px;max-width:92vw;background:#fff;border-radius:24px;box-shadow:0 24px 70px rgba(0,0,0,.4);overflow:hidden;text-align:center}
-.cat-card .ttl{font-weight:800;font-size:14px;padding:14px;color:var(--ink)}
-.cat-stage{position:relative;height:150px;background:radial-gradient(120% 90% at 50% 16%,#3a3050,#241f33);overflow:hidden}
-.cat-img{position:absolute;left:50%;bottom:34px;width:108px;margin-left:-54px;image-rendering:pixelated;transform:translateY(60%);opacity:0;animation:catUp .6s cubic-bezier(.34,1.5,.5,1) forwards,catBob 2.4s ease-in-out .6s infinite;transition:bottom .35s cubic-bezier(.34,1.5,.5,1)}
+.cat-card{width:400px;max-width:94vw;background:#fff;border-radius:24px;box-shadow:0 24px 70px rgba(0,0,0,.4);overflow:hidden;text-align:center}
+.cat-card .ttl{font-weight:800;font-size:14px;padding:13px;color:var(--ink)}
+/* 상단 카운트/결과 배너 — 크게, 눈에 띄게 */
+.cat-top{height:58px;display:flex;align-items:center;justify-content:center;gap:12px;font-size:24px;font-weight:900;color:var(--ink);background:#f4f2fa;border-top:1px solid var(--line);border-bottom:1px solid var(--line);letter-spacing:-.3px}
+.cat-top.win{color:#0a7d4d;background:#e7f7ef}
+.cat-top.lose{color:#e60023;background:#fdebef}
+.cat-top.draw{color:#6b6b76;background:#f0f0f3}
+.cat-top .vs-hand{font-size:30px}
+.cat-top .vs-mid{font-size:14px;opacity:.7;font-weight:800}
+.cat-count.tick{animation:countPop .28s ease}
+@keyframes countPop{0%{transform:scale(.5);opacity:.25}55%{transform:scale(1.22)}100%{transform:scale(1)}}
+/* 무대 — 키 키우고 여유 */
+.cat-stage{position:relative;height:236px;background:radial-gradient(120% 90% at 50% 18%,#3a3050,#241f33);overflow:hidden}
+.cat-stage.shake{animation:catShake .42s}
+@keyframes catShake{0%,100%{transform:translateX(0)}18%{transform:translateX(-8px)}36%{transform:translateX(7px)}54%{transform:translateX(-5px)}72%{transform:translateX(4px)}88%{transform:translateX(-2px)}}
+.cat-img{position:absolute;left:50%;bottom:62px;width:128px;margin-left:-64px;image-rendering:pixelated;transform:translateY(60%);opacity:0;animation:catUp .6s cubic-bezier(.34,1.5,.5,1) forwards,catBob 2.4s ease-in-out .6s infinite;transition:bottom .35s cubic-bezier(.34,1.5,.5,1);z-index:3}
 @keyframes catUp{to{transform:translateY(0);opacity:1}}
-@keyframes catBob{0%,100%{margin-bottom:0}50%{margin-bottom:6px}}
-@keyframes catPsy{0%,100%{transform:translateX(-3px) rotate(-3deg)}50%{transform:translateX(3px) rotate(3deg)}}
-.cat-img.up{bottom:60px}
-.cat-img.psy{animation:catPsy .2s ease-in-out infinite!important}
-.cat-vs{position:absolute;left:0;right:0;top:8px;display:none;justify-content:center;align-items:center;gap:10px;font-size:24px;font-weight:800;color:#fff;text-shadow:0 2px 7px rgba(0,0,0,.55);z-index:4}
-.cat-vs.on{display:flex;animation:catPop .32s cubic-bezier(.34,1.6,.5,1)}
-.cat-vs .mid{font-size:12px;opacity:.85}
-.cat-vs .cat{color:#ffd24a}
-@keyframes catPop{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
-.desk{position:absolute;left:0;right:0;bottom:0;height:42px;background:linear-gradient(#c97b3e,#a55f29);border-top:3px solid #e0a063;z-index:2}
+@keyframes catBob{0%,100%{margin-bottom:0}50%{margin-bottom:7px}}
+@keyframes catPsy{0%,100%{transform:translateX(-4px) rotate(-4deg)}50%{transform:translateX(4px) rotate(4deg)}}
+.cat-img.up{bottom:92px}
+.cat-img.psy{animation:catPsy .18s ease-in-out infinite!important}
+/* 큰 앞발(손) — 공개 시 슬램 */
+.cat-paw{position:absolute;font-size:62px;opacity:0;z-index:5;filter:drop-shadow(0 4px 7px rgba(0,0,0,.45))}
+.cat-paw.you{left:13%;bottom:74px}
+.cat-paw.cat{right:13%;top:30px}
+.cat-paw.show{animation:pawSlam .42s cubic-bezier(.3,1.5,.5,1) forwards}
+@keyframes pawSlam{0%{opacity:0;transform:scale(.2) translateY(-18px) rotate(-12deg)}60%{opacity:1;transform:scale(1.28) rotate(4deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
+.cat-flash{position:absolute;inset:0;background:radial-gradient(circle at 50% 42%,rgba(255,255,255,.92),transparent 62%);opacity:0;pointer-events:none;z-index:4}
+.cat-flash.on{animation:catFlash .45s ease-out}
+@keyframes catFlash{0%{opacity:0}22%{opacity:1}100%{opacity:0}}
+.desk{position:absolute;left:0;right:0;bottom:0;height:58px;background:linear-gradient(#c97b3e,#a55f29);border-top:3px solid #e0a063;z-index:2}
 .cat-bar{height:6px;background:var(--line)}
 .cat-bar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--pin),#ff7a59);transition:width .3s}
-.cat-score{font-size:11px;color:var(--ink);padding:8px 14px 0;display:flex;justify-content:center;gap:10px;align-items:center;font-weight:700}
+.cat-score{font-size:12px;color:var(--ink);padding:11px 14px 2px;display:flex;justify-content:center;gap:12px;align-items:center;font-weight:700}
 .cat-streak{color:var(--mute);font-weight:600}
-.cat-rps{display:flex;gap:8px;justify-content:center;padding:10px}
-.cat-rps button{font-size:20px;width:46px;height:46px;border-radius:12px;border:1px solid var(--line);background:var(--card);cursor:pointer;transition:transform .1s}
+.cat-rps{display:flex;gap:10px;justify-content:center;padding:12px}
+.cat-rps button{font-size:24px;width:54px;height:54px;border-radius:14px;border:1.5px solid var(--line);background:var(--card);cursor:pointer;transition:transform .1s}
 .cat-rps button:hover{border-color:var(--pin);transform:translateY(-2px)}
-.cat-rps button:active{transform:scale(.92)}
-.cat-msg{font-size:11px;color:var(--mute);padding:0 14px 12px;min-height:15px}
+.cat-rps button:active{transform:scale(.9)}
+.cat-rps button:disabled{opacity:.4;cursor:default;transform:none}
+.cat-msg{font-size:11.5px;color:var(--mute);padding:0 14px 14px;min-height:16px}
 </style>
 </head>
 <body>
@@ -374,11 +391,17 @@ kbd{font-family:ui-monospace,monospace;font-size:10px;background:var(--card);bor
 <div id="catOv">
   <div class="cat-card">
     <div class="ttl" id="catTtl">잠시만요… 고양이가 작업 중 🐾</div>
-    <div class="cat-stage"><img id="catImg" class="cat-img" alt="고양이"><div class="desk"></div><div id="catVS" class="cat-vs"></div></div>
+    <div class="cat-top" id="catTop"><span class="cat-count" id="catCount">가위바위보 한 판 할까요? 🐾</span></div>
+    <div class="cat-stage" id="catStage">
+      <img id="catImg" class="cat-img" alt="고양이"><div class="desk"></div>
+      <div id="catPawYou" class="cat-paw you"></div>
+      <div id="catPawCat" class="cat-paw cat"></div>
+      <div id="catFlash" class="cat-flash"></div>
+    </div>
     <div class="cat-bar"><i id="catBar"></i></div>
     <div id="catScore" class="cat-score"></div>
     <div class="cat-rps"><button onclick="Cat.rps('rock')" title="바위">✊</button><button onclick="Cat.rps('scissors')" title="가위">✌️</button><button onclick="Cat.rps('paper')" title="보">🖐</button></div>
-    <div class="cat-msg" id="catMsg">기다리는 동안 가위바위보 한 판! (✊✌️🖐 클릭)</div>
+    <div class="cat-msg" id="catMsg">‘보!’에 맞춰 내봐요 — 버튼을 누르면 셋을 셉니다 (✊✌️🖐)</div>
   </div>
 </div>
 
@@ -432,38 +455,52 @@ var Cat={
   show(kind){var ov=$("catOv");if(!ov)return;
     $("catTtl").textContent=(kind==="image"||kind==="final")?"이미지 생성 중… 🎨":"카피 만드는 중… ✍️";
     var img=$("catImg");if(img){if(window.CAT)img.src=CAT.neutral;img.classList.remove("up","psy");}
-    $("catMsg").textContent="기다리는 동안 가위바위보 한 판! (✊✌️🖐 클릭)";
-    var vs=$("catVS");if(vs)vs.classList.remove("on");
+    $("catMsg").textContent="‘보!’에 맞춰 내봐요 — 버튼을 누르면 셋을 셉니다 (✊✌️🖐)";
+    Cat._top("가위바위보 한 판 할까요? 🐾","");
+    Cat._paw("catPawYou","");Cat._paw("catPawCat","");Cat._buttons(true);
     Cat._busy=false;clearInterval(Cat._cd);Cat._score();
     Cat._p=6;Cat._bar();ov.classList.add("on");
     clearInterval(Cat._t);Cat._t=setInterval(function(){Cat._p=Math.min(94,Cat._p+Math.random()*8);Cat._bar();},420);},
   hide(){var ov=$("catOv");if(!ov)return;Cat._p=100;Cat._bar();clearInterval(Cat._t);setTimeout(function(){ov.classList.remove("on");},220);},
   _bar(){var b=$("catBar");if(b)b.style.width=Cat._p+"%";},
+  _top(html,cls){var t=$("catTop");if(!t)return;t.className="cat-top"+(cls?(" "+cls):"");t.innerHTML="<span class='cat-count' id='catCount'>"+html+"</span>";},
+  _tick(html){var t=$("catTop");if(!t)return;t.className="cat-top";t.innerHTML="<span class='cat-count tick' id='catCount'>"+html+"</span>";},
+  _paw(id,emoji){var p=$(id);if(!p)return;p.classList.remove("show");if(!emoji){p.textContent="";p.style.opacity="0";return;}p.textContent=emoji;void p.offsetWidth;p.classList.add("show");},
+  _buttons(on){[].forEach.call(document.querySelectorAll(".cat-rps button"),function(b){b.disabled=!on;});},
   _score(){var e=$("catScore");if(!e)return;var s=Cat.score;
     e.innerHTML="<b style='color:#0a7d4d'>승 "+s.w+"</b> · 무 "+s.d+" · <b style='color:#e60023'>패 "+s.l+"</b>"
       +"<span class='cat-streak'>"+(s.streak>0?("🔥 "+s.streak+"연승"):"연승 0")+" · 최고 "+s.best+"</span>";},
   rps(you){
-    if(Cat._busy||!Cat.HAND[you])return;Cat._busy=true;
-    var img=$("catImg"),vs=$("catVS"),msg=$("catMsg");
-    if(img){if(window.CAT)img.src=CAT.neutral;img.classList.add("psy");} // 안달(가위바위보 직전)
-    if(vs)vs.classList.remove("on");
-    var seq=["가위 ✊","바위 ✊","보! 🖐"],i=0;msg.textContent=seq[0];
-    clearInterval(Cat._cd);Cat._cd=setInterval(function(){i++;if(i<seq.length)msg.textContent=seq[i];},300);
+    if(Cat._busy||!Cat.HAND[you])return;Cat._busy=true;Cat._buttons(false);
+    var img=$("catImg"),stage=$("catStage"),flash=$("catFlash"),msg=$("catMsg");
+    if(img){if(window.CAT)img.src=CAT.neutral;img.classList.remove("up");img.classList.add("psy");} // 직전 안달(주먹 떨기)
+    Cat._paw("catPawYou","");Cat._paw("catPawCat","");
+    var beats={rock:"scissors",scissors:"paper",paper:"rock"},m=["rock","scissors","paper"];
+    var cat=m[(Math.random()*3)|0]; // 고양이는 이미 냈다(숨김) — 예측해!
+    var seq=["가위","바위","보!"],i=0;
+    Cat._tick(seq[0]);msg.textContent="셋을 셉니다… 고양이가 뭘 낼지 예측! 👀";
+    clearInterval(Cat._cd);Cat._cd=setInterval(function(){i++;if(i<seq.length)Cat._tick(seq[i]);},460);
     setTimeout(function(){
       clearInterval(Cat._cd);if(img)img.classList.remove("psy");
-      var m=["rock","scissors","paper"],cat=m[(Math.random()*3)|0],beats={rock:"scissors",scissors:"paper",paper:"rock"},s=Cat.score;
-      if(vs){vs.innerHTML="<span>나 "+Cat.HAND[you]+"</span><span class='mid'>VS</span><span class='cat'>"+Cat.HAND[cat]+" 냥</span>";void vs.offsetWidth;vs.classList.add("on");}
-      if(you===cat){s.d++;msg.textContent="🤝 비겼다! 한 판 더";if(img){if(window.CAT)img.src=CAT.neutral;img.classList.remove("up");}}
-      else if(beats[you]===cat){ // 내가 이김 → 고양이 시무룩
+      // 동시 공개 — 큰 앞발 슬램 + 화면 플래시(타격감)
+      Cat._paw("catPawYou",Cat.HAND[you]);Cat._paw("catPawCat",Cat.HAND[cat]);
+      if(flash){flash.classList.remove("on");void flash.offsetWidth;flash.classList.add("on");}
+      var s=Cat.score,vsbar=function(mid){return "나 <span class='vs-hand'>"+Cat.HAND[you]+"</span> <span class='vs-mid'>"+mid+"</span> <span class='vs-hand'>"+Cat.HAND[cat]+"</span> 냥";};
+      if(you===cat){
+        s.d++;Cat._top(vsbar("="),"draw");msg.textContent="🤝 비겼다! 한 판 더";
+        if(img){if(window.CAT)img.src=CAT.neutral;img.classList.remove("up");}
+      } else if(beats[you]===cat){ // 내가 이김 → 고양이 시무룩
         s.w++;s.streak++;if(s.streak>s.best){s.best=s.streak;Cat._save();}
-        msg.textContent=s.streak>=3?("🎉 "+s.streak+"연승! 고양이가 약올라요"):"🎉 이겼다! 거의 다 됐어요";
+        Cat._top(vsbar("이김!"),"win");
+        msg.textContent=s.streak>=3?("🎉 "+s.streak+"연승! 고양이가 약올라요"):"🎉 예측 성공! 거의 다 됐어요";
         if(img){if(window.CAT)img.src=CAT.sad;img.classList.remove("up");}
-      } else { // 고양이 승 → 신나서 완전 등장
-        s.l++;s.streak=0;msg.textContent="😼 고양이 승! 분하다… 다시!";
+      } else { // 고양이 승 → 신나서 완전 등장 + 무대 흔들(타격감)
+        s.l++;s.streak=0;Cat._top(vsbar("패…"),"lose");msg.textContent="😼 고양이 승! 분하다… 다시!";
         if(img){if(window.CAT)img.src=CAT.happy;img.classList.add("up");}
+        if(stage){stage.classList.remove("shake");void stage.offsetWidth;stage.classList.add("shake");}
       }
-      Cat._score();Cat._busy=false;
-    },950);
+      Cat._score();Cat._busy=false;Cat._buttons(true);
+    },460*2+360);
   }
 };
 Cat._load();
