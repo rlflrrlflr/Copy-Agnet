@@ -181,11 +181,11 @@ kbd{font-family:ui-monospace,monospace;font-size:10px;background:var(--card);bor
       <button class="btn gho sm" onclick="UI.reset()" title="새로 시작">🔄 새로</button>
       <span id="modeBadge" class="badge-sim">시뮬레이터</span>
       <select id="provider" class="keyin tiny" style="width:auto" onchange="UI.onKey()" title="카피·분석에 쓸 모델">
-        <option value="claude">🤖 Claude (카피)</option>
-        <option value="gemini">✦ Gemini (카피)</option>
+        <option value="gemini" selected>✦ Gemini (기본)</option>
+        <option value="claude">🤖 Claude (키 입력 시)</option>
       </select>
-      <input id="claudeKey" class="keyin tiny" type="password" placeholder="Claude API Key" oninput="UI.onKey()">
-      <input id="geminiKey" class="keyin tiny" type="password" placeholder="Gemini API Key (이미지)" oninput="UI.onKey()">
+      <input id="geminiKey" class="keyin tiny" type="password" placeholder="Gemini API Key (카피+이미지)" oninput="UI.onKey()">
+      <input id="claudeKey" class="keyin tiny" type="password" placeholder="Claude API Key (선택)" oninput="UI.onKey()">
     </div>
   </div>
 </header>
@@ -316,10 +316,6 @@ kbd{font-family:ui-monospace,monospace;font-size:10px;background:var(--card);bor
           <div class="row" style="gap:10px"><label class="row tiny" style="gap:6px">악센트 <input type="color" id="s4accent" value="#e60023" oninput="S4.setAccent(this.value)"></label>
             <button class="btn sm" style="margin-left:auto" onclick="S4.regenBg()">🌄 배경 다시</button></div>
         </div></div>
-        <div class="panel"><div class="panel-h">💬 고른 안에만 피드백</div><div class="panel-b col">
-          <textarea id="s4fb" class="in" rows="2" placeholder="예: 여백 더 주고 톤을 차분하게"></textarea>
-          <button class="btn full" onclick="S4.refine()">피드백 반영해 다듬기</button>
-        </div></div>
         <div class="panel"><div class="panel-h">⬇ 내보내기 <span class="tiny muted" style="font-weight:600;margin-left:auto">마케터 즉시 셋팅 · 디자이너 전달</span></div><div class="panel-b col">
           <div class="tool"><button class="btn sm" style="flex:1" onclick="S4.download()">🖼 완성본 PNG</button><button class="btn sm" style="flex:1" onclick="S4.downloadBg()">🌄 배경만 (텍스트 없음)</button></div>
           <div class="tool"><button class="btn sm" style="flex:1" onclick="S4.downloadSVG()">✏️ SVG (디자이너 편집)</button><button class="btn sm" style="flex:1" onclick="S4.downloadSpec()">📋 디자인 스펙</button></div>
@@ -362,7 +358,7 @@ var CH_LIMIT={"":{k:15,s:30,c:10},"GDN":{k:15,s:30,c:10},"Meta":{k:20,s:40,c:12}
 /* 모델 라우팅 — 카피/분석은 Claude 또는 Gemini, 이미지는 Gemini(Claude는 이미지 생성 X) */
 var MODELS={ claude:"claude-opus-4-8", geminiText:"gemini-2.5-flash", geminiImage:"gemini-3.1-flash-image" };
 var App={
-  stage:1, live:false, provider:"claude", keys:{claude:"",gemini:""}, brand:{accent:"",logo:null}, assets:{products:[],refs:[]},
+  stage:1, live:false, provider:"gemini", keys:{claude:"",gemini:""}, brand:{accent:"",logo:null}, assets:{products:[],refs:[]},
   brief:{mode:"quick",target:"",offer:"",funnel:"",keyMsg:"",seedKey:"",seedSub:"",visual:"",must:"",ban:"",channel:"",voice:""},
   analysis:{pains:[],tones:[]},
   copies:[], pick:null,
@@ -736,8 +732,8 @@ var Doc={
       intent:{ layoutType:"product-shot", visualCarries:App.brief.visual||"제품이 어울리는 맥락 속 한 컷",
                copyCarries:c.key, badgeText:"", mood:"확신·프리미엄", tone:c.tone, funnel:App.brief.funnel },
       layers:[
-        Doc.text("key", c.key, {ny:.60, size:74, weight:800, font:"Black Han Sans"}),
-        Doc.text("sub", c.sub, {ny:.74, size:32, weight:600, font:"Pretendard"}),
+        Doc.text("key", c.key, {ny:.60, size:64, weight:800, font:"Pretendard"}),
+        Doc.text("sub", c.sub, {ny:.74, size:30, weight:600, font:"Pretendard"}),
         Doc.cta(c.cta, {ny:.85})
       ]
     };
@@ -766,7 +762,10 @@ var Doc={
    ============================================================ */
 var S3={
   _img:{}, drag:null,
-  mount(){ S3.renderAll(); try{Assets.render();}catch(e){} },
+  mount(){ S3.renderAll(); try{Assets.render();}catch(e){}
+    // 기존처럼 진입 시 배경 이미지 자동 생성(키 있을 때 1회). 상품컷 있으면 동일성 유지 합성.
+    if(App.doc&&!App.doc._autogen&&App.keys.gemini){App.doc._autogen=true;S3.genImage();}
+  },
   renderAll(){ S3.draw(); S3.layers(); S3.overlay(); S3.props(); UI.reflectStepper(); try{Store.save();}catch(e){} },
 
   /* ---------- 캔버스 렌더 ---------- */
@@ -853,7 +852,7 @@ var S3={
     x.fillStyle=l.color2||"#fff";x.textAlign="center";
     var scale=(l.style==="ribbon")?b.h/2:(l.style==="tag")?b.h/2:R;
     if(l.sub){x.textBaseline="alphabetic";x.font="800 "+(scale*0.4)+"px 'Pretendard',sans-serif";x.fillText(l.sub,cx+tagDx,cy-scale*0.2);}
-    x.textBaseline="middle";x.font="900 "+(scale*0.92)+"px 'Black Han Sans','Pretendard',sans-serif";x.fillText(l.text||"",cx+tagDx,cy+(l.sub?scale*0.28:0));
+    x.textBaseline="middle";x.font="900 "+(scale*0.92)+"px 'Pretendard',sans-serif";x.fillText(l.text||"",cx+tagDx,cy+(l.sub?scale*0.28:0));
     x.restore();
   },
   runColor(l,i){if(!l.runs)return null;for(var r=0;r<l.runs.length;r++){if(i>=l.runs[r].s&&i<l.runs[r].e)return l.runs[r].c;}return null;},
@@ -876,8 +875,9 @@ var S3={
   overlay(){
     var ov=$("overlay");ov.innerHTML="";
     var l=App.sel&&Doc.byId(App.sel);if(!l||l.hidden)return;
-    var cv=$("editCanvas");var sc=cv.clientWidth/cv.width;var b=S3.bbox(l);
-    var box=el("div","selbox");box.style.left=(b.x*sc)+"px";box.style.top=(b.y*sc)+"px";box.style.width=(b.w*sc)+"px";box.style.height=(b.h*sc)+"px";
+    var cv=$("editCanvas");var cr=cv.getBoundingClientRect(),orr=ov.getBoundingClientRect();
+    var sc=cr.width/cv.width,offX=cr.left-orr.left,offY=cr.top-orr.top;var b=S3.bbox(l);
+    var box=el("div","selbox");box.style.left=(offX+b.x*sc)+"px";box.style.top=(offY+b.y*sc)+"px";box.style.width=(b.w*sc)+"px";box.style.height=(b.h*sc)+"px";
     if(l.rot){box.style.transformOrigin="50% 50%";box.style.transform="rotate("+l.rot+"deg)";}
     // 핸들을 박스 자식으로 → 회전과 함께 따라감
     function hdl(cls,css,mode){var k=el("div","hdl"+(cls?(" "+cls):""));for(var p in css)k.style[p]=css[p];k.style.pointerEvents="auto";k.dataset.h=mode;k.addEventListener("pointerdown",function(e){S3.startHandle(e,mode);});box.appendChild(k);}
@@ -1081,10 +1081,17 @@ var Design={
     else if(a.deco==="frame"){[H*0.135,H*0.865].forEach(function(yy){ops.push({t:"line",x1:W*0.5-W*0.155,y1:yy,x2:W*0.5+W*0.155,y2:yy,stroke:accent,sw:Math.max(1,H*0.0016),alpha:.55});});ops.push({t:"poly",pts:star(W*0.5,H*0.105,H*0.011),fill:accent,alpha:.9});}
     else if(a.deco==="ticks"){for(var ti=0;ti<3;ti++)ops.push({t:"rect",x:M+ti*H*0.03,y:H*0.075,w:H*0.018,h:H*0.018,fill:accent,alpha:.9});}
     var maxW=(a.anchor==="center")?W*0.82:W-M*2;
-    var keySize=H*a.keyScale;x.font=a.keyW+" "+keySize+"px "+a.keyFont;
-    var lines=Design.wrap(x,c.key,maxW),lh=keySize*a.lh,subSize=H*a.subScale,ctaSize=H*a.ctaScale;
-    var kickSize=H*0.026,kickH=(c.kicker?kickSize*2.4:0);
-    var blockH=kickH+lines.length*lh+(a.under?keySize*0.46:keySize*0.1)+(c.sub?subSize*1.9:0)+(c.cta?ctaSize*3.0:0);
+    var subSize=H*a.subScale,ctaSize=H*a.ctaScale,kickSize=H*0.026,kickH=(c.kicker?kickSize*2.4:0);
+    var availH=H*(a.anchor==="center"?0.66:0.60);
+    // 자동 맞춤: 헤드라인이 가로폭/세이프영역을 넘으면 폰트 축소(오버플로우 방지)
+    var keySize=H*a.keyScale,lines,lh,blockH;
+    for(var _f=0;_f<14;_f++){
+      x.font=a.keyW+" "+keySize+"px "+a.keyFont;lines=Design.wrap(x,c.key,maxW);lh=keySize*a.lh;
+      var _long=0;lines.forEach(function(ln){_long=Math.max(_long,x.measureText(ln).width);});
+      blockH=kickH+lines.length*lh+(a.under?keySize*0.46:keySize*0.1)+(c.sub?subSize*1.9:0)+(c.cta?ctaSize*3.0:0);
+      if((_long<=maxW&&blockH<=availH)||keySize<=H*0.045)break;
+      keySize*=0.93;
+    }
     var cx=(a.align==="center")?W/2:M,startY=(a.anchor==="center")?(H*0.52-blockH*0.5):(H*(1-0.085)-blockH);
     var KF=a.keyFont,PF="'Pretendard',sans-serif",y=startY;
     if(c.kicker){x.font="800 "+kickSize+"px "+PF;
@@ -1117,7 +1124,7 @@ var Design={
       if(b.style!=="ribbon"&&b.style!=="tag")ops.push({t:"circle",cx:bcx,cy:bcy,r:R*0.82,stroke:"rgba(255,255,255,.6)",sw:R*0.06});
       var bc2=b.color2||"#fff";
       if(b.sub)ops.push({t:"text",x:bcx,y:bcy-R*0.22,anchor:"center",family:PF,weight:800,size:R*0.34,fill:bc2,text:b.sub,baseline:"alphabetic"});
-      ops.push({t:"text",x:bcx,y:bcy+(b.sub?R*0.28:0),anchor:"center",family:"'Black Han Sans','Pretendard',sans-serif",weight:900,size:R*0.82,fill:bc2,text:b.text||"",baseline:"middle"});});
+      ops.push({t:"text",x:bcx,y:bcy+(b.sub?R*0.28:0),anchor:"center",family:"'Pretendard',sans-serif",weight:900,size:R*0.82,fill:bc2,text:b.text||"",baseline:"middle"});});
     if(App.brand&&App.brand.logo)ops.push({t:"img",href:App.brand.logo,x:M,y:M*0.85,w:W*0.15,h:W*0.15});
     return {ops:ops,W:W,H:H};
   },
@@ -1229,7 +1236,7 @@ var Design={
     if(b.style!=="ribbon"&&b.style!=="tag"){x.strokeStyle="rgba(255,255,255,.6)";x.lineWidth=R*0.06;x.beginPath();x.arc(0,0,R*0.82,0,7);x.stroke();}
     x.fillStyle=b.color2||"#fff";x.textAlign="center";
     if(b.sub){x.textBaseline="alphabetic";x.font="800 "+(R*0.34)+"px 'Pretendard',sans-serif";x.fillText(b.sub,0,-R*0.22);}
-    x.textBaseline="middle";x.font="900 "+(R*0.82)+"px 'Black Han Sans','Pretendard',sans-serif";x.fillText(b.text||"",0,b.sub?R*0.28:0);
+    x.textBaseline="middle";x.font="900 "+(R*0.82)+"px 'Pretendard',sans-serif";x.fillText(b.text||"",0,b.sub?R*0.28:0);
     x.restore();
   }
 };
@@ -1290,7 +1297,7 @@ var S4={
   async regenBg(){var v=App.final.variants[App.final.pick];if(!v)return;var url=await Engine.gen("final",{layoutType:App.doc.intent.layoutType,seedHue:App.doc.bgHue+Math.floor(Math.random()*120),idx:App.final.pick});delete S3._img[v.bg];v.bg=url;S4.renderVariants();S4.paintFinal();},
   paintFinal(){ Design.render($("finalCanvas"),App.final.variants[App.final.pick],App.doc); },
   async refine(){
-    var fb=$("s4fb").value.trim();if(!fb){toast("피드백을 입력하세요");return;}
+    var fbel=$("s4fb");var fb=fbel?fbel.value.trim():"";if(!fb){return;}
     toast("‘"+fb.slice(0,16)+"…’ 반영 중");
     App.doc.intent.mood=(App.doc.intent.mood||"")+" / "+fb;
     var v=App.final.variants[App.final.pick];
