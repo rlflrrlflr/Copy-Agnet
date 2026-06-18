@@ -429,7 +429,7 @@ var GEM_AR={"1:1":"1:1","4:5":"4:5","16:9":"16:9"};
 var App={
   stage:1, live:false, provider:"gemini", keys:{claude:"",gemini:""}, brand:{accent:"",logo:null}, assets:{products:[],refs:[]}, ctx:[],
   brief:{mode:"quick",target:"",offer:"",funnel:"",keyMsg:"",seedKey:"",seedSub:"",visual:"",must:"",ban:"",channel:"",voice:""},
-  analysis:{pains:[],tones:[]},
+  analysis:{pains:[],tones:[],usps:[]},
   copies:[], pick:null,
   doc:null,          // 3단계 기획 문서
   sel:null,          // 선택 레이어 id(주 선택 — 핸들·속성·인라인편집)
@@ -616,28 +616,38 @@ var Engine={
   _prompt(kind,p){
     if(kind==="analyze"){
       return {
-        sys:"너는 한국 퍼포먼스 마케팅 시니어 카피라이터다. 타겟과 오퍼를 받아 광고 카피의 토대가 될 핵심 페인포인트 3개와 어울리는 톤 3개를 뽑는다. 한국어로, 광고 실무에 쓸 수 있게 날카롭고 구체적으로.",
-        user:"타겟:\n"+(p.target||"")+"\n\n오퍼:\n"+(p.offer||"")+"\n\n퍼널 단계: "+(p.funnel||"")+Ctx.block()+"\n\n페인포인트 3개와 톤 3개(예: 직격추궁형/숫자증거형/공감형 등)를 JSON으로."
+        sys:"너는 한국 퍼포먼스 마케팅 시니어 전략가다. 타겟·오퍼를 받아 (1)핵심 페인포인트 3개 (2)어울리는 톤 3개 (3)이 제품만의 차별점(USP) 3~5개를 뽑는다. USP는 오퍼에 등장하는 '구체적 소재·스펙·수치·고유 기능명'을 일반화하지 말고 그대로 살려라(예: '가죽'이 아니라 '나파가죽', '방수'가 아니라 'IPX7 방수', '1.2mm 논슬립'). 한국어, 광고 실무용으로 날카롭게.",
+        user:"타겟:\n"+(p.target||"")+"\n\n오퍼:\n"+(p.offer||"")+"\n\n퍼널 단계: "+(p.funnel||"")+Ctx.block()+"\n\n페인포인트 3개, 톤 3개(예: 직격추궁형/숫자증거형/공감형), USP 3~5개(오퍼의 구체 용어 그대로)를 JSON으로."
       };
     }
     // copies
     var lim=CH_LIMIT[p.channel||""]||CH_LIMIT[""];
     return {
-      sys:"너는 한국 퍼포먼스 DA 배너 카피라이터다. 메인(KEY)·서브(SUB)·CTA 3요소로 된 광고 카피 5안을 서로 다른 톤·각도로 만든다. 메인은 "+lim.k+"자, 서브 "+lim.s+"자, CTA "+lim.c+"자 내외. 클리셰 금지, 구체 수치/직격 화법 선호. 한국어.\n중요: 메인 또는 서브에 실제 '제품·카테고리 명사'(오퍼에서 추출, 예: 트렁크 매트 / 직소싱 / 구독)를 최소 1회 분명히 넣어라. 추상적 베네핏·감정어만 쓰지 말 것 — 무엇을 파는지 글에서 바로 드러나야 한다.",
-      user:"타겟:\n"+(p.target||"")+"\n\n오퍼:\n"+(p.offer||"")+"\n\n페인포인트:\n"+(p.pains||[]).join(" / ")+"\n\n톤 후보: "+(p.tones||[]).join(", ")+"\n"+(p.seedKey?("\n기존 메인(안 A로 고정·발전): "+p.seedKey):"")+Ctx.block()+"\n\n5안을 '광고 성과가 좋을 순서'로 정렬해(가장 강한 안이 1번, 위 3개가 TOP3) JSON으로. 각 안: key, sub, cta, tone, why(왜 이 안인지 한 줄)."
+      sys:"너는 한국 퍼포먼스 DA 배너 카피라이터다. 메인(KEY)·서브(SUB)·CTA 3요소로 된 광고 카피 5안을 서로 다른 톤·각도로 만든다. 메인은 "+lim.k+"자, 서브 "+lim.s+"자, CTA "+lim.c+"자 내외. 클리셰 금지, 구체 수치/직격 화법 선호. 한국어.\n중요1: 메인 또는 서브에 실제 '제품·카테고리 명사'(예: 트렁크 매트)를 최소 1회 분명히 넣어 무엇을 파는지 바로 드러나게.\n중요2: 제공된 USP(구체 소재·스펙·고유기능)를 일반화하지 말고 '그 단어 그대로' 최소 2개 안에 녹여라(예: '가죽'으로 뭉개지 말고 '나파가죽'). 추상적 감정어만 쓰지 말 것.",
+      user:"타겟:\n"+(p.target||"")+"\n\n오퍼:\n"+(p.offer||"")+"\n\n페인포인트:\n"+(p.pains||[]).join(" / ")+"\n\n핵심 USP(그대로 살릴 것):\n"+((p.usps&&p.usps.length)?p.usps.join(" / "):"(오퍼에서 직접 추출)")+"\n\n톤 후보: "+(p.tones||[]).join(", ")+"\n"+(p.seedKey?("\n기존 메인(안 A로 고정·발전): "+p.seedKey):"")+Ctx.block()+"\n\n5안을 '광고 성과가 좋을 순서'로 정렬해(가장 강한 안이 1번, 위 3개가 TOP3) JSON으로. 각 안: key, sub, cta, tone, why(왜 이 안인지 한 줄)."
     };
   },
   _schema(kind){
-    if(kind==="analyze") return {type:"object",additionalProperties:false,required:["pains","tones"],properties:{
-      pains:{type:"array",items:{type:"string"}}, tones:{type:"array",items:{type:"string"}} }};
+    if(kind==="analyze") return {type:"object",additionalProperties:false,required:["pains","tones","usps"],properties:{
+      pains:{type:"array",items:{type:"string"}}, tones:{type:"array",items:{type:"string"}}, usps:{type:"array",items:{type:"string"}} }};
     return {type:"object",additionalProperties:false,required:["copies"],properties:{ copies:{type:"array",items:{
       type:"object",additionalProperties:false,required:["key","sub","cta","tone","why"],
       properties:{key:{type:"string"},sub:{type:"string"},cta:{type:"string"},tone:{type:"string"},why:{type:"string"}} }}}};
   },
   _coerce(kind,obj){
-    if(kind==="analyze") return {pains:(obj.pains||[]).slice(0,3),tones:(obj.tones||[]).slice(0,3)};
+    if(kind==="analyze") return {pains:(obj.pains||[]).slice(0,3),tones:(obj.tones||[]).slice(0,3),usps:(obj.usps||[]).slice(0,5)};
     var arr=(obj.copies||obj.list||[]).slice(0,5);
     return arr.map(function(b,i){b.id=["A","B","C","D","E"][i]||("X"+i);return b;});
+  },
+  /* 추론 모델이 코드펜스/사고 텍스트를 섞어 내보내도 JSON만 안전 추출 */
+  _json(txt){
+    txt=(txt||"").trim();
+    try{return JSON.parse(txt);}catch(e){}
+    var f=txt.replace(/^```(?:json)?/i,"").replace(/```$/,"").trim();
+    try{return JSON.parse(f);}catch(e){}
+    var s=txt.indexOf("{"),en=txt.lastIndexOf("}");
+    if(s>=0&&en>s){try{return JSON.parse(txt.slice(s,en+1));}catch(e){}}
+    throw new Error("JSON 파싱 실패");
   },
 
   /* ---------- Claude (텍스트) — 브라우저 직접 호출 ---------- */
@@ -657,7 +667,7 @@ var Engine={
     var data=await res.json();
     if(data.stop_reason==="refusal") throw new Error("Claude refusal");
     var txt=(data.content||[]).filter(function(b){return b.type==="text";}).map(function(b){return b.text;}).join("");
-    return Engine._coerce(kind,JSON.parse(txt));
+    return Engine._coerce(kind,Engine._json(txt));
   },
 
   /* ---------- Gemini (텍스트) ---------- */
@@ -672,11 +682,11 @@ var Engine={
     if(!res.ok){ var t=await res.text(); throw new Error("Gemini "+res.status+" "+t.slice(0,80)); }
     var data=await res.json();
     var txt=(((data.candidates||[])[0]||{}).content||{}).parts||[];
-    txt=txt.map(function(x){return x.text||"";}).join("");
-    return Engine._coerce(kind,JSON.parse(txt));
+    txt=txt.filter(function(x){return !x.thought;}).map(function(x){return x.text||"";}).join("");
+    return Engine._coerce(kind,Engine._json(txt));
   },
   _geminiSchema(kind){ // Gemini는 additionalProperties 미지원 → 별도 스키마
-    if(kind==="analyze") return {type:"object",properties:{pains:{type:"array",items:{type:"string"}},tones:{type:"array",items:{type:"string"}}}};
+    if(kind==="analyze") return {type:"object",properties:{pains:{type:"array",items:{type:"string"}},tones:{type:"array",items:{type:"string"}},usps:{type:"array",items:{type:"string"}}}};
     return {type:"object",properties:{copies:{type:"array",items:{type:"object",properties:{
       key:{type:"string"},sub:{type:"string"},cta:{type:"string"},tone:{type:"string"},why:{type:"string"}}}}}};
   },
@@ -722,7 +732,12 @@ var Engine={
       var t=p.target||"타겟", o=p.offer||"오퍼";
       return {
         pains:[ "‘"+kw(t)+"’ 상황에서 매번 같은 벽에 막힌다", "해결책을 알아도 비용·리스크가 부담이라 미룬다", "지금 안 바꾸면 경쟁자에게 밀린다는 불안" ],
-        tones:pickN(TONES.slice().sort(function(){return Math.random()-.5;}),3)
+        tones:pickN(TONES.slice().sort(function(){return Math.random()-.5;}),3),
+        usps:(function(){var seg=o.split(/[—–:]|\s-\s/);var tail=(seg.slice(1).join(" ")||seg[0]||"");
+          var toks=tail.split(/[\s,·()\n]+/).filter(function(w){return w.length>=2&&!/^(및|또는|등|the|and|for)$/i.test(w);});
+          var nums=o.split(/[\s,·—–:|()\n]+/).filter(function(w){return /\d/.test(w)&&w.length>=2;});
+          var seen={},uniq=[];toks.concat(nums).forEach(function(w){if(!seen[w]){seen[w]=1;uniq.push(w);}});
+          return uniq.slice(0,4);})()
       };
     }
     if(kind==="copies"){
@@ -836,11 +851,24 @@ var S1={
     var b=S1.collect();
     if(!b.target||!b.offer){toast("타겟과 오퍼는 필수예요");return;}
     if(!b.funnel){toast("퍼널 단계를 골라 주세요");return;}
-    $("s1btn").innerHTML="분석 중…";
-    App.analysis=await Engine.gen("analyze",b);
-    await S2.regen(true);
-    $("s1btn").textContent="분석 시작 → 페인·톤·카피 5안";
-    UI.go(2);
+    var btn=$("s1btn");if(btn.dataset.busy==="1")return;btn.dataset.busy="1";
+    var orig="분석 시작 → 페인·톤·카피 5안";
+    btn.innerHTML="분석 중… <span style='opacity:.7;font-weight:600'>(최고 모델은 수십 초 걸릴 수 있어요)</span>";
+    try{
+      App.analysis=await Engine.gen("analyze",b);
+      await S2.regen(true);
+      UI.go(2);
+    }catch(e){
+      console.error("analyze 실패:",e);
+      toast("생성 오류 — 시뮬로 대체 ("+(((e&&e.message)||e||"")+"").slice(0,40)+")");
+      try{
+        if(!App.analysis||!App.analysis.pains||!App.analysis.pains.length)App.analysis=Engine._sim("analyze",b);
+        App.copies=Engine._sim("copies",{channel:b.channel,seedKey:b.seedKey,tones:App.analysis.tones,pains:App.analysis.pains,usps:App.analysis.usps,target:b.target,offer:b.offer,funnel:b.funnel});
+        S2.render();UI.go(2);
+      }catch(e2){console.error(e2);toast("진행 불가 — 입력을 확인해 주세요");}
+    }finally{
+      btn.dataset.busy="0";btn.textContent=orig;
+    }
   }
 };
 
@@ -850,7 +878,7 @@ var S1={
 var S2={
   async regen(silent){
     var b=App.brief, a=App.analysis;
-    App.copies=await Engine.gen("copies",{channel:b.channel,seedKey:b.seedKey,tones:a.tones,pains:a.pains,target:b.target,offer:b.offer,funnel:b.funnel});
+    App.copies=await Engine.gen("copies",{channel:b.channel,seedKey:b.seedKey,tones:a.tones,pains:a.pains,usps:a.usps,target:b.target,offer:b.offer,funnel:b.funnel});
     App.copies.forEach(function(c){Log.push("copy","pair",c.key,c.sub);});
     S2.render();
     if(!silent)toast("카피 5안 새로 생성");
@@ -862,6 +890,7 @@ var S2={
     (App.analysis.pains||[]).forEach(function(p){pc.appendChild(el("div","tiny","· "+esc(p)));});
     pc.appendChild(el("div","mini-lab","자동 선택 톤"));
     pc.appendChild(el("div","tiny",(App.analysis.tones||[]).map(esc).join(" · ")));
+    if((App.analysis.usps||[]).length){pc.appendChild(el("div","mini-lab","핵심 USP (카피에 반영)"));pc.appendChild(el("div","tiny",(App.analysis.usps||[]).map(esc).join(" · ")));}
     an.appendChild(pc);
     var g=$("copyGrid");g.innerHTML="";
     App.copies.forEach(function(c,i){
