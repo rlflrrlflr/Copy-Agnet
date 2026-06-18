@@ -439,10 +439,13 @@ kbd{font-family:ui-monospace,monospace;font-size:10px;background:var(--card);bor
       <div class="col" style="gap:13px">
         <div class="panel"><div class="panel-h">✨ 완성 후보</div><div class="panel-b col" id="variantList" style="gap:8px"></div>
           <div class="panel-b" style="border-top:1px solid var(--line)"><button class="btn p full" onclick="S4.generate()" id="s4gen">완성본 생성 / 다시</button></div></div>
-        <div class="panel"><div class="panel-h">🎛 마케터 조정 <span class="tiny muted" style="font-weight:600;margin-left:auto">고른 안 직접 셋팅</span></div><div class="panel-b col">
-          <div class="col"><label class="mini-lab">디자인 아키타입</label><select id="s4arch" class="in" onchange="S4.setArch(this.value)"></select></div>
-          <div class="row" style="gap:10px"><label class="row tiny" style="gap:6px">악센트 <input type="color" id="s4accent" value="#e60023" oninput="S4.setAccent(this.value)"></label>
-            <button class="btn sm" style="margin-left:auto" onclick="S4.regenBg()">🌄 배경 다시</button></div>
+        <div class="panel"><div class="panel-h">💬 말로 고치기 <span class="tiny muted" style="font-weight:600;margin-left:auto">고른 안을 다시 생성</span></div><div class="panel-b col">
+          <div class="s2chat-in"><input id="s4fb" class="in" placeholder="예: 더 고급스럽게 · 배경 어둡게 · 글씨 더 크게 (Enter)" onkeydown="if(event.key==='Enter'){event.preventDefault();S4.refine();}"><button class="btn p sm" onclick="S4.refine()">반영</button></div>
+          <button class="btn sm full" onclick="S4.regenBg()">🔄 이 안 다른 버전으로 다시</button>
+          <details class="fold"><summary class="tiny muted">키 없이 미리보기일 때 디자인 셋팅 <span class="ar">▾</span></summary><div class="fold-b col">
+            <div class="col"><label class="mini-lab">디자인 아키타입</label><select id="s4arch" class="in" onchange="S4.setArch(this.value)"></select></div>
+            <label class="row tiny" style="gap:6px">악센트 <input type="color" id="s4accent" value="#e60023" oninput="S4.setAccent(this.value)"></label>
+          </div></details>
         </div></div>
         <div class="panel"><div class="panel-h">⬇ 내보내기 <span class="tiny muted" style="font-weight:600;margin-left:auto">마케터 즉시 셋팅 · 디자이너 전달</span></div><div class="panel-b col">
           <div class="tool"><button class="btn sm" style="flex:1" onclick="S4.download()">🖼 완성본 PNG</button><button class="btn sm" style="flex:1" onclick="S4.downloadBg()">🌄 배경만 (텍스트 없음)</button></div>
@@ -775,14 +778,14 @@ var Brand={
    Engine — 시뮬레이터 + Gemini 훅(한 곳)
    ============================================================ */
 var Engine={
-  async gen(kind,payload){
+  async gen(kind,payload,strict){
     var isImage=(kind==="image"||kind==="final");
     Cat.show(kind); var _done;
-    try{ _done=await Engine._run(kind,payload,isImage); }
+    try{ _done=await Engine._run(kind,payload,isImage,strict); }
     finally{ Cat.hide(); }
     return _done;
   },
-  async _run(kind,payload,isImage){
+  async _run(kind,payload,isImage,strict){
     try{
       if(isImage){ if(App.keys.gemini) return await Engine._geminiImage(kind,payload); }
       else { // 텍스트(분석/카피): 선택된 provider
@@ -791,7 +794,7 @@ var Engine={
         if(App.keys.claude) return await Engine._claude(kind,payload);
         if(App.keys.gemini) return await Engine._geminiText(kind,payload);
       }
-    }catch(e){ console.warn(e); toast("API 오류 → 시뮬레이터로 ("+(e.message||e).slice(0,40)+")"); }
+    }catch(e){ if(strict)throw e; console.warn(e); toast("API 오류 → 시뮬레이터로 ("+(e.message||e).slice(0,40)+")"); }
     await new Promise(function(r){setTimeout(r,240);});
     return Engine._sim(kind,payload);
   },
@@ -891,7 +894,7 @@ var Engine={
     return parts;
   },
   async _geminiImage(kind,p){
-    var prompt=Engine._imagePrompt(p);
+    var prompt=(kind==="final"&&p&&p.finalDoc)?Engine._finalPrompt(App.doc,p.dir||0,p):Engine._imagePrompt(p);
     var url="https://generativelanguage.googleapis.com/v1beta/models/"+MODELS.geminiImage+":generateContent?key="+encodeURIComponent(App.keys.gemini);
     var ratio=(App.doc&&App.doc.ratio)||"1:1";
     var res=await fetch(url,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({
@@ -903,6 +906,34 @@ var Engine={
     var parts=(((data.candidates||[])[0]||{}).content||{}).parts||[];
     for(var i=0;i<parts.length;i++){ if(parts[i].inlineData){ return "data:"+(parts[i].inlineData.mimeType||"image/png")+";base64,"+parts[i].inlineData.data; } }
     throw new Error("이미지 응답 없음");
+  },
+  /* 4단계 — 텍스트까지 구운 '완성 배너' 한 장을 통째로 생성(레이어 분리 눈속임 = JSON 기반 전체 재생성) */
+  _finalPrompt(d,dir,p){
+    d=d||App.doc||{intent:{}};var it=d.intent||{};p=p||{};
+    var get=function(role){var L=(d.layers||[]).filter(function(x){return x.role===role&&!x.hidden;})[0];return L?(L.text||"").trim():"";};
+    var key=get("key")||it.copyCarries||"";
+    var sub=get("sub")||"";
+    var cta=get("cta")||"자세히 보기";
+    var badges=(d.layers||[]).filter(function(x){return x.type==="badge"&&!x.hidden;}).map(function(b){return ((b.sub?b.sub+" ":"")+(b.text||"")).trim();}).filter(Boolean);
+    var accent=(App.brand&&App.brand.accent)||"#e60023";
+    var dirs=[
+      {n:"클린 프리미엄",s:"minimal and elegant, lots of breathing room, refined premium typography, soft studio lighting, calm sophisticated composition"},
+      {n:"임팩트 세일",s:"bold high-contrast and energetic, very large punchy headline, strong color blocking, promotional and eye-catching"},
+      {n:"라이프스타일",s:"the product shown in a real-life usage scene/context with natural warm lighting, relatable and story-driven composition"}
+    ];
+    var dd=dirs[(dir||0)%3];var ratio=d.ratio||"1:1";
+    var s="Design a complete, ready-to-publish Korean performance-marketing display ad banner, aspect ratio "+ratio+", 2026 top-tier aesthetic (Toss / 29CM / Kurly level). Direction: "+dd.s+". ";
+    s+="The attached product image is the hero subject — integrate it naturally, keep it photoreal and identical (do not redraw printed text/logos on the product). ";
+    s+="RENDER THE FOLLOWING KOREAN TEXTS EXACTLY as written, perfectly spelled, crisp and legible, with professional Korean ad typography and clear hierarchy (absolutely NO gibberish, NO broken/invented glyphs):\n";
+    if(key)s+="• Headline (largest, bold, high contrast against background): \""+key+"\"\n";
+    if(sub)s+="• Sub copy (smaller, supporting): \""+sub+"\"\n";
+    if(cta)s+="• A call-to-action button (rounded pill, filled with accent color "+accent+", white text): \""+cta+"\"\n";
+    badges.forEach(function(b){s+="• A round/burst sale badge (accent color "+accent+", white bold text) in a top corner: \""+b+"\"\n";});
+    if(it.mood)s+="Mood: "+it.mood+". ";
+    s+="Use brand accent color "+accent+". Keep ~7% safe margins so nothing is clipped. ";
+    if(p.fb)s+="Extra art direction from the user (apply it): "+p.fb+". ";
+    s+="Output ONE single finished banner image with ALL the text baked in, indistinguishable from a real published ad. No watermark, no UI chrome, no mockup frame.";
+    return s;
   },
   _imagePrompt(p){
     var d=App.doc||{intent:{}};var it=d.intent||{};
@@ -1755,28 +1786,41 @@ var S4={
   mount(){ if(!App.final.variants.length){S4.generate();} else {S4.renderVariants();S4.paintFinal();} },
   intent(){ /* 기획자 의도 패널 제거(유저에겐 불필요) — 의도는 App.doc.intent에 그대로 보존되어 생성에만 사용 */ },
   async generate(){
-    $("s4gen").textContent="디자인 완성 중…";
-    var d=App.doc;App.final.variants=[];
-    var archs=Design.pickArchs(d);
-    for(var i=0;i<archs.length;i++){
-      var url=await Engine.gen("final",{layoutType:d.intent.layoutType,seedHue:d.bgHue+i*16,idx:i});
-      App.final.variants.push({bg:url,arch:archs[i]});
-    }
-    App.final.pick=0;S4.renderVariants();S4.paintFinal();
-    var kc=Design.content(d);Log.push("design","generate",kc.key,(archs.map(function(k){return ARCH[k]?ARCH[k].label:k;}).join("/")));
-    $("s4gen").textContent="완성본 생성 / 다시";
-    toast("기획 의도를 디자이너 관점으로 3종 완성");
+    var d=App.doc;var live=!!(App.keys&&App.keys.gemini);
+    var btn=$("s4gen");if(btn.dataset.busy==="1")return;btn.dataset.busy="1";
+    btn.textContent=live?"완성본 생성 중… (안당 수십 초)":"미리보기 생성 중…";
+    App.final.variants=[];
+    var names=["클린 프리미엄","임팩트 세일","라이프스타일"];
+    try{
+      for(var i=0;i<3;i++){
+        var pushed=false;
+        if(live){
+          try{ var url=await Engine.gen("final",{finalDoc:true,dir:i},true); App.final.variants.push({bg:url,full:true,dir:i,name:names[i]}); pushed=true; }
+          catch(e){ toast("실시간 생성 실패 → 미리보기로(브라우저 키/네트워크 확인): "+((e&&e.message)||e).slice(0,40)); }
+        }
+        if(!pushed){ var archs=Design.pickArchs(d); var u2=await Engine.gen("image",{layoutType:d.intent.layoutType,seedHue:d.bgHue+i*16,idx:i}); App.final.variants.push({bg:u2,full:false,arch:archs[i]}); }
+        App.final.pick=0;S4.renderVariants();S4.paintFinal(); // 한 장씩 채워지며 보이게
+      }
+    }catch(e){ console.error(e); toast("생성 오류: "+((e&&e.message)||e).slice(0,50)); }
+    finally{ btn.dataset.busy="0"; btn.textContent="완성본 생성 / 다시"; }
+    var kc=Design.content(d);Log.push("design","generate",kc.key,live?"full-banner x3":"preview x3");
+    toast(live?"AI가 완성본 3종 생성(텍스트까지 합성) — 골라서 미세조정/다시":"키 없이 미리보기 — 이미지 키를 넣으면 실제 완성본이 생성됩니다");
   },
+  _drawCover(canvas,url){var x=canvas.getContext("2d");var W=canvas.width,H=canvas.height;
+    function go(im){var s=Math.max(W/im.width,H/im.height);var dw=im.width*s,dh=im.height*s;x.clearRect(0,0,W,H);x.drawImage(im,(W-dw)/2,(H-dh)/2,dw,dh);}
+    if(S3._img[url]){go(S3._img[url]);}else{var im=new Image();im.onload=function(){S3._img[url]=im;go(im);};im.src=url;}},
   renderVariants(){
     var host=$("variantList");host.innerHTML="";
     App.final.variants.forEach(function(v,i){
       var card=el("div","variant"+(i===App.final.pick?" on":""));
       var c=el("canvas");c.width=c.height=160;card.appendChild(c);
-      var lab=el("div","tiny bold",(ARCH[v.arch]?ARCH[v.arch].label:("완성안 "+(i+1)))+"<div class='tiny muted' style='font-weight:600'>디자인 완성 · 위계·뱃지·정렬</div>");
+      var title=v.full?(v.name||("완성안 "+(i+1))):(ARCH[v.arch]?ARCH[v.arch].label:("완성안 "+(i+1)));
+      var sub=v.full?"AI 완성본 · 텍스트 합성":"미리보기(키 입력 시 완성)";
+      var lab=el("div","tiny bold",title+"<div class='tiny muted' style='font-weight:600'>"+sub+"</div>");
       card.appendChild(lab);
       card.onclick=function(){App.final.pick=i;S4.renderVariants();S4.paintFinal();};
       host.appendChild(card);
-      Design.render(c,v,App.doc);
+      if(v.full)S4._drawCover(c,v.bg); else Design.render(c,v,App.doc);
     });
     S4._fillControls();
   },
@@ -1787,16 +1831,20 @@ var S4={
   },
   setArch(arch){var v=App.final.variants[App.final.pick];if(!v)return;v.arch=arch;S4.renderVariants();S4.paintFinal();toast("아키타입 → "+(ARCH[arch]?ARCH[arch].label:arch));},
   setAccent(col){var v=App.final.variants[App.final.pick];if(!v)return;v.accent=col;S4.renderVariants();S4.paintFinal();},
-  async regenBg(){var v=App.final.variants[App.final.pick];if(!v)return;var url=await Engine.gen("final",{layoutType:App.doc.intent.layoutType,seedHue:App.doc.bgHue+Math.floor(Math.random()*120),idx:App.final.pick});delete S3._img[v.bg];v.bg=url;S4.renderVariants();S4.paintFinal();},
-  paintFinal(){ Design.render($("finalCanvas"),App.final.variants[App.final.pick],App.doc); },
+  async regenBg(){var v=App.final.variants[App.final.pick];if(!v)return;toast("이 안 다시 생성 중…");
+    if(v.full){var url=await Engine.gen("final",{finalDoc:true,dir:v.dir,fb:"vary the composition and lighting"});delete S3._img[v.bg];v.bg=url;}
+    else {var u2=await Engine.gen("image",{layoutType:App.doc.intent.layoutType,seedHue:App.doc.bgHue+Math.floor(Math.random()*120),idx:App.final.pick});delete S3._img[v.bg];v.bg=u2;}
+    S4.renderVariants();S4.paintFinal();},
+  paintFinal(){ var v=App.final.variants[App.final.pick];if(!v)return;var c=$("finalCanvas");
+    if(v.full){var wh=RATIOS[App.doc.ratio];c.width=wh[0];c.height=wh[1];S4._drawCover(c,v.bg);} else Design.render(c,v,App.doc); },
   async refine(){
-    var fbel=$("s4fb");var fb=fbel?fbel.value.trim():"";if(!fb){return;}
-    toast("‘"+fb.slice(0,16)+"…’ 반영 중");
+    var fbel=$("s4fb");var fb=fbel?fbel.value.trim():"";if(!fb){toast("어떻게 바꿀지 입력해주세요");return;}
+    var v=App.final.variants[App.final.pick];if(!v){toast("먼저 완성본을 생성");return;}
+    if(fbel)fbel.value="";toast("‘"+fb.slice(0,16)+"…’ 반영해 다시 생성 중…");
     App.doc.intent.mood=(App.doc.intent.mood||"")+" / "+fb;
-    var v=App.final.variants[App.final.pick];
-    var url=await Engine.gen("final",{layoutType:App.doc.intent.layoutType,seedHue:App.doc.bgHue+15,idx:App.final.pick});
-    if(v){delete S3._img[v.bg];v.bg=url;delete S3._img[url];}
-    S4.intent();S4.renderVariants();S4.paintFinal();
+    if(v.full){var url=await Engine.gen("final",{finalDoc:true,dir:v.dir,fb:fb});delete S3._img[v.bg];v.bg=url;}
+    else {var u2=await Engine.gen("image",{layoutType:App.doc.intent.layoutType,seedHue:App.doc.bgHue+15,idx:App.final.pick});delete S3._img[v.bg];v.bg=u2;}
+    S4.renderVariants();S4.paintFinal();toast("반영 완료");
   },
   download(){var c=$("finalCanvas");S4._dl(c.toDataURL("image/png"),"소재냥인_완성.png");toast("완성본 PNG 저장");},
   _dl(href,name){var a=el("a");a.href=href;a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){a.remove();if(/^blob:/.test(href))URL.revokeObjectURL(href);},100);},
@@ -1816,7 +1864,11 @@ var S4={
     L.push("## 핸드오프 메모");L.push("- '배경만 PNG'(텍스트·뱃지 없음) 별도 제공.");L.push("- 'SVG'를 열면 텍스트가 편집 가능한 벡터(폰트·색·위치 그대로).");L.push("- 세이프 영역 좌우/하단 여백 약 7%.");
     S4._dl(URL.createObjectURL(new Blob([L.join("\n")],{type:"text/plain;charset=utf-8"})),"소재냥인_디자인스펙.txt");toast("디자인 스펙(.txt) 저장");
   },
-  toStage3(){var v=App.final.variants[App.final.pick];if(!v){toast("완성안을 먼저 생성");return;}Design.applyToDoc(App.doc,v);App.doc.bgImage=v.bg;delete S3._img[v.bg];UI.go(3);toast("디자인을 3단계 레이어로 — 직접 편집하세요");},
+  toStage3(){var v=App.final.variants[App.final.pick];if(!v){toast("완성안을 먼저 생성");return;}
+    App.doc.bgImage=v.bg;delete S3._img[v.bg];App.doc.scrim=0; // 완성본은 음영 불필요
+    if(v.full){App.doc.layers.forEach(function(l){l.hidden=true;});toast("완성본을 3단계 배경으로 — 위에 레이어를 더 얹어 편집하세요(텍스트는 이미 합성됨)");}
+    else {Design.applyToDoc(App.doc,v);toast("디자인을 3단계 레이어로 — 직접 편집하세요");}
+    UI.go(3);},
   async downloadAllRatios(){
     var v=App.final.variants[App.final.pick];if(!v){toast("완성안을 먼저 생성");return;}
     var orig=App.doc.ratio,ratios=["1:1","4:5","16:9"];toast("전 비율 렌더링…");
