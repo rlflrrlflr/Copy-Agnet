@@ -101,7 +101,8 @@ main{padding:22px 0 60px}
 .dot.ok{background:var(--ok);box-shadow:0 0 0 4px #e7f6ee}
 /* ---- stage2 copy cards ---- */
 .copy-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
-.copy-card{border:1.5px solid var(--line);border-radius:var(--r-lg);padding:18px;background:#fff;cursor:pointer;transition:.14s;position:relative}
+.copy-card{border:1.5px solid var(--line);border-radius:var(--r-lg);padding:18px;background:#fff;cursor:pointer;transition:.14s;position:relative;animation:cardIn .34s both}
+@keyframes cardIn{0%{opacity:0;transform:translateY(10px) scale(.985)}100%{opacity:1;transform:translateY(0) scale(1)}}
 .copy-card:hover{border-color:var(--pin);transform:translateY(-2px)}
 .copy-card.on{border-color:var(--pin);box-shadow:0 0 0 3px var(--pin-50)}
 .copy-card .tag{position:absolute;top:-10px;left:16px;font-size:10px;font-weight:800;padding:3px 9px;border-radius:7px;background:var(--pin);color:#fff}
@@ -374,7 +375,7 @@ kbd{font-family:ui-monospace,monospace;font-size:10px;background:var(--card);bor
     <details class="fold"><summary>분석 근거 — 페인포인트 · 톤 (펼치기) <span class="ar">▾</span></summary><div class="fold-b" id="s2analysis"></div></details>
     <div id="copyGrid" class="copy-grid"></div>
     <div class="s2chat">
-      <div class="s2chat-h">💬 대화로 카피 다듬기 <span class="tiny muted" style="font-weight:600">— 직접 고쳐도 되고, 이렇게 말해도 돼요: “더 짧게”, “숫자·할인 강조”, “‘매트’ 꼭 넣어”, “덜 공격적으로”</span></div>
+      <div class="s2chat-h">💬 더 수정하고 싶다면 말씀해주세요 <span class="tiny muted" style="font-weight:600">— 카피를 클릭/더블클릭해 직접 고치는 것도 가능해요. 예: “더 짧게”, “숫자·할인 강조”, “‘매트’ 꼭 넣어”, “덜 공격적으로”</span></div>
       <div id="s2log" class="s2log"></div>
       <div class="s2chat-in">
         <input id="s2msg" class="in" placeholder="이렇게 바꿔줘… (Enter로 전송)" onkeydown="if(event.key==='Enter'){event.preventDefault();S2.chat();}">
@@ -402,6 +403,8 @@ kbd{font-family:ui-monospace,monospace;font-size:10px;background:var(--card);bor
         <div class="panel" style="min-width:0"><div class="panel-h">🗂 레이어</div><div class="panel-b col" id="layerList" style="gap:4px"></div></div>
         <div class="panel" style="min-width:0"><div class="panel-h">📐 비율</div><div class="panel-b">
           <div class="seg" id="ratioSeg"><button data-r="1:1" class="on" onclick="S3.ratio('1:1')">1:1</button><button data-r="4:5" onclick="S3.ratio('4:5')">4:5</button><button data-r="16:9" onclick="S3.ratio('16:9')">16:9</button></div>
+          <div class="col" style="margin-top:10px"><label class="mini-lab">🌓 배경 음영 (가독성 보호) <span class="tiny muted" style="font-weight:600">자동</span></label>
+            <div class="kv"><input id="scrimRange" type="range" min="0" max="80" value="45" oninput="S3.setScrim(this.value)"><input id="scrimNum" class="num" type="number" min="0" max="80" value="45" oninput="S3.setScrim(this.value)"></div></div>
         </div></div>
         <div class="panel" style="min-width:0"><div class="panel-h">📎 상품컷 · 레퍼런스</div><div class="panel-b col" style="gap:8px;min-width:0">
           <div class="row" style="gap:6px;min-width:0"><div id="dzProduct3" class="dropzone" style="flex:1;min-width:0;padding:9px 4px;font-size:11px" onclick="document.getElementById('upProduct3').click()">🛍 상품<br><span class="tiny muted">놓기/클릭</span></div><div id="dzRef3" class="dropzone" style="flex:1;min-width:0;padding:9px 4px;font-size:11px" onclick="document.getElementById('upRef3').click()">🎨 참고<br><span class="tiny muted">놓기/클릭</span></div>
@@ -1101,6 +1104,7 @@ var S2={
     App.copies.forEach(function(c,i){
       var top=i<3;
       var card=el("div","copy-card"+(top?" top":" alt")+(c.id===App.pick?" on":""));card.dataset.id=c.id;
+      card.style.animationDelay=(i*0.09)+"s"; // 챠챠챡 순차 등장
       card.innerHTML="<span class='tag'>안 "+c.id+" · "+esc(c.tone)+"</span>"
         +(top?"<span class='rank'>TOP "+(i+1)+"</span>":"<span class='rank alt'>보조</span>")
         +"<div class='k' contenteditable='true' data-f='key' spellcheck='false'>"+esc(c.key)+"</div>"
@@ -1152,7 +1156,7 @@ var Doc={
   initFromCopy(c){
     var hue=200+Math.floor(Math.random()*120);
     App.doc={
-      ratio:"1:1", bgImage:null, bgHue:hue,
+      ratio:"1:1", bgImage:null, bgHue:hue, scrim:.45,
       intent:{ layoutType:"product-shot", visualCarries:App.brief.visual||"제품이 어울리는 맥락 속 한 컷",
                copyCarries:c.key, badgeText:"", mood:"확신·프리미엄", tone:c.tone, funnel:App.brief.funnel },
       layers:[
@@ -1190,7 +1194,7 @@ var S3={
     // 기존처럼 진입 시 배경 이미지 자동 생성(키 있을 때 1회). 상품컷 있으면 동일성 유지 합성.
     if(App.doc&&!App.doc._autogen&&App.keys.gemini){App.doc._autogen=true;S3.genImage();}
   },
-  renderAll(){ S3.draw(); S3.layers(); S3.overlay(); S3.props(); UI.reflectStepper(); try{Store.save();}catch(e){} },
+  renderAll(){ S3.draw(); S3.layers(); S3.overlay(); S3.props(); S3.syncScrim(); UI.reflectStepper(); try{Store.save();}catch(e){} },
 
   /* ---------- 캔버스 렌더 ---------- */
   loadBg(cb){
@@ -1206,8 +1210,9 @@ var S3={
       x.clearRect(0,0,W,H);
       if(im){var s=Math.max(W/im.width,H/im.height);var dw=im.width*s,dh=im.height*s;x.drawImage(im,(W-dw)/2,(H-dh)/2,dw,dh);}
       else{var g=x.createLinearGradient(0,0,W,H);g.addColorStop(0,"hsl("+d.bgHue+",50%,30%)");g.addColorStop(1,"hsl("+((d.bgHue+40)%360)+",55%,15%)");x.fillStyle=g;x.fillRect(0,0,W,H);}
-      // 가독 스크림(하단)
-      var sg=x.createLinearGradient(0,H*.45,0,H);sg.addColorStop(0,"rgba(0,0,0,0)");sg.addColorStop(1,"rgba(0,0,0,.45)");x.fillStyle=sg;x.fillRect(0,0,W,H);
+      // 가독 스크림(하단) — 자동으로 깔리되, 슬라이더로 세기 조절(가독성 보호)
+      var sc=(d.scrim!=null?d.scrim:.45);
+      if(sc>0){var sg=x.createLinearGradient(0,H*.42,0,H);sg.addColorStop(0,"rgba(0,0,0,0)");sg.addColorStop(1,"rgba(0,0,0,"+sc+")");x.fillStyle=sg;x.fillRect(0,0,W,H);}
       d.layers.slice().sort(function(a,b){return a.z-b.z;}).forEach(function(l){if(l.hidden||l._editing)return;if(l.rot){var bb=S3.bbox(l),cx=bb.x+bb.w/2,cy=bb.y+bb.h/2;x.save();x.translate(cx,cy);x.rotate(l.rot*Math.PI/180);x.translate(-cx,-cy);S3.drawLayer(x,l,W,H);x.restore();}else S3.drawLayer(x,l,W,H);});
       // 스냅 가이드
       if(S3.drag&&S3.drag.guides)S3.drawGuides(x,S3.drag.guides,W,H);
@@ -1463,7 +1468,8 @@ var S3={
     var sw=el("div","tool");SWATCHES.forEach(function(col){var b=el("button","swatch"+(l.color===col?" on":""));b.style.background=col;b.onclick=function(){l.color=col;S3.renderAll();};sw.appendChild(b);});
     var cp=el("input");cp.type="color";cp.value=((l.color||"#ffffff").length===7)?l.color:"#ffffff";cp.oninput=function(){l.color=cp.value;S3.renderAll();};sw.appendChild(cp);
     cw.appendChild(sw);body.appendChild(cw);
-    if(l.type==="cta"){var bw=el("div","col");bw.appendChild(el("label","mini-lab","버튼 색"));var bc=el("input");bc.type="color";bc.value=l.bg;bc.oninput=function(){l.bg=bc.value;S3.draw();};bw.appendChild(bc);body.appendChild(bw);}
+    if(l.type==="cta"){var bw=el("div","col");bw.appendChild(el("label","mini-lab","버튼 색"));var bc=el("input");bc.type="color";bc.value=l.bg;bc.oninput=function(){l.bg=bc.value;S3.draw();};bw.appendChild(bc);body.appendChild(bw);
+      var srow0=el("div","col");srow0.appendChild(el("label","mini-lab","버튼 모양"));var sg0=el("div","seg");[["pill","● 알약"],["bar","▭ 하단바"]].forEach(function(s){var bb=el("button",l.shape===s[0]?"on":"",s[1]);bb.onclick=function(){l.shape=s[0];[].forEach.call(sg0.children,function(x){x.classList.toggle("on",x===bb);});S3.draw();};sg0.appendChild(bb);});srow0.appendChild(sg0);body.appendChild(srow0);}
     // 크기 (T1) — 글자/뱃지 크기(상한 ↑: 뱃지 더 크게)
     var zw=el("div","col");zw.appendChild(el("label","mini-lab",l.type==="badge"?"뱃지 크기":(l.type==="cta"?"글자 크기":"크기")));
     var zr=el("div","kv");var rg=el("input");rg.type="range";rg.min=12;rg.max=420;rg.value=l.size;rg.oninput=function(){l.size=+rg.value;num.value=l.size;S3.renderAll();};
@@ -1489,7 +1495,6 @@ var S3={
       var wrow=el("div","col");wrow.appendChild(el("label","mini-lab","두께 (굵기)"));var ws=el("select","in");WEIGHTS.forEach(function(w){var o=el("option",null,w[1]+" ("+w[0]+")");o.value=w[0];if(+w[0]===(+l.weight||700))o.selected=true;ws.appendChild(o);});ws.onchange=function(){l.weight=+ws.value;S3.renderAll();};wrow.appendChild(ws);fb.appendChild(wrow);
       var arow=el("div","col");arow.appendChild(el("label","mini-lab","정렬"));var seg=el("div","seg");[["left","왼"],["center","가운데"],["right","오른"]].forEach(function(a){var bb=el("button",l.align===a[0]?"on":"",a[1]);bb.onclick=function(){l.align=a[0];[].forEach.call(seg.children,function(x){x.classList.toggle("on",x===bb);});S3.renderAll();};seg.appendChild(bb);});arow.appendChild(seg);fb.appendChild(arow);
     }
-    if(l.type==="cta"){var srow=el("div","col");srow.appendChild(el("label","mini-lab","CTA 모양"));var sg=el("div","seg");[["pill","알약"],["bar","바"]].forEach(function(s){var bb=el("button",l.shape===s[0]?"on":"",s[1]);bb.onclick=function(){l.shape=s[0];[].forEach.call(sg.children,function(x){x.classList.toggle("on",x===bb);});S3.draw();};sg.appendChild(bb);});srow.appendChild(sg);fb.appendChild(srow);}
     // 캔버스 정렬 + 회전
     var alw=el("div","col");alw.appendChild(el("label","mini-lab","캔버스 정렬 · 회전"));
     var ar=el("div","tool");
@@ -1527,6 +1532,8 @@ var S3={
   addBadge(){Doc.add(Doc.badge({}));S3.renderAll();},
   addImage(url){function go(im){Doc.add(Doc.image(url,{ar:im.height/im.width}));S3.renderAll();}if(S3._img[url])go(S3._img[url]);else{var im=new Image();im.onload=function(){S3._img[url]=im;go(im);};im.src=url;}},
   ratio(r){App.doc.ratio=r;[].forEach.call($("ratioSeg").children,function(b){b.classList.toggle("on",b.dataset.r===r);});S3.renderAll();},
+  setScrim(v){v=clamp(+v||0,0,80);if(App.doc)App.doc.scrim=v/100;var r=$("scrimRange"),n=$("scrimNum");if(r)r.value=v;if(n)n.value=v;S3.draw();try{Store.save();}catch(e){}},
+  syncScrim(){if(!App.doc)return;var v=Math.round((App.doc.scrim!=null?App.doc.scrim:.45)*100);var r=$("scrimRange"),n=$("scrimNum");if(r)r.value=v;if(n)n.value=v;},
   bgUpload(e){var f=e.target.files[0];if(!f)return;var rd=new FileReader();rd.onload=function(){App.doc.bgImage=rd.result;delete S3._img[rd.result];S3.draw();};rd.readAsDataURL(f);},
   async genImage(){var hasP=(App.assets&&App.assets.products&&App.assets.products.length);toast(App.live?(hasP?"상품컷을 합성한 새 배경 생성 중…":"배경 생성 중…(상품컷을 넣으면 합성해줘요)"):"시뮬 배경(키 입력 시 실제 합성)");var url=await Engine.gen("image",{layoutType:App.doc.intent.layoutType,seedHue:App.doc.bgHue+30});App.doc.bgHue=(App.doc.bgHue+30)%360;App.doc.bgImage=url;delete S3._img[url];S3.draw();}
 };
