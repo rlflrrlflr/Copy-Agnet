@@ -256,7 +256,7 @@ kbd{font-family:ui-monospace,monospace;font-size:10px;background:var(--card);bor
       <div class="row" style="gap:12px;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card)">
         <span class="mini-lab">🎨 브랜드 킷</span>
         <label class="row tiny" style="gap:5px;cursor:pointer">악센트 <input type="color" id="brandAccent" value="#e60023" oninput="Brand.setAccent(this.value)"></label>
-        <button class="btn sm" onclick="document.getElementById('brandLogo').click()">로고 업로드</button>
+        <div id="dzLogo" class="dropzone" style="padding:8px 12px;min-width:0;font-size:11px" onclick="document.getElementById('brandLogo').click()">🖼 로고 끌어다 놓기/클릭 <span class="tiny muted">· 악센트 자동</span></div>
         <input type="file" id="brandLogo" class="hidden" accept="image/*" onchange="Brand.setLogo(event)">
         <span id="brandLogoName" class="tiny muted"></span>
         <button class="btn gho sm" style="margin-left:auto" onclick="Brand.reset()">초기화</button>
@@ -556,6 +556,7 @@ var Drop={
   wireAll(){
     Drop.zone($("dzProduct"),function(fl){Assets.addFiles("product",fl);});
     Drop.zone($("dzRef"),function(fl){Assets.addFiles("ref",fl);});
+    Drop.zone($("dzLogo"),function(fl){Brand.setLogoFiles(fl);});
     Drop.zone($("dzCtx"),function(fl){Ctx.addFile(fl);});
     Drop.zone($("dzProduct3"),function(fl){Assets.addFiles("product",fl);});
     Drop.zone($("dzRef3"),function(fl){Assets.addFiles("ref",fl);});
@@ -586,7 +587,24 @@ var Assets={
 /* 브랜드 킷 — 마케터가 한 번 셋팅하면 모든 완성 디자인에 반영 */
 var Brand={
   setAccent(col){App.brand.accent=col;Brand._refresh();},
-  setLogo(e){var f=e.target.files[0];if(!f)return;var rd=new FileReader();rd.onload=function(){App.brand.logo=rd.result;var im=new Image();im.onload=function(){S3._img[rd.result]=im;Brand._refresh();};im.src=rd.result;$("brandLogoName").textContent="✓ "+f.name.slice(0,14);};rd.readAsDataURL(f);},
+  setLogo(e){Brand.setLogoFiles(e.target.files);if(e&&e.target)e.target.value="";},
+  setLogoFiles(fl){if(!fl||!fl.length)return;var f=fl[0];if(!/^image\//.test(f.type||""))return;
+    var rd=new FileReader();rd.onload=function(){App.brand.logo=rd.result;var im=new Image();im.onload=function(){S3._img[rd.result]=im;
+      var acc=Brand._accentFrom(im);if(acc){App.brand.accent=acc;var ai=$("brandAccent");if(ai)ai.value=acc;toast("로고에서 악센트 자동 추출: "+acc);}
+      Brand._refresh();};im.src=rd.result;$("brandLogoName").textContent="✓ "+f.name.slice(0,14);};rd.readAsDataURL(f);},
+  /* 로고의 가장 선명한(채도·명도 높은) 대표색을 악센트로 추출 */
+  _accentFrom(img){try{
+    var n=40,c=document.createElement("canvas");c.width=n;c.height=n;var x=c.getContext("2d");x.drawImage(img,0,0,n,n);
+    var d=x.getImageData(0,0,n,n).data,acc={},best=null,bestSc=-1;
+    for(var i=0;i<d.length;i+=4){var r=d[i],g=d[i+1],bl=d[i+2],a=d[i+3];if(a<128)continue;
+      var mx=Math.max(r,g,bl),mn=Math.min(r,g,bl),v=mx/255,s=mx?(mx-mn)/mx:0;
+      if(s<0.32||v<0.22||v>0.97)continue;
+      var key=(r>>5)+"_"+(g>>5)+"_"+(bl>>5),sc=s*v;
+      if(!acc[key])acc[key]={n:0,r:0,g:0,b:0,sc:0};var o=acc[key];o.n++;o.r+=r;o.g+=g;o.b+=bl;o.sc+=sc;}
+    for(var k in acc){if(acc[k].sc>bestSc){bestSc=acc[k].sc;best=acc[k];}}
+    if(!best)return null;var R=Math.round(best.r/best.n),G=Math.round(best.g/best.n),B=Math.round(best.b/best.n);
+    return "#"+[R,G,B].map(function(v){return ("0"+v.toString(16)).slice(-2);}).join("");
+  }catch(e){return null;}},
   reset(){App.brand.accent="";App.brand.logo=null;$("brandLogoName").textContent="";Brand._refresh();toast("브랜드 킷 초기화");},
   _refresh(){if(App.stage===4&&App.final.variants.length){S4.renderVariants();S4.paintFinal();}}
 };
