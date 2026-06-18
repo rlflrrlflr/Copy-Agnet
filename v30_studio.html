@@ -423,7 +423,9 @@ var CH_LIMIT={"":{k:15,s:30,c:10},"GDN":{k:15,s:30,c:10},"Meta":{k:20,s:40,c:12}
 
 /* ---------------- 단일 상태 ---------------- */
 /* 모델 라우팅 — 카피/분석은 Claude 또는 Gemini, 이미지는 Gemini(Claude는 이미지 생성 X) */
-var MODELS={ claude:"claude-opus-4-8", geminiText:"gemini-2.5-flash", geminiImage:"gemini-3.1-flash-image" };
+/* 최고 퀄 우선(토큰 비용 무관) — 텍스트=Gemini 3.1 Pro, 이미지=Nano Banana Pro(Gemini 3 Pro Image, 2K·고정밀 텍스트). Claude는 Opus 4.8. */
+var MODELS={ claude:"claude-opus-4-8", geminiText:"gemini-3.1-pro-preview", geminiImage:"gemini-3-pro-image-preview" };
+var GEM_AR={"1:1":"1:1","4:5":"4:5","16:9":"16:9"};
 var App={
   stage:1, live:false, provider:"gemini", keys:{claude:"",gemini:""}, brand:{accent:"",logo:null}, assets:{products:[],refs:[]}, ctx:[],
   brief:{mode:"quick",target:"",offer:"",funnel:"",keyMsg:"",seedKey:"",seedSub:"",visual:"",must:"",ban:"",channel:"",voice:""},
@@ -646,7 +648,7 @@ var Engine={
       headers:{ "content-type":"application/json", "x-api-key":App.keys.claude,
         "anthropic-version":"2023-06-01", "anthropic-dangerous-direct-browser-access":"true" },
       body:JSON.stringify({
-        model:MODELS.claude, max_tokens:1400, system:pr.sys,
+        model:MODELS.claude, max_tokens:3000, system:pr.sys,
         messages:[{role:"user",content:pr.user}],
         output_config:{format:{type:"json_schema",schema:Engine._schema(kind)}}
       })
@@ -690,9 +692,10 @@ var Engine={
   async _geminiImage(kind,p){
     var prompt=Engine._imagePrompt(p);
     var url="https://generativelanguage.googleapis.com/v1beta/models/"+MODELS.geminiImage+":generateContent?key="+encodeURIComponent(App.keys.gemini);
+    var ratio=(App.doc&&App.doc.ratio)||"1:1";
     var res=await fetch(url,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({
       contents:[{role:"user",parts:Engine._imgParts(prompt)}],
-      generationConfig:{responseModalities:["IMAGE"]}
+      generationConfig:{responseModalities:["IMAGE"],imageConfig:{aspectRatio:GEM_AR[ratio]||"1:1",imageSize:"2K"}}
     })});
     if(!res.ok){ var t=await res.text(); throw new Error("Gemini IMG "+res.status+" "+t.slice(0,70)); }
     var data=await res.json();
@@ -707,7 +710,7 @@ var Engine={
     s+="Compose as "+(LA[p.layoutType||it.layoutType]||"a fitting commercial scene")+". ";
     if(it.visualCarries)s+="Image should carry: "+it.visualCarries+". ";
     if(it.mood)s+="Mood: "+it.mood+". ";
-    s+="Leave a calm low-contrast area for headline overlay. 2026 top-tier aesthetic (Toss/29CM/Kurly league). 1:1.";
+    s+="Leave a calm low-contrast area for headline overlay. 2026 top-tier aesthetic (Toss/29CM/Kurly league). Photoreal, crisp, studio lighting, high detail. Aspect ratio "+(d.ratio||"1:1")+".";
     var prods=(App.assets&&App.assets.products)||[],refs=(App.assets&&App.assets.refs)||[];
     if(prods.length){s+=" [PRODUCT — IDENTITY LOCKED] The first "+prods.length+" attached image(s) are the ACTUAL product"+(prods.length>1?" (incl. detail close-up shots)":"")+". Recreate the product EXACTLY as shown — identical shape, label, printed text, colors and proportions. Treat every printed character/logo as a locked texture: NEVER redraw, restyle, translate, recolor or invent it. Integrate it naturally as the single focal subject; you may use the detail shots for accurate close-up details. Do NOT alter or replace the product.";}
     if(refs.length){s+=" [STYLE REFERENCE] The remaining attached image(s) are mood/style references only — match their color grading, lighting and composition feel; never copy their text, logos or products.";}
@@ -809,8 +812,8 @@ var UI={
     App.keys.gemini=$("geminiKey").value.trim();
     var txtLive=(App.provider==="claude"&&App.keys.claude)||(App.provider==="gemini"&&App.keys.gemini)||App.keys.claude||App.keys.gemini;
     App.live=!!txtLive;
-    var label=txtLive?((App.provider==="claude"&&App.keys.claude)||(!App.keys.gemini&&App.keys.claude)?"Claude 카피":"Gemini 카피"):"시뮬레이터";
-    if(txtLive&&App.keys.gemini)label+=" + Gemini 이미지";
+    var label=txtLive?((App.provider==="claude"&&App.keys.claude)||(!App.keys.gemini&&App.keys.claude)?"Claude Opus 카피":"Gemini 3.1 Pro 카피"):"시뮬레이터";
+    if(txtLive&&App.keys.gemini)label+=" + Nano Banana Pro 이미지";
     $("modeBadge").textContent=label;$("modeBadge").classList.toggle("live",!!txtLive);
   }
 };
