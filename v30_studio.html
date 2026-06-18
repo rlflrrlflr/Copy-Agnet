@@ -6,7 +6,9 @@
 <title>소재냥인 Studio v30 — 카피 · 기획 · 완성</title>
 <!-- 디자인 폰트(점진적 향상 · 오프라인이면 시스템 폰트로 폴백) -->
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Do+Hyeon&family=Jua&family=Gowun+Dodum&family=Nanum+Myeongjo:wght@700;800&family=Gothic+A1:wght@700;800;900&display=swap" rel="stylesheet">
+<!-- 인기 한글 폰트(눈누/구글) + Pretendard 전체 weight. 오프라인이면 시스템 폴백(검증 무영향) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Do+Hyeon&family=Jua&family=Gowun+Dodum&family=Nanum+Myeongjo:wght@400;700;800&family=Gothic+A1:wght@300;400;500;700;800;900&family=Noto+Sans+KR:wght@300;400;500;700;900&family=Noto+Serif+KR:wght@400;600;700;900&family=Sunflower:wght@300;500;700&family=Song+Myung&family=Gugi&display=swap" rel="stylesheet">
 <style>
 /* ============================================================
    소재냥인 Studio v30 — 구조 전면 재설계 (단일 파일 · 무의존 · 시뮬레이터 우선)
@@ -416,7 +418,9 @@ kbd{font-family:ui-monospace,monospace;font-size:10px;background:var(--card);bor
 var FUNNELS=["인지","유입","구매고려","전환","리타겟팅"];
 var TONES=["직격추궁형","자조넋두리형","현재vs미래형","공감형","숫자증거형","질문형"];
 var LAYOUTS=[["product-shot","제품샷"],["app-ui-screen","앱 UI"],["persona-scenario","인물+상황"],["data-visual","수치·차트"]];
-var FONTS=["Pretendard","Black Han Sans","Gothic A1","Noto Serif KR","Nanum Myeongjo","Do Hyeon","Jua","Gowun Dodum"];
+var FONTS=["Pretendard","Noto Sans KR","Gothic A1","Black Han Sans","Jua","Do Hyeon","Gowun Dodum","Noto Serif KR","Nanum Myeongjo","Song Myung","Sunflower","Gugi"];
+/* weight 단계(있는 폰트에서 적용 — Pretendard/Noto Sans KR/Gothic A1은 100~900) */
+var WEIGHTS=[["300","얇게"],["400","보통"],["500","중간"],["700","볼드"],["800","두껍게"],["900","블랙"]];
 var SWATCHES=["#ffffff","#191919","#e60023","#ffd24a","#1f6feb","#0a7d4d","#ff7a59","#7c3aed"];
 var RATIOS={"1:1":[1080,1080],"4:5":[1080,1350],"16:9":[1080,607]};
 var CH_LIMIT={"":{k:15,s:30,c:10},"GDN":{k:15,s:30,c:10},"Meta":{k:20,s:40,c:12},"Naver":{k:15,s:25,c:8},"Kakao":{k:14,s:28,c:9}};
@@ -1244,6 +1248,7 @@ var S3={
     var fb=el("div","fold-b");
     if(l.type!=="image"&&l.type!=="badge"){
       var frow=el("div","col");frow.appendChild(el("label","mini-lab","글꼴"));var fs=el("select","in");FONTS.forEach(function(f){var o=el("option",null,f);o.value=f;if(f===l.font)o.selected=true;fs.appendChild(o);});fs.onchange=function(){l.font=fs.value;S3.renderAll();};frow.appendChild(fs);fb.appendChild(frow);
+      var wrow=el("div","col");wrow.appendChild(el("label","mini-lab","두께 (굵기)"));var ws=el("select","in");WEIGHTS.forEach(function(w){var o=el("option",null,w[1]+" ("+w[0]+")");o.value=w[0];if(+w[0]===(+l.weight||700))o.selected=true;ws.appendChild(o);});ws.onchange=function(){l.weight=+ws.value;S3.renderAll();};wrow.appendChild(ws);fb.appendChild(wrow);
       var arow=el("div","col");arow.appendChild(el("label","mini-lab","정렬"));var seg=el("div","seg");[["left","왼"],["center","가운데"],["right","오른"]].forEach(function(a){var bb=el("button",l.align===a[0]?"on":"",a[1]);bb.onclick=function(){l.align=a[0];[].forEach.call(seg.children,function(x){x.classList.toggle("on",x===bb);});S3.renderAll();};seg.appendChild(bb);});arow.appendChild(seg);fb.appendChild(arow);
     }
     if(l.type==="cta"){var srow=el("div","col");srow.appendChild(el("label","mini-lab","CTA 모양"));var sg=el("div","seg");[["pill","알약"],["bar","바"]].forEach(function(s){var bb=el("button",l.shape===s[0]?"on":"",s[1]);bb.onclick=function(){l.shape=s[0];[].forEach.call(sg.children,function(x){x.classList.toggle("on",x===bb);});S3.draw();};sg.appendChild(bb);});srow.appendChild(sg);fb.appendChild(srow);}
