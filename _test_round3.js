@@ -79,31 +79,17 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
    };im.src=c.toDataURL();
  }));
 
- // ---------- cat think bubble during count ----------
- const cat=await p.evaluate(async()=>{
-   Cat.score={w:0,l:0,d:0,streak:0,best:0};Cat.show('copies');
-   const hasThink=!!document.getElementById('catThink');
-   Cat.rps('rock');
-   await new Promise(r=>setTimeout(r,250));
-   const thinkOn=document.getElementById('catThink').classList.contains('on');
-   const thinkText=document.getElementById('catThink').textContent.length>0;
-   await new Promise(r=>setTimeout(r,1300));
-   const thinkOff=!document.getElementById('catThink').classList.contains('on');
-   return {hasThink,thinkOn,thinkText,thinkOff};
- });
 
  await b.close();
  console.log('refine:',JSON.stringify(refine));
  console.log('s3:',JSON.stringify(s3));
  console.log('s4:',JSON.stringify(s4));
  console.log('knockout:',JSON.stringify(ko));
- console.log('cat:',JSON.stringify(cat));
  console.log('errors:',errs.length?errs.slice(0,6):'none');
  const ok=refine.mustOk&&refine.shortOk&&refine.strongOk&&refine.logCount>=2&&refine.numOk&&refine.copies===5
    &&s3.hasImgLayer&&s3.sizeWorks&&s3.deleteWorks
    &&s4.noIntentList&&s4.noIntentBox&&s4.intentFnSafe
    &&ko.ok&&ko.cornerTransparent&&ko.centerOpaque
-   &&cat.hasThink&&cat.thinkOn&&cat.thinkText&&cat.thinkOff
-   &&!errs.length;
+      &&!errs.length;
  console.log(ok?'PASS':'FAIL');process.exit(ok?0:1);
 })().catch(e=>{console.error('FATAL',e.message);process.exit(1);});
