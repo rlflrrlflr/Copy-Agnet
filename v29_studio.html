@@ -397,6 +397,18 @@ var Cat={
     else{$("catMsg").textContent="😼 고양이 승! 조금만 더…";if(img&&window.CAT)img.src=CAT.happy;}}
 };
 
+/* 팀 공통 로그 — 원본 툴과 동일한 Apps Script 시트로 사용 로그 전송(no-cors)
+   시트 '카피 엔진 관련 로그' / 열: 시간·광고주·단계·액션·KEY·SUB·피드백 */
+var Log={
+  HOOK:"https://script.google.com/macros/s/AKfycbxV3LZFAYBiGUx6kOcoxeDla0Xi8HPnWjtOYfTHoaPawC9BJ1ZhI0Y0KEn3_pmyjODguA/exec",
+  q:[],
+  url(){try{return localStorage.getItem("ce19hook")||Log.HOOK;}catch(e){return Log.HOOK;}},
+  off(){try{return localStorage.getItem("ce19logoff")==="1";}catch(e){return false;}},
+  adv(){try{var pick=function(s){s=(s||"").trim();if(!s)return "";return s.split(/[\s,/|\n·]+/).filter(Boolean).slice(0,2).join(" ").slice(0,20);};return pick(App.brief.offer)||pick(App.brief.target)||"(미상)";}catch(e){return "(미상)";}},
+  push(stage,action,key,sub,fb){if(Log.off())return;try{Log.q.push({sheet:"pref",row:[new Date().toLocaleString(),Log.adv(),stage||"",action||"",key||"",sub||"",fb||""]});if(Log.q.length>400)Log.q=Log.q.slice(-400);Log.flush();}catch(e){}},
+  async flush(){var url=Log.url();if(!url||!Log.q.length)return;var batch=Log.q.splice(0,Log.q.length);try{await fetch(url,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({rows:batch})});}catch(e){Log.q=batch.concat(Log.q);}}
+};
+
 /* 에셋 — 상품컷(동일성 유지)·디테일컷·레퍼런스(스타일 참고). 1단계+3단계 노출 */
 var Assets={
   add(kind,e){var fl=e.target.files;if(!fl)return;[].forEach.call(fl,function(f){var rd=new FileReader();rd.onload=function(){var url=rd.result,o={id:uid(),name:f.name,url:url};(kind==="product"?App.assets.products:App.assets.refs).push(o);var im=new Image();im.onload=function(){S3._img[url]=im;o.ar=im.height/im.width;Assets.render();};im.src=url;};rd.readAsDataURL(f);});e.target.value="";},
@@ -683,6 +695,7 @@ var S2={
   async regen(silent){
     var b=App.brief, a=App.analysis;
     App.copies=await Engine.gen("copies",{channel:b.channel,seedKey:b.seedKey,tones:a.tones,pains:a.pains,target:b.target,offer:b.offer,funnel:b.funnel});
+    App.copies.forEach(function(c){Log.push("copy","pair",c.key,c.sub);});
     S2.render();
     if(!silent)toast("카피 3안 새로 생성");
   },
@@ -705,7 +718,9 @@ var S2={
   choose(id){
     App.pick=id;
     [].forEach.call($("copyGrid").children,function(x){x.classList.toggle("on",x.dataset.id===id);});
-    Doc.initFromCopy(App.copies.filter(function(c){return c.id===id;})[0]);
+    var c=App.copies.filter(function(c){return c.id===id;})[0];
+    if(c)Log.push("copy","select",c.key,c.sub);
+    Doc.initFromCopy(c);
     setTimeout(function(){UI.go(3);},180);
   }
 };
@@ -1248,6 +1263,7 @@ var S4={
       App.final.variants.push({bg:url,arch:archs[i]});
     }
     App.final.pick=0;S4.renderVariants();S4.paintFinal();
+    var kc=Design.content(d);Log.push("design","generate",kc.key,(archs.map(function(k){return ARCH[k]?ARCH[k].label:k;}).join("/")));
     $("s4gen").textContent="완성본 생성 / 다시";
     toast("기획 의도를 디자이너 관점으로 3종 완성");
   },
@@ -1374,7 +1390,7 @@ function init(){
 }
 if(document.readyState!=="loading")init();else document.addEventListener("DOMContentLoaded",init);
 /* 테스트 훅 */
-window.App=App;window.UI=UI;window.S1=S1;window.S2=S2;window.S3=S3;window.S4=S4;window.Doc=Doc;window.Engine=Engine;window.Brand=Brand;window.Design=Design;window.Store=Store;window.Assets=Assets;
+window.App=App;window.UI=UI;window.S1=S1;window.S2=S2;window.S3=S3;window.S4=S4;window.Doc=Doc;window.Engine=Engine;window.Brand=Brand;window.Design=Design;window.Store=Store;window.Assets=Assets;window.Log=Log;
 </script>
 </body>
 </html>
