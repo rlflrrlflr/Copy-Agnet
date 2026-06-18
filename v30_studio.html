@@ -120,6 +120,15 @@ main{padding:22px 0 60px}
 .copy-card .c[contenteditable]:focus{box-shadow:0 0 0 2px #fff,0 0 0 4px var(--pin)}
 .copy-card .pick-btn{display:block;width:100%;margin-top:12px;padding:9px;font-size:12px;font-weight:800;color:var(--pin);background:var(--pin-50);border:1px solid var(--pin-100);border-radius:9px;cursor:pointer}
 .copy-card .pick-btn:hover{background:var(--pin);color:#fff}
+.s2chat{border:1px solid var(--line);border-radius:12px;background:var(--card);padding:12px}
+.s2chat-h{font-weight:800;font-size:13px;margin-bottom:8px}
+.s2log{display:flex;flex-direction:column;gap:6px;max-height:170px;overflow:auto;margin-bottom:9px}
+.s2log:empty{display:none}
+.s2-msg{font-size:12px;line-height:1.42;padding:7px 11px;border-radius:11px;max-width:90%;white-space:pre-wrap}
+.s2-msg.me{align-self:flex-end;background:var(--pin);color:#fff;border-bottom-right-radius:3px}
+.s2-msg.ai{align-self:flex-start;background:var(--pin-50);color:var(--body);border-bottom-left-radius:3px}
+.s2chat-in{display:flex;gap:8px}
+.s2chat-in .in{flex:1}
 .copy-card .edit-hint{font-size:9.5px;color:var(--mute);margin-top:6px}
 .dropzone{border:1.5px dashed var(--line-d);border-radius:10px;padding:13px 12px;text-align:center;font-size:12px;font-weight:700;color:var(--body);cursor:pointer;background:#fff;transition:.12s;min-width:130px;line-height:1.5}
 .dropzone:hover{border-color:var(--pin);color:var(--pin-d);background:#fff}
@@ -154,6 +163,8 @@ main{padding:22px 0 60px}
 .lay .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lay .eye{opacity:.5;font-size:12px;padding:2px}
 .lay .eye:hover{opacity:1}
+.lay .del{opacity:.45;font-size:12px;padding:2px}
+.lay .del:hover{opacity:1;filter:saturate(1.4)}
 .tool{display:flex;flex-wrap:wrap;gap:6px}
 .swatch{width:24px;height:24px;border-radius:7px;border:1px solid var(--line-d);cursor:pointer;padding:0}
 .swatch.on{box-shadow:0 0 0 2px var(--pin)}
@@ -197,9 +208,13 @@ kbd{font-family:ui-monospace,monospace;font-size:10px;background:var(--card);bor
 .cat-img{position:absolute;left:50%;bottom:62px;width:128px;margin-left:-64px;image-rendering:pixelated;transform:translateY(60%);opacity:0;animation:catUp .6s cubic-bezier(.34,1.5,.5,1) forwards,catBob 2.4s ease-in-out .6s infinite;transition:bottom .35s cubic-bezier(.34,1.5,.5,1);z-index:3}
 @keyframes catUp{to{transform:translateY(0);opacity:1}}
 @keyframes catBob{0%,100%{margin-bottom:0}50%{margin-bottom:7px}}
-@keyframes catPsy{0%,100%{transform:translateX(-4px) rotate(-4deg)}50%{transform:translateX(4px) rotate(4deg)}}
+@keyframes catPsy{0%,100%{transform:translateY(2px) scale(1);opacity:1}50%{transform:translateY(-6px) scale(1.05);opacity:1}}
 .cat-img.up{bottom:92px}
-.cat-img.psy{animation:catPsy .18s ease-in-out infinite!important}
+.cat-img.psy{animation:catPsy .5s ease-in-out infinite!important}
+/* 카운트 동안 기대 말풍선(고양이가 노려보는 느낌) */
+.cat-think{position:absolute;left:50%;top:12px;transform:translateX(-50%);font-size:13px;font-weight:800;color:#fff;background:rgba(0,0,0,.46);padding:4px 13px;border-radius:14px;opacity:0;transition:opacity .18s;z-index:6;white-space:nowrap;pointer-events:none}
+.cat-think.on{opacity:1;animation:thinkBob 1s ease-in-out infinite}
+@keyframes thinkBob{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-3px)}}
 /* 큰 앞발(손) — 공개 시 슬램 */
 .cat-paw{position:absolute;font-size:62px;opacity:0;z-index:5;filter:drop-shadow(0 4px 7px rgba(0,0,0,.45))}
 .cat-paw.you{left:13%;bottom:74px}
@@ -317,6 +332,14 @@ kbd{font-family:ui-monospace,monospace;font-size:10px;background:var(--card);bor
       <button class="btn sm" style="margin-left:auto" onclick="S2.regen()">🔄 다시 생성</button></div>
     <details class="fold"><summary>분석 근거 — 페인포인트 · 톤 (펼치기) <span class="ar">▾</span></summary><div class="fold-b" id="s2analysis"></div></details>
     <div id="copyGrid" class="copy-grid"></div>
+    <div class="s2chat">
+      <div class="s2chat-h">💬 대화로 카피 다듬기 <span class="tiny muted" style="font-weight:600">— 직접 고쳐도 되고, 이렇게 말해도 돼요: “더 짧게”, “숫자·할인 강조”, “‘매트’ 꼭 넣어”, “덜 공격적으로”</span></div>
+      <div id="s2log" class="s2log"></div>
+      <div class="s2chat-in">
+        <input id="s2msg" class="in" placeholder="이렇게 바꿔줘… (Enter로 전송)" onkeydown="if(event.key==='Enter'){event.preventDefault();S2.chat();}">
+        <button class="btn p sm" onclick="S2.chat()">보내기</button>
+      </div>
+    </div>
   </section>
 
   <!-- ===================== STAGE 3 (EDITOR) ===================== -->
@@ -328,7 +351,7 @@ kbd{font-family:ui-monospace,monospace;font-size:10px;background:var(--card);bor
         <button class="btn sm" onclick="S3.addBadge()">＋ 뱃지</button>
         <button class="btn sm" onclick="document.getElementById('bgUp').click()">🖼 배경</button>
         <input type="file" id="bgUp" class="hidden" accept="image/*" onchange="S3.bgUpload(event)">
-        <button class="btn sm" onclick="S3.genImage()" title="현재 배경을 AI로 다시 생성">🔄 배경 다시 생성</button>
+        <button class="btn sm" onclick="S3.genImage()" title="상품컷을 그대로 합성·보존한 채 어울리는 '새 배경 장면'을 AI로 생성합니다 (상품컷 위에 글씨만 얹는 게 아님)">🔄 상품컷 기반 배경 생성</button>
         <button class="btn p" onclick="S4.open()">4단계 · 완성 →</button>
       </div>
     </div>
@@ -363,14 +386,13 @@ kbd{font-family:ui-monospace,monospace;font-size:10px;background:var(--card);bor
 
   <!-- ===================== STAGE 4 ===================== -->
   <section id="stage4" class="col hidden" style="gap:14px">
-    <div class="card pad"><div class="sec-h"><span class="bar"></span>4단계 · 완성 (기획자 의도 위에서 다듬기)</div>
-      <div class="sub">3단계에서 당신이 내린 결정을 <b>기획자 의도</b>로 읽고, 그 근거 위에서 완성도만 끌어올립니다.</div></div>
+    <div class="card pad"><div class="sec-h"><span class="bar"></span>4단계 · 완성</div>
+      <div class="sub">3단계 기획을 바탕으로 매체에 바로 쓸 완성본을 만듭니다. 후보 중 하나를 고르고 미세조정하세요.</div></div>
     <div class="final-grid">
       <div class="panel"><div class="panel-h">🖼 완성본</div><div class="panel-b" style="display:grid;place-items:center;min-height:360px">
         <canvas id="finalCanvas" width="1080" height="1080" style="max-width:100%;max-height:60vh;border-radius:8px;box-shadow:var(--shadow)"></canvas>
       </div></div>
       <div class="col" style="gap:13px">
-        <div class="intent-box"><div class="xb" style="color:var(--warn);font-size:13px;margin-bottom:8px">🧭 읽어낸 기획자 의도</div><div id="intentList"></div></div>
         <div class="panel"><div class="panel-h">✨ 완성 후보</div><div class="panel-b col" id="variantList" style="gap:8px"></div>
           <div class="panel-b" style="border-top:1px solid var(--line)"><button class="btn p full" onclick="S4.generate()" id="s4gen">완성본 생성 / 다시</button></div></div>
         <div class="panel"><div class="panel-h">🎛 마케터 조정 <span class="tiny muted" style="font-weight:600;margin-left:auto">고른 안 직접 셋팅</span></div><div class="panel-b col">
@@ -396,6 +418,7 @@ kbd{font-family:ui-monospace,monospace;font-size:10px;background:var(--card);bor
     <div class="cat-top" id="catTop"><span class="cat-count" id="catCount">가위바위보 한 판 할까요? 🐾</span></div>
     <div class="cat-stage" id="catStage">
       <img id="catImg" class="cat-img" alt="고양이"><div class="desk"></div>
+      <div id="catThink" class="cat-think"></div>
       <div id="catPawYou" class="cat-paw you"></div>
       <div id="catPawCat" class="cat-paw cat"></div>
       <div id="catFlash" class="cat-flash"></div>
@@ -462,7 +485,7 @@ var Cat={
     $("catTtl").textContent=(kind==="image"||kind==="final")?"이미지 생성 중… 🎨":"카피 만드는 중… ✍️";
     var img=$("catImg");if(img){if(window.CAT)img.src=CAT.neutral;img.classList.remove("up","psy");}
     $("catMsg").textContent="‘보!’에 맞춰 내봐요 — 버튼을 누르면 셋을 셉니다 (✊✌️🖐)";
-    Cat._top("가위바위보 한 판 할까요? 🐾","");
+    Cat._top("가위바위보 한 판 할까요? 🐾","");Cat._think("");
     Cat._paw("catPawYou","");Cat._paw("catPawCat","");Cat._buttons(true);
     Cat._busy=false;clearInterval(Cat._cd);Cat._score();
     Cat._p=6;Cat._bar();ov.classList.add("on");
@@ -472,6 +495,7 @@ var Cat={
   _top(html,cls){var t=$("catTop");if(!t)return;t.className="cat-top"+(cls?(" "+cls):"");t.innerHTML="<span class='cat-count' id='catCount'>"+html+"</span>";},
   _tick(html){var t=$("catTop");if(!t)return;t.className="cat-top";t.innerHTML="<span class='cat-count tick' id='catCount'>"+html+"</span>";},
   _paw(id,emoji){var p=$(id);if(!p)return;p.classList.remove("show");if(!emoji){p.textContent="";p.style.opacity="0";return;}p.textContent=emoji;void p.offsetWidth;p.classList.add("show");},
+  _think(html){var t=$("catThink");if(!t)return;if(!html){t.classList.remove("on");t.textContent="";return;}t.textContent=html;t.classList.add("on");},
   _buttons(on){[].forEach.call(document.querySelectorAll(".cat-rps button"),function(b){b.disabled=!on;});},
   _score(){var e=$("catScore");if(!e)return;var s=Cat.score;
     e.innerHTML="<b style='color:#0a7d4d'>승 "+s.w+"</b> · 무 "+s.d+" · <b style='color:#e60023'>패 "+s.l+"</b>"
@@ -479,7 +503,8 @@ var Cat={
   rps(you){
     if(Cat._busy||!Cat.HAND[you])return;Cat._busy=true;Cat._buttons(false);
     var img=$("catImg"),stage=$("catStage"),flash=$("catFlash"),msg=$("catMsg");
-    if(img){if(window.CAT)img.src=CAT.neutral;img.classList.remove("up");img.classList.add("psy");} // 직전 안달(주먹 떨기)
+    if(img){if(window.CAT)img.src=CAT.neutral;img.classList.remove("up");img.classList.add("psy");} // 카운트 중 — 기대하며 노려보기(가운데 유지)
+    Cat._think("👀 고양이가 노려본다…냥");
     Cat._paw("catPawYou","");Cat._paw("catPawCat","");
     var beats={rock:"scissors",scissors:"paper",paper:"rock"},m=["rock","scissors","paper"];
     var cat=m[(Math.random()*3)|0]; // 고양이는 이미 냈다(숨김) — 예측해!
@@ -487,7 +512,7 @@ var Cat={
     Cat._tick(seq[0]);msg.textContent="셋을 셉니다… 고양이가 뭘 낼지 예측! 👀";
     clearInterval(Cat._cd);Cat._cd=setInterval(function(){i++;if(i<seq.length)Cat._tick(seq[i]);},460);
     setTimeout(function(){
-      clearInterval(Cat._cd);if(img)img.classList.remove("psy");
+      clearInterval(Cat._cd);if(img)img.classList.remove("psy");Cat._think("");
       // 동시 공개 — 큰 앞발 슬램 + 화면 플래시(타격감)
       Cat._paw("catPawYou",Cat.HAND[you]);Cat._paw("catPawCat",Cat.HAND[cat]);
       if(flash){flash.classList.remove("on");void flash.offsetWidth;flash.classList.add("on");}
@@ -577,7 +602,9 @@ var Assets={
       var img=el("img");img.src=a.url;img.style.cssText="width:100%;height:100%;object-fit:cover;display:block";cell.appendChild(img);
       var x=el("button",null,"×");x.style.cssText="position:absolute;top:0;right:0;background:rgba(0,0,0,.6);color:#fff;border:none;width:17px;height:17px;font-size:12px;line-height:1;cursor:pointer";x.onclick=function(ev){ev.stopPropagation();Assets.remove(a.k,a.id);};cell.appendChild(x);
       var tag=el("span",null,a.k==="product"?"상품":"참고");tag.style.cssText="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.58);color:#fff;font-size:8px;text-align:center;font-weight:800";cell.appendChild(tag);
-      if(s3){cell.title="클릭=배경으로 · Shift+클릭=이미지로 얹기";cell.style.cursor="pointer";cell.onclick=function(ev){if(ev.shiftKey)Assets.toLayer(a.url);else Assets.toBg(a.url);};}
+      if(s3){cell.title="클릭=배경으로 · ＋레이어=크기조절·삭제 가능한 레이어로";cell.style.cursor="pointer";cell.onclick=function(ev){if(ev.shiftKey)Assets.toLayer(a.url);else Assets.toBg(a.url);};
+        var ly=el("button",null,"＋레이어");ly.style.cssText="position:absolute;top:0;left:0;background:rgba(13,138,138,.88);color:#fff;border:none;font-size:8px;font-weight:800;padding:1px 4px;border-radius:0 0 6px 0;cursor:pointer";ly.onclick=function(ev){ev.stopPropagation();Assets.toLayer(a.url);};cell.appendChild(ly);
+      }
       host.appendChild(cell);
     });},
   toBg(url){if(!App.doc){toast("먼저 카피를 고르세요");return;}App.doc.bgImage=url;delete S3._img[url];S3.draw();try{Store.save();}catch(e){}toast("배경으로 적용");},
@@ -589,9 +616,27 @@ var Brand={
   setAccent(col){App.brand.accent=col;Brand._refresh();},
   setLogo(e){Brand.setLogoFiles(e.target.files);if(e&&e.target)e.target.value="";},
   setLogoFiles(fl){if(!fl||!fl.length)return;var f=fl[0];if(!/^image\//.test(f.type||""))return;
-    var rd=new FileReader();rd.onload=function(){App.brand.logo=rd.result;var im=new Image();im.onload=function(){S3._img[rd.result]=im;
+    var rd=new FileReader();rd.onload=function(){var orig=rd.result;App.brand.logo=orig;var im=new Image();im.onload=function(){S3._img[orig]=im;
       var acc=Brand._accentFrom(im);if(acc){App.brand.accent=acc;var ai=$("brandAccent");if(ai)ai.value=acc;toast("로고에서 악센트 자동 추출: "+acc);}
-      Brand._refresh();};im.src=rd.result;$("brandLogoName").textContent="✓ "+f.name.slice(0,14);};rd.readAsDataURL(f);},
+      var ko=Brand.knockout(im); // 단색 배경이면 누끼따서 투명 PNG로
+      if(ko){App.brand.logo=ko;var ki=new Image();ki.onload=function(){S3._img[ko]=ki;Brand._refresh();};ki.src=ko;toast("로고 배경 자동 제거(누끼) 적용");}
+      Brand._refresh();};im.src=orig;$("brandLogoName").textContent="✓ "+f.name.slice(0,14);};rd.readAsDataURL(f);},
+  /* 로고 누끼 — 네 모서리가 단색이면 그 색(±tol)을 투명 처리한 PNG 반환. 아니면 null(원본 유지) */
+  knockout(img){try{
+    var w=img.naturalWidth||img.width,h=img.naturalHeight||img.height;if(!w||!h)return null;
+    var sc=Math.min(1,512/Math.max(w,h)),cw=Math.max(1,Math.round(w*sc)),ch=Math.max(1,Math.round(h*sc));
+    var c=document.createElement("canvas");c.width=cw;c.height=ch;var x=c.getContext("2d");x.drawImage(img,0,0,cw,ch);
+    var im=x.getImageData(0,0,cw,ch),d=im.data;
+    var cs=[[0,0],[cw-1,0],[0,ch-1],[cw-1,ch-1]],br=0,bg=0,bb=0;
+    cs.forEach(function(p){var i=(p[1]*cw+p[0])*4;br+=d[i];bg+=d[i+1];bb+=d[i+2];});br/=4;bg/=4;bb/=4;
+    var uni=cs.every(function(p){var i=(p[1]*cw+p[0])*4;return Math.abs(d[i]-br)+Math.abs(d[i+1]-bg)+Math.abs(d[i+2]-bb)<54;});
+    if(!uni)return null; // 모서리가 제각각 → 사진/풀블리드 로고: 건드리지 않음
+    var tol=78,cleared=0;
+    for(var i=0;i<d.length;i+=4){if(d[i+3]<8)continue;var dist=Math.abs(d[i]-br)+Math.abs(d[i+1]-bg)+Math.abs(d[i+2]-bb);
+      if(dist<tol){var t=1-dist/tol;var na=Math.round(d[i+3]*(1-t)*(1-t));d[i+3]=na;if(na<18){d[i+3]=0;cleared++;}}}
+    if(cleared<cw*ch*0.02)return null; // 거의 안 지워짐 → 의미 없음
+    x.putImageData(im,0,0);return c.toDataURL("image/png");
+  }catch(e){return null;}},
   /* 로고의 가장 선명한(채도·명도 높은) 대표색을 악센트로 추출 */
   _accentFrom(img){try{
     var n=40,c=document.createElement("canvas");c.width=n;c.height=n;var x=c.getContext("2d");x.drawImage(img,0,0,n,n);
@@ -640,6 +685,13 @@ var Engine={
       return {
         sys:"너는 한국 퍼포먼스 마케팅 시니어 전략가다. 타겟·오퍼를 받아 (1)핵심 페인포인트 3개 (2)어울리는 톤 3개 (3)이 제품만의 차별점(USP) 3~5개를 뽑는다. USP는 오퍼에 등장하는 '구체적 소재·스펙·수치·고유 기능명'을 일반화하지 말고 그대로 살려라(예: '가죽'이 아니라 '나파가죽', '방수'가 아니라 'IPX7 방수', '1.2mm 논슬립'). 한국어, 광고 실무용으로 날카롭게.",
         user:"타겟:\n"+(p.target||"")+"\n\n오퍼:\n"+(p.offer||"")+"\n\n퍼널 단계: "+(p.funnel||"")+Ctx.block()+"\n\n페인포인트 3개, 톤 3개(예: 직격추궁형/숫자증거형/공감형), USP 3~5개(오퍼의 구체 용어 그대로)를 JSON으로."
+      };
+    }
+    if(kind==="refine"){
+      var rl=CH_LIMIT[p.channel||""]||CH_LIMIT[""];
+      return {
+        sys:"너는 한국 퍼포먼스 DA 배너 카피라이터다. 기존 카피 5안과 사용자의 자연어 수정 요청을 받아, 요청을 반영해 5안을 다시 다듬는다. 5안 구조와 안 순서(가장 강한 안이 1번, 위 3개 TOP3)는 유지. 메인 "+rl.k+"자·서브 "+rl.s+"자·CTA "+rl.c+"자 내외. 제품 명사와 구체 USP(예: 나파가죽)는 일반화하지 말고 유지하면서 요청 방향으로만 개선. 요청이 한 안만 겨냥해도 전체 톤 일관성은 지켜라. 한국어.",
+        user:"제품/오퍼:\n"+(p.offer||"")+"\n\n타겟:\n"+(p.target||"")+"\n\n핵심 USP(유지): "+(((p.usps||[]).join(" / "))||"-")+"\n\n[기존 5안]\n"+(p.copies||[]).map(function(c){return c.id+") "+c.key+" | "+c.sub+" | "+c.cta+" ("+c.tone+")";}).join("\n")+"\n\n[수정 요청]\n"+(p.instruction||"")+"\n\n수정된 5안을 JSON으로(각 안: key, sub, cta, tone, why). why엔 '무엇을 어떻게 바꿨는지' 한 줄."
       };
     }
     // copies
@@ -761,6 +813,23 @@ var Engine={
           var seen={},uniq=[];toks.concat(nums).forEach(function(w){if(!seen[w]){seen[w]=1;uniq.push(w);}});
           return uniq.slice(0,4);})()
       };
+    }
+    if(kind==="refine"){
+      var ins=(p.instruction||""),src=(p.copies||[]).slice(0,5),noun=prodNoun(p.offer)||"제품";
+      var shorter=/짧|간결|줄여|압축|간단/.test(ins),longer=/길게|자세|풀어|구체적으로 더/.test(ins);
+      var strong=/강하|공격|쎄|세게|임팩트|자극|도발/.test(ins),soft=/부드럽|순화|덜 공격|차분|점잖|정중/.test(ins);
+      var num=/숫자|수치|퍼센트|%|할인|가격/.test(ins);
+      var mustWord=(ins.match(/['"“”]([^'"“”]{1,12})['"“”]/)||[])[1]||(ins.match(/([가-힣A-Za-z0-9]{1,12})\s*(?:꼭|반드시)\s*(?:넣|포함|써)/)||[])[1];
+      return src.map(function(c0,i){var c=Object.assign({},c0);
+        if(mustWord&&(c.key+c.sub).indexOf(mustWord)<0)c.key=mustWord+" "+c.key;
+        if(num&&!/\d/.test(c.key+c.sub))c.sub=c.sub.replace(/[.!]$/,"")+" · 지금 최대 50%";
+        if(strong){c.key=c.key.replace(/[.?! ]+$/,"")+"!";if(!/→/.test(c.cta))c.cta=c.cta.replace(/하기$/,"하기")+" →";}
+        if(soft)c.key=c.key.replace(/[!?]+$/,"");
+        if(shorter){c.key=c.key.split(/[,·—–-]/)[0].trim();c.sub=cut(c.sub,Math.max(10,Math.floor((c.sub||"").length*0.6)));}
+        if(longer&&(c.sub||"").indexOf(noun)<0)c.sub=(c.sub||"")+" "+noun+"라서 가능한 차이.";
+        c.why="요청 반영: "+ins.slice(0,18)+(ins.length>18?"…":"");
+        c.id=["A","B","C","D","E"][i]||("X"+i);return c;
+      });
     }
     if(kind==="copies"){
       var lim=CH_LIMIT[p.channel||""]||CH_LIMIT[""];
@@ -937,6 +1006,21 @@ var S2={
     });
   },
   highlight(id){App.pick=id;[].forEach.call($("copyGrid").children,function(x){x.classList.toggle("on",x.dataset.id===id);});},
+  _log(who,text){var host=$("s2log");if(!host)return null;var d=el("div","s2-msg "+who);d.textContent=text;host.appendChild(d);host.scrollTop=host.scrollHeight;return d;},
+  async chat(){
+    var inp=$("s2msg");if(!inp)return;var msg=(inp.value||"").trim();if(!msg)return;
+    if(!App.copies||!App.copies.length){toast("먼저 카피를 생성하세요");return;}
+    inp.value="";S2._log("me",msg);inp.disabled=true;
+    var hint=S2._log("ai","고치는 중… ✍️");
+    try{
+      var b=App.brief,a=App.analysis||{};
+      var out=await Engine.gen("refine",{instruction:msg,copies:App.copies,target:b.target,offer:b.offer,pains:a.pains,usps:a.usps,tones:a.tones,channel:b.channel});
+      if(out&&out.length){App.copies=out;S2.render();if(hint)hint.textContent="✓ 반영했어요 — 5안을 다시 다듬었습니다. 더 고칠 게 있으면 말해줘요.";}
+      else if(hint)hint.textContent="바뀐 게 없어요. 다르게 요청해볼래요?";
+      App.copies.forEach(function(c){Log.push("copy","refine",c.key,c.sub,msg);});
+    }catch(e){if(hint)hint.textContent="실패해서 원본 유지: "+((e&&e.message)||e);}
+    finally{inp.disabled=false;inp.focus();}
+  },
   choose(id){
     App.pick=id;
     [].forEach.call($("copyGrid").children,function(x){x.classList.toggle("on",x.dataset.id===id);});
@@ -1100,8 +1184,8 @@ var S3={
     App.doc.layers.slice().sort(function(a,b){return b.z-a.z;}).forEach(function(l){
       var ic={key:"H",sub:"T",cta:"▭",image:"🖼"}[l.role]||"T";
       var row=el("div","lay"+(S3.isSel(l.id)?" on":"")+(l.id===App.sel?" primary":""));
-      row.innerHTML="<span class='ic'>"+ic+"</span><span class='nm'>"+esc(l.role.toUpperCase()+" · "+(l.text||"").slice(0,12))+"</span><span class='eye'>"+(l.hidden?"🙈":"👁")+"</span>";
-      row.onclick=function(e){ if(e.target.className==="eye"){l.hidden=!l.hidden;}else{S3.pickSel(l.id,e.shiftKey);} S3.renderAll(); };
+      row.innerHTML="<span class='ic'>"+ic+"</span><span class='nm'>"+esc((l.type==="image"?"이미지":l.role.toUpperCase())+" · "+(l.text||(l.type==="image"?"레이어":"")).slice(0,12))+"</span><span class='eye' title='숨기기'>"+(l.hidden?"🙈":"👁")+"</span><span class='del' title='삭제'>🗑</span>";
+      row.onclick=function(e){ var cn=e.target.className; if(cn==="eye"){l.hidden=!l.hidden;}else if(cn==="del"){Doc.remove(l.id);}else{S3.pickSel(l.id,e.shiftKey);} S3.renderAll(); };
       host.appendChild(row);
     });
   },
@@ -1330,7 +1414,7 @@ var S3={
   addImage(url){function go(im){Doc.add(Doc.image(url,{ar:im.height/im.width}));S3.renderAll();}if(S3._img[url])go(S3._img[url]);else{var im=new Image();im.onload=function(){S3._img[url]=im;go(im);};im.src=url;}},
   ratio(r){App.doc.ratio=r;[].forEach.call($("ratioSeg").children,function(b){b.classList.toggle("on",b.dataset.r===r);});S3.renderAll();},
   bgUpload(e){var f=e.target.files[0];if(!f)return;var rd=new FileReader();rd.onload=function(){App.doc.bgImage=rd.result;delete S3._img[rd.result];S3.draw();};rd.readAsDataURL(f);},
-  async genImage(){toast(App.live?"이미지 생성 중…":"시뮬 배경 생성");var url=await Engine.gen("image",{layoutType:App.doc.intent.layoutType,seedHue:App.doc.bgHue+30});App.doc.bgHue=(App.doc.bgHue+30)%360;App.doc.bgImage=url;delete S3._img[url];S3.draw();}
+  async genImage(){var hasP=(App.assets&&App.assets.products&&App.assets.products.length);toast(App.live?(hasP?"상품컷을 합성한 새 배경 생성 중…":"배경 생성 중…(상품컷을 넣으면 합성해줘요)"):"시뮬 배경(키 입력 시 실제 합성)");var url=await Engine.gen("image",{layoutType:App.doc.intent.layoutType,seedHue:App.doc.bgHue+30});App.doc.bgHue=(App.doc.bgHue+30)%360;App.doc.bgImage=url;delete S3._img[url];S3.draw();}
 };
 
 /* ============================================================
@@ -1547,21 +1631,8 @@ var Design={
    ============================================================ */
 var S4={
   open(){ if(!App.doc){toast("먼저 기획하세요");return;} UI.go(4); },
-  mount(){ S4.intent(); if(!App.final.variants.length){S4.generate();} else {S4.renderVariants();S4.paintFinal();} },
-  intent(){
-    var d=App.doc;var box=$("intentList");box.innerHTML="";
-    var rows=[
-      ["퍼널",d.intent.funnel||App.brief.funnel],
-      ["톤",d.intent.tone],
-      ["레이아웃",d.intent.layoutType],
-      ["메인 의도",(Doc.byId(App.sel)||d.layers[0]).text||d.intent.copyCarries],
-      ["이미지가 보여줄 것",d.intent.visualCarries],
-      ["무드",d.intent.mood],
-      ["뱃지",(function(){var bs=d.layers.filter(function(L){return L.type==="badge";});return bs.length?bs.map(function(L){return (L.sub?L.sub+" ":"")+L.text+"("+L.style+")";}).join(", "):(d.intent.badgeText||"(없음)");})()],
-      ["디자이너 처리","마케터 의도(카피·뱃지·톤)를 받아 타이포 위계·뱃지 디자인·정렬을 재구성 (거친 배치는 그대로 안 옮김)"]
-    ];
-    rows.forEach(function(r){var row=el("div","intent-row","<b>"+esc(r[0])+"</b><span>"+esc(r[1]||"-")+"</span>");box.appendChild(row);});
-  },
+  mount(){ if(!App.final.variants.length){S4.generate();} else {S4.renderVariants();S4.paintFinal();} },
+  intent(){ /* 기획자 의도 패널 제거(유저에겐 불필요) — 의도는 App.doc.intent에 그대로 보존되어 생성에만 사용 */ },
   async generate(){
     $("s4gen").textContent="디자인 완성 중…";
     var d=App.doc;App.final.variants=[];
