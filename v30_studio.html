@@ -326,19 +326,19 @@ kbd{font-family:ui-monospace,monospace;font-size:10px;background:var(--card);bor
         <button class="btn sm" onclick="S3.addBadge()">＋ 뱃지</button>
         <button class="btn sm" onclick="document.getElementById('bgUp').click()">🖼 배경</button>
         <input type="file" id="bgUp" class="hidden" accept="image/*" onchange="S3.bgUpload(event)">
-        <button class="btn sm" onclick="S3.genImage()">✨ 이미지 생성</button>
+        <button class="btn sm" onclick="S3.genImage()" title="현재 배경을 AI로 다시 생성">🔄 배경 다시 생성</button>
         <button class="btn p" onclick="S4.open()">4단계 · 완성 →</button>
       </div>
     </div>
     <div class="editor">
       <!-- LEFT: layers + ratio -->
-      <div class="col" style="gap:12px">
-        <div class="panel"><div class="panel-h">🗂 레이어</div><div class="panel-b col" id="layerList" style="gap:4px"></div></div>
-        <div class="panel"><div class="panel-h">📐 비율</div><div class="panel-b">
+      <div class="col" style="gap:12px;min-width:0">
+        <div class="panel" style="min-width:0"><div class="panel-h">🗂 레이어</div><div class="panel-b col" id="layerList" style="gap:4px"></div></div>
+        <div class="panel" style="min-width:0"><div class="panel-h">📐 비율</div><div class="panel-b">
           <div class="seg" id="ratioSeg"><button data-r="1:1" class="on" onclick="S3.ratio('1:1')">1:1</button><button data-r="4:5" onclick="S3.ratio('4:5')">4:5</button><button data-r="16:9" onclick="S3.ratio('16:9')">16:9</button></div>
         </div></div>
-        <div class="panel"><div class="panel-h">📎 상품컷 · 레퍼런스</div><div class="panel-b col" style="gap:8px">
-          <div class="row" style="gap:6px"><div id="dzProduct3" class="dropzone" style="flex:1;padding:9px 6px" onclick="document.getElementById('upProduct3').click()">🛍 상품<br><span class="tiny muted">놓기/클릭</span></div><div id="dzRef3" class="dropzone" style="flex:1;padding:9px 6px" onclick="document.getElementById('upRef3').click()">🎨 참고<br><span class="tiny muted">놓기/클릭</span></div>
+        <div class="panel" style="min-width:0"><div class="panel-h">📎 상품컷 · 레퍼런스</div><div class="panel-b col" style="gap:8px;min-width:0">
+          <div class="row" style="gap:6px;min-width:0"><div id="dzProduct3" class="dropzone" style="flex:1;min-width:0;padding:9px 4px;font-size:11px" onclick="document.getElementById('upProduct3').click()">🛍 상품<br><span class="tiny muted">놓기/클릭</span></div><div id="dzRef3" class="dropzone" style="flex:1;min-width:0;padding:9px 4px;font-size:11px" onclick="document.getElementById('upRef3').click()">🎨 참고<br><span class="tiny muted">놓기/클릭</span></div>
           <input type="file" id="upProduct3" class="hidden" accept="image/*" multiple onchange="Assets.add('product',event)"><input type="file" id="upRef3" class="hidden" accept="image/*" multiple onchange="Assets.add('ref',event)"></div>
           <div id="assetGrid3" class="row" style="flex-wrap:wrap;gap:6px"></div>
           <span class="tiny muted">클릭=배경 · Shift+클릭=얹기</span>
