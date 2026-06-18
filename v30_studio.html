@@ -119,6 +119,9 @@ main{padding:22px 0 60px}
 .copy-card .pick-btn{display:block;width:100%;margin-top:12px;padding:9px;font-size:12px;font-weight:800;color:var(--pin);background:var(--pin-50);border:1px solid var(--pin-100);border-radius:9px;cursor:pointer}
 .copy-card .pick-btn:hover{background:var(--pin);color:#fff}
 .copy-card .edit-hint{font-size:9.5px;color:var(--mute);margin-top:6px}
+.dropzone{border:1.5px dashed var(--line-d);border-radius:10px;padding:13px 12px;text-align:center;font-size:12px;font-weight:700;color:var(--body);cursor:pointer;background:#fff;transition:.12s;min-width:130px;line-height:1.5}
+.dropzone:hover{border-color:var(--pin);color:var(--pin-d);background:#fff}
+.dropzone.drag-over{border-color:var(--pin);border-style:solid;background:var(--pin-50);color:var(--pin-d);box-shadow:0 0 0 3px var(--pin-50)}
 /* ---- stage3 editor ---- */
 .editor{display:grid;grid-template-columns:200px 1fr 290px;gap:14px;align-items:start}
 @media(max-width:1100px){.editor{grid-template-columns:1fr}}
@@ -241,11 +244,11 @@ kbd{font-family:ui-monospace,monospace;font-size:10px;background:var(--card);bor
         <span class="tiny muted" style="flex-basis:100%">한 번 설정하면 모든 완성 디자인의 악센트·로고에 자동 반영(브랜드 일관성).</span>
       </div>
       <div class="col" style="gap:8px;padding:12px;border:1.5px solid var(--pin-100);border-radius:12px;background:var(--pin-50)">
-        <div class="row"><span class="mini-lab" style="color:var(--pin-d)">📎 상품컷 · 레퍼런스</span><span class="tiny muted" style="margin-left:auto">상품 동일성 유지 · 디테일컷 여러 장 OK</span></div>
+        <div class="row"><span class="mini-lab" style="color:var(--pin-d)">📎 상품컷 · 레퍼런스</span><span class="tiny muted" style="margin-left:auto">끌어다 놓기 · 상품 동일성 유지 · 디테일컷 여러 장 OK</span></div>
         <div class="row" style="gap:8px;flex-wrap:wrap">
-          <button class="btn sm" onclick="document.getElementById('upProduct').click()">🛍 상품컷 추가</button>
+          <div id="dzProduct" class="dropzone grow" onclick="document.getElementById('upProduct').click()">🛍 <b>상품컷</b> 끌어다 놓기<br><span class="tiny muted">또는 클릭 — 동일 상품 유지</span></div>
           <input type="file" id="upProduct" class="hidden" accept="image/*" multiple onchange="Assets.add('product',event)">
-          <button class="btn sm" onclick="document.getElementById('upRef').click()">🎨 레퍼런스 추가</button>
+          <div id="dzRef" class="dropzone grow" onclick="document.getElementById('upRef').click()">🎨 <b>레퍼런스</b> 끌어다 놓기<br><span class="tiny muted">또는 클릭 — 스타일 참고</span></div>
           <input type="file" id="upRef" class="hidden" accept="image/*" multiple onchange="Assets.add('ref',event)">
         </div>
         <div id="assetGrid" class="row" style="flex-wrap:wrap;gap:8px;align-items:center"></div>
@@ -258,12 +261,10 @@ kbd{font-family:ui-monospace,monospace;font-size:10px;background:var(--card);bor
           <input id="ctxUrl" class="in grow" placeholder="URL 붙여넣기 (랜딩·경쟁사·기사 등) — Enter로 추가" onkeydown="if(event.key==='Enter'){event.preventDefault();Ctx.addUrl();}">
           <button class="btn sm" onclick="Ctx.addUrl()">＋ URL</button>
         </div>
-        <div class="row" style="gap:6px;align-items:flex-end">
-          <textarea id="ctxText" class="in grow" rows="2" placeholder="또는 자료조사 텍스트 붙여넣기 (리서치·후기·브리프 등)"></textarea>
-          <button class="btn sm" onclick="Ctx.addText()">＋ 자료</button>
-        </div>
+        <div id="dzCtx" class="dropzone" onclick="document.getElementById('upCtx').click()">📄 <b>자료 파일</b> 끌어다 놓기 (.txt · .md · .csv)<br><span class="tiny muted">또는 클릭 — 리서치·후기·브리프 텍스트</span></div>
+        <input type="file" id="upCtx" class="hidden" accept=".txt,.md,.csv,.json,.tsv,text/*" multiple onchange="Ctx.addFile(event.target.files);event.target.value=''">
         <div id="ctxList" class="col" style="gap:5px"></div>
-        <span class="tiny muted">추가한 자료는 카피·분석 생성 시 <b>맥락</b>으로 들어갑니다. URL은 자동 분류되며, 항목별 드롭다운으로 분류를 바꿀 수 있어요. (URL 본문은 직접 못 가져오니 핵심은 텍스트로 붙여넣으면 더 정확)</span>
+        <span class="tiny muted">추가한 자료는 카피·분석 생성 시 <b>맥락</b>으로 들어갑니다. URL은 자동 분류되며, 항목별 드롭다운으로 분류를 바꿀 수 있어요. (URL 본문은 직접 못 가져오니 핵심 텍스트는 파일로 올리면 더 정확)</span>
       </div>
     </div>
     <div id="proBox" class="col hidden" style="gap:12px">
@@ -320,7 +321,7 @@ kbd{font-family:ui-monospace,monospace;font-size:10px;background:var(--card);bor
           <div class="seg" id="ratioSeg"><button data-r="1:1" class="on" onclick="S3.ratio('1:1')">1:1</button><button data-r="4:5" onclick="S3.ratio('4:5')">4:5</button><button data-r="16:9" onclick="S3.ratio('16:9')">16:9</button></div>
         </div></div>
         <div class="panel"><div class="panel-h">📎 상품컷 · 레퍼런스</div><div class="panel-b col" style="gap:8px">
-          <div class="row" style="gap:6px"><button class="btn sm" style="flex:1" onclick="document.getElementById('upProduct3').click()">🛍 상품</button><button class="btn sm" style="flex:1" onclick="document.getElementById('upRef3').click()">🎨 참고</button>
+          <div class="row" style="gap:6px"><div id="dzProduct3" class="dropzone" style="flex:1;padding:9px 6px" onclick="document.getElementById('upProduct3').click()">🛍 상품<br><span class="tiny muted">놓기/클릭</span></div><div id="dzRef3" class="dropzone" style="flex:1;padding:9px 6px" onclick="document.getElementById('upRef3').click()">🎨 참고<br><span class="tiny muted">놓기/클릭</span></div>
           <input type="file" id="upProduct3" class="hidden" accept="image/*" multiple onchange="Assets.add('product',event)"><input type="file" id="upRef3" class="hidden" accept="image/*" multiple onchange="Assets.add('ref',event)"></div>
           <div id="assetGrid3" class="row" style="flex-wrap:wrap;gap:6px"></div>
           <span class="tiny muted">클릭=배경 · Shift+클릭=얹기</span>
@@ -484,7 +485,11 @@ var ROLES_KO={landing:"랜딩페이지",reference:"레퍼런스",competitor:"경
 var Ctx={
   guess(u){u=(u||"").toLowerCase();if(/coupang|smartstore|naver\.com|11st|gmarket|amazon|aliexpress|brand\.naver|ohou|musinsa/.test(u))return"competitor";if(/news|article|blog|brunch|tistory|medium|post|magazine|trend|report|리뷰|review/.test(u))return"research";return"landing";},
   addUrl(){var e=$("ctxUrl"),u=(e.value||"").trim();if(!u)return;if(!/^https?:\/\//i.test(u))u="https://"+u;var role=$("ctxRole").value;if(role==="landing")role=Ctx.guess(u);App.ctx.push({id:uid(),kind:"url",role:role,value:u});e.value="";Ctx.render();toast("자료 추가: "+ROLES_KO[role]);},
-  addText(){var e=$("ctxText"),t=(e.value||"").trim();if(!t)return;var role=$("ctxRole").value;if(role==="landing")role="research";App.ctx.push({id:uid(),kind:"text",role:role,value:t});e.value="";Ctx.render();toast("자료 텍스트 추가");},
+  addText(){var e=$("ctxText");if(!e)return;var t=(e.value||"").trim();if(!t)return;var role=$("ctxRole").value;if(role==="landing")role="research";App.ctx.push({id:uid(),kind:"text",role:role,value:t});e.value="";Ctx.render();toast("자료 텍스트 추가");},
+  addFile(fl){if(!fl)return;[].forEach.call(fl,function(f){
+    if(/^image\//.test(f.type||"")){Assets.addFiles("ref",[f]);return;}
+    var rd=new FileReader();rd.onload=function(){var t=(rd.result||"").toString().trim();if(!t)return;var rs=$("ctxRole"),role=rs?rs.value:"research";if(role==="landing")role="research";App.ctx.push({id:uid(),kind:"text",role:role,value:t.slice(0,4000)});Ctx.render();toast("자료 파일 추가: "+(f.name||""));};rd.readAsText(f);
+  });},
   remove(id){App.ctx=App.ctx.filter(function(x){return x.id!==id;});Ctx.render();},
   setRole(id,role){var it=App.ctx.filter(function(x){return x.id===id;})[0];if(it)it.role=role;try{Store.save();}catch(e){}},
   render(){var host=$("ctxList");if(!host)return;host.innerHTML="";
@@ -498,9 +503,26 @@ var Ctx={
   block(){if(!App.ctx||!App.ctx.length)return"";var lines=App.ctx.map(function(it){return "- ("+ROLES_KO[it.role]+") "+(it.kind==="url"?it.value:it.value.slice(0,600));});return "\n\n[맥락 자료 — 카피에 반영]\n"+lines.join("\n");}
 };
 
+/* 드래그앤드롭 영역 헬퍼 — 파일을 끌어다 놓으면 onFiles 호출 */
+var Drop={
+  zone(elm,onFiles){if(!elm||elm._dropBound)return;elm._dropBound=true;
+    ["dragenter","dragover"].forEach(function(ev){elm.addEventListener(ev,function(e){e.preventDefault();e.stopPropagation();elm.classList.add("drag-over");});});
+    ["dragleave","dragend"].forEach(function(ev){elm.addEventListener(ev,function(e){e.preventDefault();e.stopPropagation();elm.classList.remove("drag-over");});});
+    elm.addEventListener("drop",function(e){e.preventDefault();e.stopPropagation();elm.classList.remove("drag-over");var dt=e.dataTransfer;if(dt&&dt.files&&dt.files.length)onFiles(dt.files);});
+  },
+  wireAll(){
+    Drop.zone($("dzProduct"),function(fl){Assets.addFiles("product",fl);});
+    Drop.zone($("dzRef"),function(fl){Assets.addFiles("ref",fl);});
+    Drop.zone($("dzCtx"),function(fl){Ctx.addFile(fl);});
+    Drop.zone($("dzProduct3"),function(fl){Assets.addFiles("product",fl);});
+    Drop.zone($("dzRef3"),function(fl){Assets.addFiles("ref",fl);});
+  }
+};
+
 /* 에셋 — 상품컷(동일성 유지)·디테일컷·레퍼런스(스타일 참고). 1단계+3단계 노출 */
 var Assets={
-  add(kind,e){var fl=e.target.files;if(!fl)return;[].forEach.call(fl,function(f){var rd=new FileReader();rd.onload=function(){var url=rd.result,o={id:uid(),name:f.name,url:url};(kind==="product"?App.assets.products:App.assets.refs).push(o);var im=new Image();im.onload=function(){S3._img[url]=im;o.ar=im.height/im.width;Assets.render();};im.src=url;};rd.readAsDataURL(f);});e.target.value="";},
+  add(kind,e){Assets.addFiles(kind,e.target.files);if(e&&e.target)e.target.value="";},
+  addFiles(kind,fl){if(!fl)return;var n=0;[].forEach.call(fl,function(f){if(!/^image\//.test(f.type||""))return;n++;var rd=new FileReader();rd.onload=function(){var url=rd.result,o={id:uid(),name:f.name,url:url};(kind==="product"?App.assets.products:App.assets.refs).push(o);var im=new Image();im.onload=function(){S3._img[url]=im;o.ar=im.height/im.width;Assets.render();};im.src=url;};rd.readAsDataURL(f);});if(n)toast((kind==="product"?"상품컷":"레퍼런스")+" "+n+"장 추가");},
   remove(kind,id){var a=(kind==="product"?App.assets.products:App.assets.refs),i=-1;a.forEach(function(x,k){if(x.id===id)i=k;});if(i>=0)a.splice(i,1);Assets.render();},
   all(){return App.assets.products.map(function(p){return {k:"product",id:p.id,url:p.url};}).concat(App.assets.refs.map(function(r){return {k:"ref",id:r.id,url:r.url};}));},
   render(){Assets._fill($("assetGrid"),false);Assets._fill($("assetGrid3"),true);try{Store.save();}catch(e){}},
@@ -1564,6 +1586,7 @@ function init(){
     }catch(e){UI.go(1);}
   } else UI.go(1);
   try{Assets.render();Ctx.render();}catch(e){}
+  try{Drop.wireAll();}catch(e){}
 }
 if(document.readyState!=="loading")init();else document.addEventListener("DOMContentLoaded",init);
 /* 테스트 훅 */
