@@ -124,6 +124,9 @@ main{padding:22px 0 60px}
 .guide{position:absolute;background:var(--teal);opacity:.9;pointer-events:none}
 .guide.v{width:1px;top:0;bottom:0} .guide.h{height:1px;left:0;right:0}
 .inline-ed{position:absolute;margin:0;padding:0;border:none;outline:2px solid var(--pin);background:rgba(255,255,255,.04);resize:none;overflow:hidden;line-height:1.18;color:#fff;z-index:5}
+.inline-pal{position:absolute;display:flex;gap:4px;align-items:center;padding:4px 6px;background:#15171c;border:1px solid var(--line-d);border-radius:9px;box-shadow:0 4px 14px rgba(0,0,0,.4);z-index:6}
+.inline-pal .swatch{width:18px;height:18px;border-radius:5px}
+.inline-pal-x{font-size:10px;padding:2px 6px;border:1px solid var(--line-d);border-radius:6px;background:#22252c;color:var(--body);cursor:pointer;white-space:nowrap}
 /* layer list */
 .lay{display:flex;align-items:center;gap:8px;padding:8px 9px;border-radius:10px;border:1px solid transparent;font-size:12px;font-weight:700;color:var(--body);cursor:pointer}
 .lay:hover{background:var(--card)}
@@ -823,17 +826,26 @@ var S3={
     });
   },
   fontSpec(l){return (l.weight||700)+" "+Math.round(l.size*(/* base */1))+"px '"+l.font+"',"+ "Pretendard,sans-serif";},
-  measure(x,l,W){ // 줄바꿈 + bbox(px) 반환 (nx,ny=좌상단)
+  measure(x,l,W){ // 줄바꿈 + bbox(px) 반환 (nx,ny=좌상단), srcIdx=렌더문자별 소스 인덱스(부분색 정합)
     var maxW=l.wx*W;x.font=S3.fontSpec(l);
-    var lines=[]; (l.text||" ").split("\n").forEach(function(par){
-      var words=par.split(/(\s+)/),cur="";
-      words.forEach(function(w){ if(x.measureText(cur+w).width>maxW&&cur){lines.push(cur);cur=w.replace(/^\s+/,"");} else cur+=w; });
-      lines.push(cur);
+    var lines=[],srcIdx=[],base=0;
+    (l.text||" ").split("\n").forEach(function(par){
+      var words=par.split(/(\s+)/),cur="",idx=[],pos=base;
+      words.forEach(function(w){
+        if(x.measureText(cur+w).width>maxW&&cur){
+          lines.push(cur);srcIdx.push(idx);
+          var stripped=w.replace(/^\s+/,""),off=w.length-stripped.length;
+          cur=stripped;idx=[];for(var c=0;c<stripped.length;c++)idx.push(pos+off+c);
+        } else { for(var c2=0;c2<w.length;c2++)idx.push(pos+c2); cur+=w; }
+        pos+=w.length;
+      });
+      lines.push(cur);srcIdx.push(idx);
+      base+=par.length+1; // +1 = 소비된 '\n'
     });
-    if(!lines.length)lines=[""];
+    if(!lines.length){lines=[""];srcIdx=[[]];}
     var lh=l.size*(l.lh||1.16);
     var wmax=0;lines.forEach(function(t){wmax=Math.max(wmax,x.measureText(t).width);});
-    return {lines:lines,lh:lh,h:lh*lines.length,w:Math.min(maxW,Math.max(wmax,10))};
+    return {lines:lines,lh:lh,h:lh*lines.length,w:Math.min(maxW,Math.max(wmax,10)),srcIdx:srcIdx};
   },
   bbox(l){ // 표시/히트용 px bbox
     var cv=$("editCanvas");var x=cv.getContext("2d");var W=cv.width,H=cv.height;
@@ -856,15 +868,13 @@ var S3={
     // text (key/sub) — runs 부분색 지원
     var m=S3.measure(x,l,W);x.font=S3.fontSpec(l);x.textBaseline="alphabetic";x.textAlign="left";
     var bx=l.nx*W, boxW=Math.max(m.w,l.wx*W);
-    var ci=0;
     m.lines.forEach(function(line,li){
       var lw=x.measureText(line).width;
       var ax=bx; if(l.align==="center")ax=bx+(boxW-lw)/2; else if(l.align==="right")ax=bx+boxW-lw;
       var yy=l.ny*H+m.lh*(li+1)-l.size*.24;
-      // 부분색 세그먼트
-      var gi=ci, cx=ax;
-      for(var k=0;k<line.length;k++){var col=S3.runColor(l,gi+k)||l.color;x.fillStyle=col;var ch=line[k];x.fillText(ch,cx,yy);cx+=x.measureText(ch).width;}
-      ci+=line.length;
+      // 부분색 세그먼트 — 렌더문자→소스인덱스 매핑(줄바꿈/워드랩 넘어가도 정합)
+      var cx=ax, idxRow=m.srcIdx[li]||[];
+      for(var k=0;k<line.length;k++){var si=idxRow[k];var col=(si!=null?S3.runColor(l,si):null)||l.color;x.fillStyle=col;var ch=line[k];x.fillText(ch,cx,yy);cx+=x.measureText(ch).width;}
     });
   },
   drawBadge(x,l){
@@ -889,6 +899,8 @@ var S3={
     x.restore();
   },
   runColor(l,i){if(!l.runs)return null;for(var r=0;r<l.runs.length;r++){if(i>=l.runs[r].s&&i<l.runs[r].e)return l.runs[r].c;}return null;},
+  applyRun(l,s,e,c){if(e<=s)return;if(!l.runs)l.runs=[];var out=[];l.runs.forEach(function(r){if(r.e<=s||r.s>=e){out.push(r);}else{if(r.s<s)out.push({s:r.s,e:s,c:r.c});if(r.e>e)out.push({s:e,e:r.e,c:r.c});}});out.push({s:s,e:e,c:c});out.sort(function(a,b){return a.s-b.s;});l.runs=out;},
+  clearRun(l,s,e){if(!l.runs)return;if(e<=s){l.runs=[];return;}var out=[];l.runs.forEach(function(r){if(r.e<=s||r.s>=e){out.push(r);}else{if(r.s<s)out.push({s:r.s,e:s,c:r.c});if(r.e>e)out.push({s:e,e:r.e,c:r.c});}});l.runs=out;},
   roundRect(x,X,Y,w,h,r){r=Math.min(r,h/2,w/2);x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+w,Y,X+w,Y+h,r);x.arcTo(X+w,Y+h,X,Y+h,r);x.arcTo(X,Y+h,X,Y,r);x.arcTo(X,Y,X+w,Y,r);x.closePath();},
   drawGuides(x,g,W,H){x.save();x.strokeStyle="#0d8a8a";x.lineWidth=2;g.forEach(function(s){x.beginPath();if(s.v!=null){x.moveTo(s.v,0);x.lineTo(s.v,H);}else{x.moveTo(0,s.h);x.lineTo(W,s.h);}x.stroke();});x.restore();},
 
@@ -972,13 +984,27 @@ var S3={
   inlineEdit(l){
     var cv=$("editCanvas");var sc=cv.clientWidth/cv.width;var b=S3.bbox(l);var host=$("canvasHost");
     var ta=el("textarea","inline-ed");var hr=cv.getBoundingClientRect(),pr=host.getBoundingClientRect();
-    ta.style.left=(hr.left-pr.left+b.x*sc)+"px";ta.style.top=(hr.top-pr.top+b.y*sc)+"px";
+    var L=hr.left-pr.left+b.x*sc, T=hr.top-pr.top+b.y*sc;
+    ta.style.left=L+"px";ta.style.top=T+"px";
     ta.style.width=(b.w*sc+8)+"px";ta.style.height=(b.h*sc+6)+"px";
     ta.style.font=(l.weight)+" "+(l.size*sc)+"px '"+l.font+"',sans-serif";ta.style.color=l.color;ta.style.textAlign=l.align;
     ta.value=l.text;host.appendChild(ta);ta.focus();ta.select();
+    // 구간색 팔레트 — 텍스트 드래그 선택 후 스와치 클릭 = 그 구간만 부분색
+    var pal=el("div","inline-pal");pal.style.left=L+"px";pal.style.top=(T-34)+"px";
+    var sel={s:0,e:0};
+    function remember(){sel.s=ta.selectionStart;sel.e=ta.selectionEnd;}
+    ta.addEventListener("select",remember);ta.addEventListener("keyup",remember);ta.addEventListener("mouseup",remember);
+    SWATCHES.forEach(function(col){var sb=el("button","swatch");sb.style.background=col;sb.title="선택 구간에 이 색";
+      sb.onmousedown=function(ev){ev.preventDefault();remember();if(sel.e>sel.s){S3.applyRun(l,sel.s,sel.e,col);S3.draw();}else toast("색을 입힐 글자를 먼저 드래그로 선택하세요");};
+      pal.appendChild(sb);});
+    var clr=el("button","inline-pal-x","구간색 지우기");
+    clr.onmousedown=function(ev){ev.preventDefault();remember();S3.clearRun(l,sel.s,sel.e>sel.s?sel.e:sel.s);if(sel.e<=sel.s)l.runs=[];S3.draw();};
+    pal.appendChild(clr);host.appendChild(pal);
+    var removed=false;
+    function close(){if(removed)return;removed=true;l.text=ta.value;ta.remove();pal.remove();S3.renderAll();}
     function sync(){l.text=ta.value;S3.draw();}
     ta.addEventListener("input",sync);
-    ta.addEventListener("blur",function(){sync();ta.remove();S3.renderAll();});
+    ta.addEventListener("blur",function(){setTimeout(close,140);});
     ta.addEventListener("keydown",function(e){if(e.key==="Escape"){ta.blur();}e.stopPropagation();});
   },
 
