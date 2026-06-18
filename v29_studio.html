@@ -223,6 +223,20 @@ kbd{font-family:ui-monospace,monospace;font-size:10px;background:var(--card);bor
         <div id="assetGrid" class="row" style="flex-wrap:wrap;gap:8px;align-items:center"></div>
         <span class="tiny muted">상품컷 = AI가 <b>동일 상품을 유지</b>해 합성하거나 그대로 얹기(디테일컷도 활용) · 레퍼런스 = 스타일 참고용. 3단계에서도 쓸 수 있어요.</span>
       </div>
+      <div class="col" style="gap:8px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card)">
+        <div class="row"><span class="mini-lab">🔗 맥락 자료 (URL · 자료조사)</span><span class="tiny muted" style="margin-left:auto">선택 · 카피 정확도↑</span></div>
+        <div class="row" style="gap:6px;flex-wrap:wrap">
+          <select id="ctxRole" class="in" style="width:auto;flex:0 0 auto"><option value="landing">랜딩페이지</option><option value="reference">레퍼런스</option><option value="competitor">경쟁사</option><option value="research">시장리서치</option><option value="brief">브리프</option><option value="etc">기타</option></select>
+          <input id="ctxUrl" class="in grow" placeholder="URL 붙여넣기 (랜딩·경쟁사·기사 등) — Enter로 추가" onkeydown="if(event.key==='Enter'){event.preventDefault();Ctx.addUrl();}">
+          <button class="btn sm" onclick="Ctx.addUrl()">＋ URL</button>
+        </div>
+        <div class="row" style="gap:6px;align-items:flex-end">
+          <textarea id="ctxText" class="in grow" rows="2" placeholder="또는 자료조사 텍스트 붙여넣기 (리서치·후기·브리프 등)"></textarea>
+          <button class="btn sm" onclick="Ctx.addText()">＋ 자료</button>
+        </div>
+        <div id="ctxList" class="col" style="gap:5px"></div>
+        <span class="tiny muted">추가한 자료는 카피·분석 생성 시 <b>맥락</b>으로 들어갑니다. URL은 자동 분류되며, 항목별 드롭다운으로 분류를 바꿀 수 있어요. (URL 본문은 직접 못 가져오니 핵심은 텍스트로 붙여넣으면 더 정확)</span>
+      </div>
     </div>
     <div id="proBox" class="col hidden" style="gap:12px">
       <details class="fold"><summary>① 키메시지 · 시드카피 (있으면 고정·발전) <span class="ar">▾</span></summary>
@@ -358,7 +372,7 @@ var CH_LIMIT={"":{k:15,s:30,c:10},"GDN":{k:15,s:30,c:10},"Meta":{k:20,s:40,c:12}
 /* 모델 라우팅 — 카피/분석은 Claude 또는 Gemini, 이미지는 Gemini(Claude는 이미지 생성 X) */
 var MODELS={ claude:"claude-opus-4-8", geminiText:"gemini-2.5-flash", geminiImage:"gemini-3.1-flash-image" };
 var App={
-  stage:1, live:false, provider:"gemini", keys:{claude:"",gemini:""}, brand:{accent:"",logo:null}, assets:{products:[],refs:[]},
+  stage:1, live:false, provider:"gemini", keys:{claude:"",gemini:""}, brand:{accent:"",logo:null}, assets:{products:[],refs:[]}, ctx:[],
   brief:{mode:"quick",target:"",offer:"",funnel:"",keyMsg:"",seedKey:"",seedSub:"",visual:"",must:"",ban:"",channel:"",voice:""},
   analysis:{pains:[],tones:[]},
   copies:[], pick:null,
@@ -403,6 +417,25 @@ var Log={
   adv(){try{var pick=function(s){s=(s||"").trim();if(!s)return "";return s.split(/[\s,/|\n·]+/).filter(Boolean).slice(0,2).join(" ").slice(0,20);};return pick(App.brief.offer)||pick(App.brief.target)||"(미상)";}catch(e){return "(미상)";}},
   push(stage,action,key,sub,fb){if(Log.off())return;try{Log.q.push({sheet:"pref",row:[new Date().toLocaleString(),Log.adv(),stage||"",action||"",key||"",sub||"",fb||""]});if(Log.q.length>400)Log.q=Log.q.slice(-400);Log.flush();}catch(e){}},
   async flush(){var url=Log.url();if(!url||!Log.q.length)return;var batch=Log.q.splice(0,Log.q.length);try{await fetch(url,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({rows:batch})});}catch(e){Log.q=batch.concat(Log.q);}}
+};
+
+/* 맥락 자료 — URL(랜딩/경쟁사/기사) + 자료조사 텍스트. 드롭다운 분류(자동추정+수정). 카피/분석 프롬프트에 주입 */
+var ROLES_KO={landing:"랜딩페이지",reference:"레퍼런스",competitor:"경쟁사",research:"시장리서치",brief:"브리프",etc:"기타"};
+var Ctx={
+  guess(u){u=(u||"").toLowerCase();if(/coupang|smartstore|naver\.com|11st|gmarket|amazon|aliexpress|brand\.naver|ohou|musinsa/.test(u))return"competitor";if(/news|article|blog|brunch|tistory|medium|post|magazine|trend|report|리뷰|review/.test(u))return"research";return"landing";},
+  addUrl(){var e=$("ctxUrl"),u=(e.value||"").trim();if(!u)return;if(!/^https?:\/\//i.test(u))u="https://"+u;var role=$("ctxRole").value;if(role==="landing")role=Ctx.guess(u);App.ctx.push({id:uid(),kind:"url",role:role,value:u});e.value="";Ctx.render();toast("자료 추가: "+ROLES_KO[role]);},
+  addText(){var e=$("ctxText"),t=(e.value||"").trim();if(!t)return;var role=$("ctxRole").value;if(role==="landing")role="research";App.ctx.push({id:uid(),kind:"text",role:role,value:t});e.value="";Ctx.render();toast("자료 텍스트 추가");},
+  remove(id){App.ctx=App.ctx.filter(function(x){return x.id!==id;});Ctx.render();},
+  setRole(id,role){var it=App.ctx.filter(function(x){return x.id===id;})[0];if(it)it.role=role;try{Store.save();}catch(e){}},
+  render(){var host=$("ctxList");if(!host)return;host.innerHTML="";
+    App.ctx.forEach(function(it){
+      var row=el("div","row");row.style.cssText="gap:6px;align-items:center";
+      var sel=el("select","in");sel.style.cssText="width:auto;flex:0 0 auto;font-size:10px;padding:4px 6px";Object.keys(ROLES_KO).forEach(function(k){var o=el("option",null,ROLES_KO[k]);o.value=k;if(k===it.role)o.selected=true;sel.appendChild(o);});sel.onchange=function(){Ctx.setRole(it.id,sel.value);};
+      var lab=el("span","grow tiny");lab.style.cssText="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--body)";lab.textContent=(it.kind==="url"?"🔗 ":"📝 ")+(it.value.length>64?it.value.slice(0,64)+"…":it.value);
+      var x=el("button","btn gho sm","×");x.style.padding="2px 8px";x.onclick=function(){Ctx.remove(it.id);};
+      row.appendChild(sel);row.appendChild(lab);row.appendChild(x);host.appendChild(row);
+    });try{Store.save();}catch(e){}},
+  block(){if(!App.ctx||!App.ctx.length)return"";var lines=App.ctx.map(function(it){return "- ("+ROLES_KO[it.role]+") "+(it.kind==="url"?it.value:it.value.slice(0,600));});return "\n\n[맥락 자료 — 카피에 반영]\n"+lines.join("\n");}
 };
 
 /* 에셋 — 상품컷(동일성 유지)·디테일컷·레퍼런스(스타일 참고). 1단계+3단계 노출 */
@@ -463,14 +496,14 @@ var Engine={
     if(kind==="analyze"){
       return {
         sys:"너는 한국 퍼포먼스 마케팅 시니어 카피라이터다. 타겟과 오퍼를 받아 광고 카피의 토대가 될 핵심 페인포인트 3개와 어울리는 톤 3개를 뽑는다. 한국어로, 광고 실무에 쓸 수 있게 날카롭고 구체적으로.",
-        user:"타겟:\n"+(p.target||"")+"\n\n오퍼:\n"+(p.offer||"")+"\n\n퍼널 단계: "+(p.funnel||"")+"\n\n페인포인트 3개와 톤 3개(예: 직격추궁형/숫자증거형/공감형 등)를 JSON으로."
+        user:"타겟:\n"+(p.target||"")+"\n\n오퍼:\n"+(p.offer||"")+"\n\n퍼널 단계: "+(p.funnel||"")+Ctx.block()+"\n\n페인포인트 3개와 톤 3개(예: 직격추궁형/숫자증거형/공감형 등)를 JSON으로."
       };
     }
     // copies
     var lim=CH_LIMIT[p.channel||""]||CH_LIMIT[""];
     return {
       sys:"너는 한국 퍼포먼스 DA 배너 카피라이터다. 메인(KEY)·서브(SUB)·CTA 3요소로 된 광고 카피 3안을 서로 다른 톤·각도로 만든다. 메인은 "+lim.k+"자, 서브 "+lim.s+"자, CTA "+lim.c+"자 내외. 클리셰 금지, 구체 수치/직격 화법 선호. 한국어.",
-      user:"타겟:\n"+(p.target||"")+"\n\n오퍼:\n"+(p.offer||"")+"\n\n페인포인트:\n"+(p.pains||[]).join(" / ")+"\n\n톤 후보: "+(p.tones||[]).join(", ")+"\n"+(p.seedKey?("\n기존 메인(안 A로 고정·발전): "+p.seedKey):"")+"\n\n3안을 JSON으로. 각 안: key, sub, cta, tone, why(왜 이 안인지 한 줄)."
+      user:"타겟:\n"+(p.target||"")+"\n\n오퍼:\n"+(p.offer||"")+"\n\n페인포인트:\n"+(p.pains||[]).join(" / ")+"\n\n톤 후보: "+(p.tones||[]).join(", ")+"\n"+(p.seedKey?("\n기존 메인(안 A로 고정·발전): "+p.seedKey):"")+Ctx.block()+"\n\n3안을 JSON으로. 각 안: key, sub, cta, tone, why(왜 이 안인지 한 줄)."
     };
   },
   _schema(kind){
@@ -1365,14 +1398,14 @@ function bindKeys(){
 /* 자동 저장/복원 — 마케터가 작업을 잃지 않게(새로고침/재방문 유지) */
 var Store={
   KEY:"soszae_v29",
-  snap(){return {v:1,stage:App.stage,brief:App.brief,brand:App.brand,assets:App.assets,copies:App.copies,pick:App.pick,analysis:App.analysis,doc:App.doc};},
+  snap(){return {v:1,stage:App.stage,brief:App.brief,brand:App.brand,assets:App.assets,ctx:App.ctx,copies:App.copies,pick:App.pick,analysis:App.analysis,doc:App.doc};},
   save(){clearTimeout(Store._t);Store._t=setTimeout(function(){try{localStorage.setItem(Store.KEY,JSON.stringify(Store.snap()));}catch(e){try{var s=Store.snap();if(s.doc)s.doc=Object.assign({},s.doc,{bgImage:null});s.assets={products:[],refs:[]};localStorage.setItem(Store.KEY,JSON.stringify(s));}catch(e2){}}},400);},
   load(){try{var r=localStorage.getItem(Store.KEY);return r?JSON.parse(r):null;}catch(e){return null;}},
   clear(){try{localStorage.removeItem(Store.KEY);}catch(e){}},
   apply(s){
     App.brief=Object.assign(App.brief,s.brief||{});App.brand=Object.assign(App.brand,s.brand||{});
     App.copies=s.copies||[];App.pick=s.pick||null;App.analysis=s.analysis||App.analysis;App.doc=s.doc||null;
-    App.assets=s.assets||{products:[],refs:[]};
+    App.assets=s.assets||{products:[],refs:[]};App.ctx=s.ctx||[];try{Ctx.render();}catch(e){}
     Assets.all().forEach(function(a){var im=new Image();im.onload=function(){S3._img[a.url]=im;};im.src=a.url;});Assets.render();
     // 입력값 복원
     var b=App.brief;["inTarget|target","inOffer|offer","inKeyMsg|keyMsg","inSeedKey|seedKey","inSeedSub|seedSub","inVisual|visual","inMust|must","inBan|ban","inVoice|voice"].forEach(function(m){var p=m.split("|"),e=$(p[0]);if(e)e.value=b[p[1]]||"";});
@@ -1389,15 +1422,19 @@ function init(){
   UI.build();UI.reflectStepper();UI.onKey();
   bindCanvas();bindKeys();
   var s=Store.load();
-  if(s&&s.stage>1&&(s.copies&&s.copies.length||s.doc)){
-    try{Store.apply(s);UI.go(Math.min(s.stage,s.doc?4:2));toast("이전 작업을 복원했어요 (헤더 ‘새로’ 로 초기화)");}
-    catch(e){UI.go(1);}
+  if(s){
+    try{
+      Store.apply(s); // 입력·맥락·에셋·브랜드 항상 복원
+      var progressed=s.stage>1&&((s.copies&&s.copies.length)||s.doc);
+      if(progressed){UI.go(Math.min(s.stage,s.doc?4:2));toast("이전 작업을 복원했어요 (헤더 ‘새로’ 로 초기화)");}
+      else UI.go(1);
+    }catch(e){UI.go(1);}
   } else UI.go(1);
-  try{Assets.render();}catch(e){}
+  try{Assets.render();Ctx.render();}catch(e){}
 }
 if(document.readyState!=="loading")init();else document.addEventListener("DOMContentLoaded",init);
 /* 테스트 훅 */
-window.App=App;window.UI=UI;window.S1=S1;window.S2=S2;window.S3=S3;window.S4=S4;window.Doc=Doc;window.Engine=Engine;window.Brand=Brand;window.Design=Design;window.Store=Store;window.Assets=Assets;window.Log=Log;
+window.App=App;window.UI=UI;window.S1=S1;window.S2=S2;window.S3=S3;window.S4=S4;window.Doc=Doc;window.Engine=Engine;window.Brand=Brand;window.Design=Design;window.Store=Store;window.Assets=Assets;window.Log=Log;window.Ctx=Ctx;
 </script>
 </body>
 </html>
