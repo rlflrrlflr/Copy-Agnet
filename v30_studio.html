@@ -1248,7 +1248,17 @@ var S3={
       var tc=el("div","col");tc.appendChild(el("label","mini-lab","글자 색"));var tci=el("input");tci.type="color";tci.value=(l.color2||"#ffffff").length===7?l.color2:"#ffffff";tci.oninput=function(){l.color2=tci.value;S3.draw();};tc.appendChild(tci);body.appendChild(tc);
     }
     if(l.type==="image"){
-      body.appendChild(el("div","tiny muted","🖼 이미지 레이어 — 드래그 이동 · 모서리로 크기 · 회전. (상품컷은 그대로 유지)"));
+      body.appendChild(el("div","tiny muted","🖼 이미지 레이어 — 드래그로 이동 · 모서리로도 크기 조절. (상품컷 원본 유지)"));
+      // 크기(±): 0=원본, -축소 / +확대  (슬라이더는 배율 %로)
+      var iw=el("div","col");iw.appendChild(el("label","mini-lab","크기 (− 축소 · + 확대)"));
+      var pct=Math.round((l.wx||.42)/( l._wx0||(l._wx0=l.wx||.42))*100);
+      var kv=el("div","kv");var r=el("input");r.type="range";r.min=20;r.max=300;r.value=pct;
+      var nn=el("input","num");nn.type="number";nn.value=pct;
+      var apply=function(v){v=clamp(v,5,400);l.wx=clamp((l._wx0||.42)*v/100,.03,1.6);r.value=v;nn.value=Math.round(v);S3.renderAll();};
+      r.oninput=function(){apply(+r.value);};nn.oninput=function(){apply(+nn.value||100);};
+      kv.appendChild(r);kv.appendChild(nn);iw.appendChild(kv);body.appendChild(iw);
+      var rw=el("div","col");rw.appendChild(el("label","mini-lab","회전 · 정렬"));
+      var rr=el("button","btn sm","↻ 0°");rr.onclick=function(){l.rot=0;S3.renderAll();};rw.appendChild(rr);body.appendChild(rw);
     } else {
     // 색 스와치 (T1) — 뱃지는 '배경색'
     var cw=el("div","col");cw.appendChild(el("label","mini-lab",l.type==="badge"?"뱃지 색":"색"));
