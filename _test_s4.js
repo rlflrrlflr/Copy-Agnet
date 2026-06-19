@@ -15,7 +15,7 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
    const promptOk=/미니멀 순정핏 가죽 트렁크 매트/.test(prompt)&&/프리미엄 매트 확인/.test(prompt)&&/최대 50%/.test(prompt)&&/#e60023/.test(prompt)&&/배경 어둡게/.test(prompt)&&/임팩트|bold high-contrast/.test(prompt);
    // ---- mocked live generate: 3 full variants ----
    let calls=0;const origGen=Engine.gen;
-   Engine.gen=async(kind,pl)=>{calls++;return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';};
+   Engine.gen=async(kind,pl)=>{calls++;return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';};Engine._imgEdge=async()=>1;
    App.keys.gemini='FAKE';App.final={variants:[],pick:0};
    await S4.generate();
    const liveVariants=App.final.variants.length;
