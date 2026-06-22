@@ -382,7 +382,7 @@ kbd{font-family:ui-monospace,monospace;font-size:10px;background:var(--card);bor
   <!-- ===================== STAGE 2 ===================== -->
   <section id="stage2" class="card pad col hidden" style="gap:16px">
     <div class="row"><div><div class="sec-h"><span class="bar"></span>2단계 · 카피 5안 (TOP 3 + 보조 2)</div><div class="sub" id="s2sub">성과 순으로 5안 — 위 3개가 TOP3, 아래 2개는 보조 변주. <b>카피는 직접 수정 가능</b>(클릭해 고치면 3단계·이미지에 그대로 반영). ‘이 안으로 기획 →’을 누르면 넘어갑니다.</div></div>
-      <button class="btn sm" style="margin-left:auto" onclick="S2.regen()">🔄 다시 생성</button></div>
+      <button class="btn sm" style="margin-left:auto" onclick="S2.regen()" title="브리프를 새 각도로 다시 해석(페인·톤·USP 재도출) → 매번 폭넓게 다른 5안. 같은 프레임 안에서 반복하지 않음">🔄 새 각도로 다시</button></div>
     <details class="fold"><summary>분석 근거 — 페인포인트 · 톤 (펼치기) <span class="ar">▾</span></summary><div class="fold-b" id="s2analysis"></div></details>
     <div id="copyGrid" class="copy-grid"></div>
     <div class="s2chat">
@@ -814,7 +814,7 @@ var Engine={
       var al=CH_LIMIT[p.channel||""]||CH_LIMIT[""];
       return {
         sys:"너는 한국 퍼포먼스 마케팅 시니어 전략가 겸 DA 카피라이터다. 타겟·오퍼를 받아 한 번에: (1)핵심 페인포인트 3개 (2)어울리는 톤 3개 (3)이 제품만의 차별점(USP) 3~5개 (4)그 USP를 녹인 광고 카피 5안을 만든다. USP는 오퍼의 '구체적 소재·스펙·수치·고유 기능명'을 일반화하지 말고 그대로 살려라(예: '가죽'이 아니라 '나파가죽', '방수'가 아니라 'IPX7 방수'). 카피 5안: 메인(KEY) "+al.k+"자·서브(SUB) "+al.s+"자·CTA "+al.c+"자 내외, 서로 다른 톤·각도, 성과 좋을 순서로 정렬(1번이 가장 강함, 위 3개가 TOP3). 메인/서브에 제품 명사를 최소 1회 분명히 넣고, USP를 '그 단어 그대로' 최소 2개 안에 녹여라. 클리셰 금지, 구체 수치/직격 화법 선호. 한국어.",
-        user:"타겟:\n"+(p.target||"")+"\n\n오퍼:\n"+(p.offer||"")+"\n\n퍼널 단계: "+(p.funnel||"")+Ctx.block()+"\n\nJSON으로: pains(3), tones(3, 예: 직격추궁형/숫자증거형/공감형), usps(3~5, 구체 용어 그대로), copies(5안: 각 key,sub,cta,tone,why)."
+        user:"타겟:\n"+(p.target||"")+"\n\n오퍼:\n"+(p.offer||"")+"\n\n퍼널 단계: "+(p.funnel||"")+Ctx.block()+(p._vary?"\n\n[중요] 직전 결과와 '다른 각도'로 새로 발산하라: 다른 페인 진입점·다른 톤 조합·다른 후킹 장치를 써서 5안이 서로도, 이전 배치와도 겹치지 않게. USP의 구체 용어(예: 나파가죽)는 유지하되 접근법은 새롭게.":"")+"\n\nJSON으로: pains(3), tones(3, 예: 직격추궁형/숫자증거형/공감형), usps(3~5, 구체 용어 그대로), copies(5안: 각 key,sub,cta,tone,why)."
       };
     }
     if(kind==="refine"){
@@ -828,7 +828,7 @@ var Engine={
     var lim=CH_LIMIT[p.channel||""]||CH_LIMIT[""];
     return {
       sys:"너는 한국 퍼포먼스 DA 배너 카피라이터다. 메인(KEY)·서브(SUB)·CTA 3요소로 된 광고 카피 5안을 서로 다른 톤·각도로 만든다. 메인은 "+lim.k+"자, 서브 "+lim.s+"자, CTA "+lim.c+"자 내외. 클리셰 금지, 구체 수치/직격 화법 선호. 한국어.\n중요1: 메인 또는 서브에 실제 '제품·카테고리 명사'(예: 트렁크 매트)를 최소 1회 분명히 넣어 무엇을 파는지 바로 드러나게.\n중요2: 제공된 USP(구체 소재·스펙·고유기능)를 일반화하지 말고 '그 단어 그대로' 최소 2개 안에 녹여라(예: '가죽'으로 뭉개지 말고 '나파가죽'). 추상적 감정어만 쓰지 말 것.",
-      user:"타겟:\n"+(p.target||"")+"\n\n오퍼:\n"+(p.offer||"")+"\n\n페인포인트:\n"+(p.pains||[]).join(" / ")+"\n\n핵심 USP(그대로 살릴 것):\n"+((p.usps&&p.usps.length)?p.usps.join(" / "):"(오퍼에서 직접 추출)")+"\n\n톤 후보: "+(p.tones||[]).join(", ")+"\n"+(p.seedKey?("\n기존 메인(안 A로 고정·발전): "+p.seedKey):"")+Ctx.block()+"\n\n5안을 '광고 성과가 좋을 순서'로 정렬해(가장 강한 안이 1번, 위 3개가 TOP3) JSON으로. 각 안: key, sub, cta, tone, why(왜 이 안인지 한 줄)."
+      user:"타겟:\n"+(p.target||"")+"\n\n오퍼:\n"+(p.offer||"")+"\n\n페인포인트:\n"+(p.pains||[]).join(" / ")+"\n\n핵심 USP(그대로 살릴 것):\n"+((p.usps&&p.usps.length)?p.usps.join(" / "):"(오퍼에서 직접 추출)")+"\n\n톤 후보: "+(p.tones||[]).join(", ")+"\n"+(p.seedKey?("\n기존 메인(안 A로 고정·발전): "+p.seedKey):"")+Ctx.block()+(p._vary?"\n\n[중요] 직전 결과와 '다른 각도'로: 다른 진입점·다른 톤·다른 후킹으로 5안이 서로도 이전과도 겹치지 않게 발산.":"")+"\n\n5안을 '광고 성과가 좋을 순서'로 정렬해(가장 강한 안이 1번, 위 3개가 TOP3) JSON으로. 각 안: key, sub, cta, tone, why(왜 이 안인지 한 줄)."
     };
   },
   _schema(kind){
@@ -863,7 +863,7 @@ var Engine={
       headers:{ "content-type":"application/json", "x-api-key":App.keys.claude,
         "anthropic-version":"2023-06-01", "anthropic-dangerous-direct-browser-access":"true" },
       body:JSON.stringify({
-        model:MODELS.claude, max_tokens:3000, system:pr.sys,
+        model:MODELS.claude, max_tokens:3000, system:pr.sys, temperature:Math.min(1,Engine._temp(kind)),
         messages:[{role:"user",content:pr.user}],
         output_config:{format:{type:"json_schema",schema:Engine._schema(kind)}}
       })
@@ -876,13 +876,15 @@ var Engine={
   },
 
   /* ---------- Gemini (텍스트) ---------- */
+  /* 다양성 온도 — 카피/분석은 높게(반복·균질화 방지), 국소 수정(refine)은 보통 */
+  _temp(kind){ return (kind==="copies"||kind==="analyze")?1.25:1.0; },
   async _geminiText(kind,p){
     var pr=Engine._prompt(kind,p);
     var url="https://generativelanguage.googleapis.com/v1beta/models/"+MODELS.geminiText+":generateContent?key="+encodeURIComponent(App.keys.gemini);
     var res=await fetch(url,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({
       systemInstruction:{parts:[{text:pr.sys}]},
       contents:[{role:"user",parts:[{text:pr.user}]}],
-      generationConfig:{responseMimeType:"application/json",responseSchema:Engine._geminiSchema(kind)}
+      generationConfig:{responseMimeType:"application/json",responseSchema:Engine._geminiSchema(kind),temperature:Engine._temp(kind),topP:0.97}
     })});
     if(!res.ok){ var t=await res.text(); throw new Error("Gemini "+res.status+" "+t.slice(0,80)); }
     var data=await res.json();
@@ -1165,11 +1167,15 @@ var S1={
    ============================================================ */
 var S2={
   async regen(silent){
-    var b=App.brief, a=App.analysis;
-    App.copies=await Engine.gen("copies",{channel:b.channel,seedKey:b.seedKey,tones:a.tones,pains:a.pains,usps:a.usps,target:b.target,offer:b.offer,funnel:b.funnel});
+    var b=App.brief;
+    // 1단계처럼 프레임(페인·톤·USP·각도)을 매번 새로 도출 → 넓은 탐색(2단계 '고정 프레임 안에서 재생성' 함정 회피)
+    var fresh=await Engine.gen("analyze",Object.assign({},b,{_vary:true}));
+    if(fresh&&fresh.pains&&fresh.pains.length)App.analysis=fresh;
+    App.copies=(fresh&&fresh.copies&&fresh.copies.length)?fresh.copies
+      :await Engine.gen("copies",{channel:b.channel,seedKey:b.seedKey,tones:App.analysis.tones,pains:App.analysis.pains,usps:App.analysis.usps,target:b.target,offer:b.offer,funnel:b.funnel,_vary:true});
     App.copies.forEach(function(c){Log.push("copy","pair",c.key,c.sub);});
     S2.render();
-    if(!silent)toast("카피 5안 새로 생성");
+    if(!silent)toast("브리프를 새 각도로 재해석 — 카피 5안 새로 생성");
   },
   render(){
     var an=$("s2analysis");an.innerHTML="";
