@@ -402,6 +402,8 @@ kbd{font-family:ui-monospace,monospace;font-size:10px;background:var(--card);bor
       <div class="row" style="margin-left:auto;gap:8px">
         <button class="btn sm" onclick="S3.addText()">＋ 텍스트</button>
         <button class="btn sm" onclick="S3.addBadge()">＋ 뱃지</button>
+        <button class="btn sm" onclick="document.getElementById('imgLayerUp').click()" title="이미지를 레이어로 올려 드래그·크기조절·삭제(상품컷 썸네일의 ＋레이어로도 가능)">＋ 이미지</button>
+        <input type="file" id="imgLayerUp" class="hidden" accept="image/*" onchange="S3.addImageFile(event)">
         <button class="btn sm" onclick="document.getElementById('bgUp').click()">🖼 배경</button>
         <input type="file" id="bgUp" class="hidden" accept="image/*" onchange="S3.bgUpload(event)">
         <button class="btn sm" onclick="S3.genImage()" title="상품컷을 그대로 합성·보존한 채 어울리는 '새 배경 장면'을 AI로 생성합니다 (상품컷 위에 글씨만 얹는 게 아님)">🔄 상품컷 기반 배경 생성</button>
@@ -457,9 +459,8 @@ kbd{font-family:ui-monospace,monospace;font-size:10px;background:var(--card);bor
       </div>
       <div class="card pad s4-export">
         <div class="tool">
-          <button class="btn sm" style="flex:1 1 30%" onclick="S4.download()">🖼 완성본 PNG</button>
-          <button class="btn sm" style="flex:1 1 30%" onclick="S4.downloadAllRatios()">📐 전 비율 PNG</button>
-          <button class="btn sm" style="flex:1 1 30%" onclick="S4.downloadSpec()">📋 디자인 스펙</button>
+          <button class="btn sm" style="flex:1 1 48%" onclick="S4.download()">🖼 완성본 PNG</button>
+          <button class="btn sm" style="flex:1 1 48%" onclick="S4.downloadAllRatios()">📐 전 비율 PNG</button>
           <button class="btn sm" style="flex:1 1 100%" onclick="S4.toStage3()">🧩 레이어로 열어 편집 (3단계 · 캔바처럼)</button>
         </div>
       </div>
@@ -941,11 +942,13 @@ var Engine={
     var sub=get("sub")||"";
     var cta=get("cta")||"자세히 보기";
     var badges=(d.layers||[]).filter(function(x){return x.type==="badge"&&!x.hidden;}).map(function(b){return ((b.sub?b.sub+" ":"")+(b.text||"")).trim();}).filter(Boolean);
+    var ctaBar=(d.layers||[]).some(function(x){return x.type==="cta"&&!x.hidden&&x.shape==="bar";}); // 3단계 하단바 반영
     var accent=(App.brand&&App.brand.accent)||"#e60023";
+    // 같은 장면(3단계 기획) 위 '서로 다른 3개 디자인 마감' — 톤 일관, 레이아웃만 변주
     var dirs=[
-      {n:"클린 프리미엄",s:"clean premium look with a clear, sharp focal product, even bright studio lighting, refined typography and purposeful spacing (still high-contrast and fully exposed, never hazy or empty)"},
-      {n:"임팩트 세일",s:"bold high-contrast and energetic, very large punchy headline, strong color blocking, promotional and eye-catching"},
-      {n:"라이프스타일",s:"the product clearly shown as the focal point in a real-life usage scene with natural but well-exposed lighting, relatable and story-driven"}
+      {n:"완성안 1",s:"headline placed large and bold in a clean open area, premium editorial typography, generous spacing"},
+      {n:"완성안 2",s:"strong promotional treatment — very large punchy headline and a prominent badge, high-impact layout"},
+      {n:"완성안 3",s:"refined lower-third caption style — headline and button toward the bottom over a subtle dark scrim, modern and minimal"}
     ];
     var dd=dirs[(dir||0)%3];var ratio=d.ratio||"1:1";
     var s;
@@ -958,7 +961,7 @@ var Engine={
     s+="RENDER THE FOLLOWING KOREAN TEXTS EXACTLY as written, perfectly spelled, crisp and legible, with professional Korean ad typography and clear hierarchy (absolutely NO gibberish, NO broken/invented glyphs):\n";
     if(key)s+="• Headline (largest, bold, high contrast against background): \""+key+"\"\n";
     if(sub)s+="• Sub copy (smaller, supporting): \""+sub+"\"\n";
-    if(cta)s+="• A call-to-action button (rounded pill, filled with accent color "+accent+", white text): \""+cta+"\"\n";
+    if(cta)s+="• A call-to-action button ("+(ctaBar?"a FULL-WIDTH solid bar pinned across the very bottom edge":"a rounded pill")+", filled with accent color "+accent+", white text): \""+cta+"\"\n";
     badges.forEach(function(b){s+="• A round/burst sale badge (accent color "+accent+", white bold text) in a top corner: \""+b+"\"\n";});
     if(it.mood)s+="Mood: "+it.mood+". ";
     s+="Use brand accent color "+accent+". Keep ~7% safe margins so nothing is clipped. ";
@@ -1625,6 +1628,7 @@ var S3={
   addText(){Doc.add(Doc.text("sub","새 텍스트",{ny:.4,size:40}));S3.renderAll();},
   addBadge(){Doc.add(Doc.badge({}));S3.renderAll();},
   addImage(url){function go(im){Doc.add(Doc.image(url,{ar:im.height/im.width}));S3.renderAll();}if(S3._img[url])go(S3._img[url]);else{var im=new Image();im.onload=function(){S3._img[url]=im;go(im);};im.src=url;}},
+  addImageFile(e){var f=e.target.files&&e.target.files[0];if(!f)return;if(!/^image\//.test(f.type||"")){toast("이미지 파일만 가능");return;}var rd=new FileReader();rd.onload=function(){S3.addImage(rd.result);toast("이미지 레이어 추가 — 드래그/모서리로 조절, 🗑로 삭제");};rd.readAsDataURL(f);if(e&&e.target)e.target.value="";},
   ratio(r){App.doc.ratio=r;[].forEach.call($("ratioSeg").children,function(b){b.classList.toggle("on",b.dataset.r===r);});S3.renderAll();},
   setScrim(v){v=clamp(+v||0,0,80);if(App.doc)App.doc.scrim=v/100;var r=$("scrimRange"),n=$("scrimNum");if(r)r.value=v;if(n)n.value=v;S3.draw();try{Store.save();}catch(e){}},
   syncScrim(){if(!App.doc)return;var v=Math.round((App.doc.scrim!=null?App.doc.scrim:.45)*100);var r=$("scrimRange"),n=$("scrimNum");if(r)r.value=v;if(n)n.value=v;},
@@ -1853,26 +1857,35 @@ var S4={
     var btn=$("s4gen");if(btn.dataset.busy==="1")return;btn.dataset.busy="1";
     btn.textContent=live?"완성본 생성 중… (안당 수십 초)":"미리보기 생성 중…";
     App.final.variants=[];
-    var names=["클린 프리미엄","임팩트 세일","라이프스타일"];
+    var names=["완성안 1","완성안 2","완성안 3"];
+    var fallbackPNG=await S4._docPNG(); // 실패/무키 시 3단계 기획안 렌더(가독·일관·하단바 반영)
+    var anyFail=false,lastErr="";
     try{
       for(var i=0;i<3;i++){
-        var pushed=false;
+        var v;
         if(live){
           try{ var url=await Engine.gen("final",{finalDoc:true,dir:i},true);
-            var ok=(await Engine._imgEdge(url))>=0.012; // AI 생성이 포그/빈화면이면 가독 보장 합성으로 폴백
-            if(ok){ App.final.variants.push({bg:url,full:true,dir:i,name:names[i]}); pushed=true; }
-            else { var av=Design.pickArchs(d); App.final.variants.push({bg:Engine._scene(d.intent.layoutType,d.bgHue+i*40),full:false,arch:av[i],degraded:true}); pushed=true; }
-          }
-          catch(e){ toast("실시간 생성 실패 → 합성본으로(브라우저 키/네트워크 확인): "+((e&&e.message)||e).slice(0,40)); }
-        }
-        if(!pushed){ var archs=Design.pickArchs(d); var u2=await Engine.gen("image",{layoutType:d.intent.layoutType,seedHue:d.bgHue+i*16,idx:i}); App.final.variants.push({bg:u2,full:false,arch:archs[i]}); }
+            var ok=(await Engine._imgEdge(url))>=0.012; // 포그/빈화면이면 3단계 기획안으로 대체
+            if(ok) v={bg:url,full:true,dir:i,name:names[i]};
+            else { anyFail=true; v={bg:fallbackPNG,full:false,fallback:true,dir:i,name:names[i]}; }
+          }catch(e){ anyFail=true; lastErr=((e&&e.message)||e+"").slice(0,60); v={bg:fallbackPNG,full:false,fallback:true,dir:i,name:names[i]}; }
+        } else { v={bg:fallbackPNG,full:false,preview:true,dir:i,name:"3단계 기획안"}; }
+        App.final.variants.push(v);
         App.final.pick=0;S4.renderVariants();S4.paintFinal(); // 한 장씩 채워지며 보이게
+        if(!live)break; // 무키는 미리보기 1장만
       }
     }catch(e){ console.error(e); toast("생성 오류: "+((e&&e.message)||e).slice(0,50)); }
     finally{ btn.dataset.busy="0"; btn.textContent="완성본 생성 / 다시"; }
-    var degraded=App.final.variants.some(function(v){return v.degraded;});
-    var kc=Design.content(d);Log.push("design","generate",kc.key,live?(degraded?"full+fallback":"full-banner x3"):"preview x3");
-    toast(!live?"키 없이 미리보기 — 이미지 키를 넣으면 실제 완성본이 생성됩니다":(degraded?"일부는 AI 품질이 불안정해 ‘가독 보장 합성본’으로 대체했어요(‘다른 버전’으로 재시도 가능)":"AI가 완성본 3종 생성(텍스트까지 합성) — 골라서 미세조정/다시"));
+    Log.push("design","generate",(Doc.byId(App.sel)||d.layers[0]||{}).text||"",live?(anyFail?"full+fallback":"full x3"):"preview x3");
+    toast(!live?"이미지 키(Gemini)를 넣으면 AI 완성본 3종이 생성됩니다 — 지금은 3단계 기획안 미리보기"
+      :(anyFail?("일부 AI 생성 실패["+(lastErr||"오류")+"] → 3단계 기획안으로 대체. ‘다른 버전’으로 재시도 가능")
+        :"AI 완성본 3종 생성 완료 — 골라서 ‘말로 고치기’로 다듬으세요"));
+  },
+  /* 3단계 기획안(배경+레이어, 하단바/음영 포함)을 PNG로 — 실패/무키 폴백 & 일관성 기준 */
+  async _docPNG(){
+    try{ S3.draw(); await new Promise(function(r){setTimeout(r,200);}); S3.draw(); await new Promise(function(r){setTimeout(r,80);});
+      return $("editCanvas").toDataURL("image/png"); }
+    catch(e){ return Engine._scene((App.doc.intent||{}).layoutType,(App.doc.bgHue||200)); }
   },
   _drawCover(canvas,url){var x=canvas.getContext("2d");var W=canvas.width,H=canvas.height;
     function go(im){var s=Math.max(W/im.width,H/im.height);var dw=im.width*s,dh=im.height*s;x.clearRect(0,0,W,H);x.drawImage(im,(W-dw)/2,(H-dh)/2,dw,dh);}
@@ -1882,30 +1895,25 @@ var S4={
     App.final.variants.forEach(function(v,i){
       var card=el("div","variant"+(i===App.final.pick?" on":""));
       var c=el("canvas");c.width=c.height=160;card.appendChild(c);
-      var title=v.full?(v.name||("완성안 "+(i+1))):(ARCH[v.arch]?ARCH[v.arch].label:("완성안 "+(i+1)));
-      var sub=v.full?"AI 완성본 · 텍스트 합성":(v.degraded?"가독 보장 합성(AI 불안정 대체)":"미리보기(키 입력 시 완성)");
-      var lab=el("div","tiny bold",title+"<div class='tiny muted' style='font-weight:600'>"+sub+"</div>");
+      var sub=v.full?"AI 완성본 · 텍스트 합성":(v.fallback?"3단계 기획안(AI 실패 대체)":"3단계 기획안 미리보기");
+      var lab=el("div","tiny bold",(v.name||("완성안 "+(i+1)))+"<div class='tiny muted' style='font-weight:600'>"+sub+"</div>");
       card.appendChild(lab);
       card.onclick=function(){App.final.pick=i;S4.renderVariants();S4.paintFinal();};
       host.appendChild(card);
-      if(v.full)S4._drawCover(c,v.bg); else Design.render(c,v,App.doc);
+      S4._drawCover(c,v.bg); // 모든 안이 실제 PNG
     });
-    S4._fillControls();
   },
-  _fillControls(){
-    var v=App.final.variants[App.final.pick];if(!v)return;
-    var sel=$("s4arch");if(sel){if(!sel.options.length)ARCH_ORDER.concat(["timer","pop"]).forEach(function(k){var o=el("option",null,ARCH[k].label+" ("+k+")");o.value=k;sel.appendChild(o);});sel.value=v.arch;}
-    var ac=$("s4accent");if(ac)ac.value=(v.accent||App.brand.accent||(ARCH[v.arch]||ARCH.impact).accentDefault).slice(0,7);
-  },
-  setArch(arch){var v=App.final.variants[App.final.pick];if(!v)return;v.arch=arch;S4.renderVariants();S4.paintFinal();toast("아키타입 → "+(ARCH[arch]?ARCH[arch].label:arch));},
-  setAccent(col){var v=App.final.variants[App.final.pick];if(!v)return;v.accent=col;S4.renderVariants();S4.paintFinal();},
   setFree(on){if(!App.final)App.final={variants:[],pick:0};App.final.free=!!on;toast(on?"디자인 자유도 높게 — 다음 생성부터 적용":"기본 자유도");},
-  async regenBg(){var v=App.final.variants[App.final.pick];if(!v)return;toast("이 안 다른 버전으로 생성 중…");
-    if(v.full){v.dir=((v.dir||0)+1)%3;var url=await Engine.gen("final",{finalDoc:true,dir:v.dir,fb:"give this a fresh typography/layout treatment"});v.name=["클린 프리미엄","임팩트 세일","라이프스타일"][v.dir];delete S3._img[v.bg];v.bg=url;}
-    else {var u2=await Engine.gen("image",{layoutType:App.doc.intent.layoutType,seedHue:App.doc.bgHue+Math.floor(Math.random()*120),idx:App.final.pick});delete S3._img[v.bg];v.bg=u2;}
+  async regenBg(){var v=App.final.variants[App.final.pick];if(!v)return;
+    if(!App.keys.gemini){toast("이미지 키(Gemini)를 넣으면 다른 버전을 생성할 수 있어요");return;}
+    toast("이 안 다른 버전으로 생성 중…");
+    v.dir=((v.dir||0)+1)%3;
+    try{ var url=await Engine.gen("final",{finalDoc:true,dir:v.dir,fb:"give this a fresh typography/layout treatment"},true);
+      if((await Engine._imgEdge(url))>=0.012){delete S3._img[v.bg];v.bg=url;v.full=true;delete v.fallback;v.name=["완성안 1","완성안 2","완성안 3"][v.dir];}
+      else toast("이번엔 품질이 불안정했어요 — 한 번 더 눌러보세요"); }
+    catch(e){toast("재생성 실패: "+((e&&e.message)||e).slice(0,40));}
     S4.renderVariants();S4.paintFinal();},
-  paintFinal(){ var v=App.final.variants[App.final.pick];if(!v)return;var c=$("finalCanvas");
-    if(v.full){var wh=RATIOS[App.doc.ratio];c.width=wh[0];c.height=wh[1];S4._drawCover(c,v.bg);} else Design.render(c,v,App.doc); },
+  paintFinal(){ var v=App.final.variants[App.final.pick];if(!v)return;var c=$("finalCanvas");var wh=RATIOS[App.doc.ratio];c.width=wh[0];c.height=wh[1];S4._drawCover(c,v.bg); },
   async refine(){
     var fbel=$("s4fb");var fb=fbel?fbel.value.trim():"";if(!fb){toast("어떻게 바꿀지 입력해주세요");return;}
     var v=App.final.variants[App.final.pick];if(!v){toast("먼저 완성본을 생성");return;}

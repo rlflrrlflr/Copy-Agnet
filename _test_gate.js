@@ -19,12 +19,12 @@ const puppeteer=require('puppeteer'),path=require('path');
    const fog=solid();
    Engine.gen=async()=>fog; // always foggy
    await S4.generate();
-   const allDegraded=App.final.variants.length===3 && App.final.variants.every(v=>v.full===false && v.degraded===true);
-   return {efSolid:+efSolid.toFixed(4),efBusy:+efBusy.toFixed(4),allDegraded};
+   const allFallback=App.final.variants.length===3 && App.final.variants.every(v=>v.full===false && v.fallback===true);
+   return {efSolid:+efSolid.toFixed(4),efBusy:+efBusy.toFixed(4),allFallback};
  });
  await b.close();
  console.log(JSON.stringify(out));
  console.log('errors:',errs.length?errs.slice(0,4):'none');
- const ok=out.efSolid<0.012 && out.efBusy>=0.012 && out.allDegraded && !errs.length;
+ const ok=out.efSolid<0.012 && out.efBusy>=0.012 && out.allFallback && !errs.length;
  console.log(ok?'PASS':'FAIL');process.exit(ok?0:1);
 })().catch(e=>{console.error('FATAL',e.message);process.exit(1);});

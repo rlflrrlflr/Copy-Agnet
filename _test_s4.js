@@ -12,7 +12,9 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
    Doc.add(Doc.badge({text:'50%',sub:'최대'}));
    App.brand.accent='#e60023';
    const prompt=Engine._finalPrompt(App.doc,1,{fb:'배경 어둡게'});
-   const promptOk=/미니멀 순정핏 가죽 트렁크 매트/.test(prompt)&&/프리미엄 매트 확인/.test(prompt)&&/최대 50%/.test(prompt)&&/#e60023/.test(prompt)&&/배경 어둡게/.test(prompt)&&/임팩트|bold high-contrast/.test(prompt);
+   App.doc.layers.filter(l=>l.type==='cta')[0].shape='bar';
+   const promptBar=Engine._finalPrompt(App.doc,2,{},true);
+   const promptOk=/미니멀 순정핏 가죽 트렁크 매트/.test(prompt)&&/프리미엄 매트 확인/.test(prompt)&&/최대 50%/.test(prompt)&&/#e60023/.test(prompt)&&/배경 어둡게/.test(prompt)&&/완성안|headline/.test(prompt)&&/FULL-WIDTH solid bar/.test(promptBar);
    // ---- mocked live generate: 3 full variants ----
    let calls=0;const origGen=Engine.gen;
    Engine.gen=async(kind,pl)=>{calls++;return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';};Engine._imgEdge=async()=>1;
@@ -40,6 +42,6 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
  await b.close();
  console.log(JSON.stringify(out));
  console.log('errors:',errs.length?errs.slice(0,5):'none');
- const ok=out.promptOk&&out.liveVariants===3&&out.allFull&&/클린 프리미엄/.test(out.names)&&out.paintedRatio&&out.refineCalled&&out.previewVariants===3&&!out.previewFull&&!errs.length;
+ const ok=out.promptOk&&out.liveVariants===3&&out.allFull&&/완성안 1/.test(out.names)&&out.paintedRatio&&out.refineCalled&&out.previewVariants===1&&!out.previewFull&&!errs.length;
  console.log(ok?'PASS':'FAIL');process.exit(ok?0:1);
 })().catch(e=>{console.error('FATAL',e.message);process.exit(1);});
