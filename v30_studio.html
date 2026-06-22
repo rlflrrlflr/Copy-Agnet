@@ -229,7 +229,7 @@ kbd{font-family:ui-monospace,monospace;font-size:10px;background:var(--card);bor
 .papers.scatter .p3{transform:translate(-180px,-70px) rotate(-200deg);opacity:0}
 .papers.scatter .p4{transform:translate(120px,-205px) rotate(220deg);opacity:0}
 .papers.scatter .p5{transform:translate(45px,-235px) rotate(-160deg);opacity:0}
-.cat-char{position:absolute;left:50%;bottom:40px;width:120px;margin-left:-60px;z-index:4;transform-origin:50% 100%;transform:translateY(60%) scale(.6);opacity:0;filter:drop-shadow(0 6px 10px rgba(0,0,0,.4));image-rendering:pixelated}
+.cat-char{position:absolute;left:50%;bottom:52px;width:124px;margin-left:-62px;z-index:6;transform-origin:50% 100%;transform:translateY(60%) scale(.6);opacity:0;filter:drop-shadow(0 6px 10px rgba(0,0,0,.4));image-rendering:pixelated;background:transparent;border:0;box-shadow:none}
 .cat-char.in{animation:emerge .72s cubic-bezier(.34,1.45,.5,1) forwards}
 .cat-char.in.bob{animation:catbob 2.4s ease-in-out infinite;transform:translateY(0) scale(1);opacity:1;z-index:4}
 .cat-stage.catin .cat-char{opacity:1}
@@ -1287,11 +1287,14 @@ var S3={
       x.clearRect(0,0,W,H);
       if(im){var s=Math.max(W/im.width,H/im.height);var dw=im.width*s,dh=im.height*s;x.drawImage(im,(W-dw)/2,(H-dh)/2,dw,dh);}
       else{var g=x.createLinearGradient(0,0,W,H);g.addColorStop(0,"hsl("+d.bgHue+",50%,30%)");g.addColorStop(1,"hsl("+((d.bgHue+40)%360)+",55%,15%)");x.fillStyle=g;x.fillRect(0,0,W,H);}
-      // 가독 스크림 — 전체 하단이 아니라 '글자(메인카피) 근처에만' 부드럽게(슬라이더로 세기)
+      // 가독 스크림 — 글자(메인카피) 클러스터에 '딱 붙는 타원'으로만(이미지 전체에 안 깔리게)
       var sc=(d.scrim!=null?d.scrim:.45);
       if(sc>0){var cl=S3._textCluster(x,W,H);
-        if(cl){var cx0=(cl.x0+cl.x1)/2,cy0=(cl.y0+cl.y1)/2,rad=Math.max(cl.x1-cl.x0,cl.y1-cl.y0)*0.62+Math.min(W,H)*0.16;
-          var rg=x.createRadialGradient(cx0,cy0,rad*0.18,cx0,cy0,rad);rg.addColorStop(0,"rgba(0,0,0,"+sc+")");rg.addColorStop(0.7,"rgba(0,0,0,"+(sc*0.55)+")");rg.addColorStop(1,"rgba(0,0,0,0)");x.fillStyle=rg;x.fillRect(0,0,W,H);}
+        if(cl){var cx0=(cl.x0+cl.x1)/2,cy0=(cl.y0+cl.y1)/2,padS=Math.min(W,H)*0.045;
+          var ew=(cl.x1-cl.x0)/2+padS, eh=(cl.y1-cl.y0)/2+padS, rr=Math.max(ew,eh,1);
+          x.save();x.translate(cx0,cy0);x.scale(ew/rr,eh/rr);
+          var rg=x.createRadialGradient(0,0,rr*0.25,0,0,rr);rg.addColorStop(0,"rgba(0,0,0,"+sc+")");rg.addColorStop(0.6,"rgba(0,0,0,"+(sc*0.45)+")");rg.addColorStop(1,"rgba(0,0,0,0)");
+          x.fillStyle=rg;x.beginPath();x.arc(0,0,rr,0,7);x.fill();x.restore();}
       }
       d.layers.slice().sort(function(a,b){return a.z-b.z;}).forEach(function(l){if(l.hidden||l._editing)return;if(l.rot){var bb=S3.bbox(l),cx=bb.x+bb.w/2,cy=bb.y+bb.h/2;x.save();x.translate(cx,cy);x.rotate(l.rot*Math.PI/180);x.translate(-cx,-cy);S3.drawLayer(x,l,W,H);x.restore();}else S3.drawLayer(x,l,W,H);});
       // 스냅 가이드
