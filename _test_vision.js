@@ -1,0 +1,11 @@
+const https=require('https');const KEY=process.env.GKEY;
+function img(prompt,cb){const b=JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{responseModalities:['IMAGE'],imageConfig:{aspectRatio:'1:1',imageSize:'2K'}}});
+ https.request({method:'POST',hostname:'generativelanguage.googleapis.com',path:'/v1beta/models/gemini-3-pro-image-preview:generateContent?key='+KEY,headers:{'content-type':'application/json','content-length':Buffer.byteLength(b)}},r=>{let d='';r.on('data',c=>d+=c);r.on('end',()=>{try{const j=JSON.parse(d);const im=(((j.candidates||[])[0]||{}).content||{}).parts.find(x=>x.inlineData);cb(im&&im.inlineData);}catch(e){cb(null);}});}).end(b);}
+function critique(b64,mime,cb){const prompt="You are a strict Korean ad-banner QC reviewer. Inspect the attached banner for DEFECTS ONLY: (1) misspelled or broken/garbled Korean text, (2) text overlapping the product or unreadable, (3) low-contrast/illegible text, (4) text or elements clipped at edges, (5) badge/button problems. The intended Korean texts are: headline '미니멀 순정핏 가죽 트렁크 매트', button '프리미엄 매트 확인하기', badge '최대 50%'. List concrete defects as a short bullet list, or reply exactly 'OK' if none. Korean.";
+ const b=JSON.stringify({contents:[{role:'user',parts:[{text:prompt},{inlineData:{mimeType:mime||'image/jpeg',data:b64}}]}]});const t0=Date.now();
+ https.request({method:'POST',hostname:'generativelanguage.googleapis.com',path:'/v1beta/models/gemini-3.1-pro-preview:generateContent?key='+KEY,headers:{'content-type':'application/json','content-length':Buffer.byteLength(b)}},r=>{let d='';r.on('data',c=>d+=c);r.on('end',()=>{let t='';try{const j=JSON.parse(d);t=(((j.candidates||[])[0]||{}).content||{}).parts.map(p=>p.text||'').join('');}catch(e){t='ERR '+d.slice(0,160);}cb(r.statusCode,t,((Date.now()-t0)/1000).toFixed(1));});}).end(b);}
+img("Korean ad banner 1:1, a tesla trunk mat product, headline '미니멀 순정핏 가죽 트렁크 매트', red pill button '프리미엄 매트 확인하기', round badge '최대 50%'. All text baked in.",(im)=>{
+ if(!im){console.log('img fail');return;}
+ console.log('image generated, critiquing...');
+ critique(im.data,im.mimeType,(s,t,sec)=>{console.log('CRITIQUE status',s,sec+'s');console.log(t.slice(0,400));});
+});
