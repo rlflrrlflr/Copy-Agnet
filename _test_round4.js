@@ -43,7 +43,7 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
    const pBase=Engine._finalPrompt(App.doc,0,{},true);
    const pFresh=Engine._finalPrompt(App.doc,0,{},false);
    const baseKeepsComp=/KEEP its composition/i.test(pBase)&&!/KEEP its composition/i.test(pFresh);
-   const freePhrase=/HIGH creative freedom/i.test(Engine._finalPrompt(App.doc,0,{free:true},true));
+   const freePhrase=/higher creative freedom/i.test(Engine._finalPrompt(App.doc,0,{free:true},true));
    return {analyzeCombined,s1Copies,barFullWidthBottom,scrimLocal,imgClick,foldRemoved,chatUI,freeSet,baseKeepsComp,freePhrase};
  });
  await b.close();

@@ -12,7 +12,7 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
    UI.go(2);S2.render();
    const card2=document.querySelectorAll('#copyGrid .copy-card')[2];
    const delay=card2&&card2.style.animationDelay;
-   const guide=document.querySelector('.s2chat-h').textContent.indexOf('더 수정하고 싶다면')>=0;
+   const guide=document.querySelector('.s2chat-h').textContent.indexOf('대화로 카피를 다듬어요')>=0;
    // go to stage 3
    Doc.initFromCopy(App.copies[0]);UI.go(3);S3.renderAll();
    const scrimDefault=App.doc.scrim;
@@ -36,6 +36,6 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
  await b.close();
  console.log(JSON.stringify(out));
  console.log('errors:',errs.length?errs.slice(0,5):'none');
- const ok=out.delay==='0.18s'&&out.guide&&out.scrimDefault===0.45&&out.hasScrim&&out.scrimSet&&out.scrimOff&&out.barVisible&&out.shapeBar&&!errs.length;
+ const ok=out.delay==='0.15s'&&out.guide&&out.scrimDefault===0.45&&out.hasScrim&&out.scrimSet&&out.scrimOff&&out.barVisible&&out.shapeBar&&!errs.length;
  console.log(ok?'PASS':'FAIL');process.exit(ok?0:1);
 })().catch(e=>{console.error('FATAL',e.message);process.exit(1);});

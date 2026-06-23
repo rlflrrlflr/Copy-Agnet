@@ -14,7 +14,7 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
    const prompt=Engine._finalPrompt(App.doc,1,{fb:'배경 어둡게'});
    App.doc.layers.filter(l=>l.type==='cta')[0].shape='bar';
    const promptBar=Engine._finalPrompt(App.doc,2,{},true);
-   const promptOk=/미니멀 순정핏 가죽 트렁크 매트/.test(prompt)&&/프리미엄 매트 확인/.test(prompt)&&/최대 50%/.test(prompt)&&/#e60023/.test(prompt)&&/배경 어둡게/.test(prompt)&&/완성안|headline/.test(prompt)&&/FULL-WIDTH solid bar/.test(promptBar);
+   const promptOk=/미니멀 순정핏 가죽 트렁크 매트/.test(prompt)&&/프리미엄 매트 확인/.test(prompt)&&/최대 50%/.test(prompt)&&/#e60023/.test(prompt)&&/배경 어둡게/.test(prompt)&&/완성안|headline/.test(prompt)&&/full-width solid bar/i.test(promptBar)&&/render ONLY the elements/i.test(promptBar);
    // ---- mocked live generate: 3 full variants ----
    let calls=0;const origGen=Engine.gen;
    Engine.gen=async(kind,pl)=>{calls++;return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';};Engine._imgEdge=async()=>1;
