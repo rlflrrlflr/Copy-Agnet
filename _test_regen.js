@@ -27,6 +27,6 @@ const puppeteer=require('puppeteer'),path=require('path');
  console.log(JSON.stringify(out,null,1));
  console.log('errors:',errs.length?errs.slice(0,4):'none');
  const ok=out.regenKind.kind==='analyze'&&out.regenKind.vary===true&&out.analysisChanged&&out.copies===5
-   &&out.tCopies===1.25&&out.tAnalyze===1.25&&out.tRefine===1.0&&out.varyDirective&&out.noVaryClean&&!errs.length;
+   &&out.tCopies===1.05&&out.tAnalyze===1.05&&out.tRefine===0.9&&out.varyDirective&&out.noVaryClean&&!errs.length;
  console.log(ok?'PASS':'FAIL');process.exit(ok?0:1);
 })().catch(e=>{console.error('FATAL',e.message);process.exit(1);});
