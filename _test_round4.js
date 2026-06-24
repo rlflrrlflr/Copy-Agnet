@@ -42,7 +42,7 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
    App.brand.accent='#e60023';
    const pBase=Engine._finalPrompt(App.doc,0,{},true);
    const pFresh=Engine._finalPrompt(App.doc,0,{},false);
-   const baseKeepsComp=/KEEP its composition/i.test(pBase)&&!/KEEP its composition/i.test(pFresh);
+   const baseKeepsComp=/KEEP its product, scene/i.test(pBase)&&!/KEEP its product, scene/i.test(pFresh);
    const freePhrase=/higher creative freedom/i.test(Engine._finalPrompt(App.doc,0,{free:true},true));
    return {analyzeCombined,s1Copies,barFullWidthBottom,scrimLocal,imgClick,foldRemoved,chatUI,freeSet,baseKeepsComp,freePhrase};
  });
