@@ -28,7 +28,7 @@ const URL='file://'+path.resolve('v30_studio.html');
    const fitBad=await S4._fitToRatio('not-an-image','1:1');
    out.fitBadNull=fitBad===null;
    // ---- cat min-time wiring ----
-   out.catMin=/1800-elapsed/.test(Cat.hide.toString());
+   out.catMin=/2200-elapsed/.test(Cat.hide.toString());
    // temps lowered
    out.temps=Engine._temp('copies')===1.05&&Engine._temp('refine')===0.9;
    return out;

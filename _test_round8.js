@@ -40,7 +40,7 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
    out.logoExact=/brand LOGO/i.test(fp)&&/do NOT redraw, recolor, restyle, distort/i.test(fp);
    // variations differ meaningfully
    const f0=Engine._finalPrompt(App.doc,0,{},true),f2=Engine._finalPrompt(App.doc,2,{},true);
-   out.varied=/EDITORIAL MINIMAL/.test(f0)&&/SOLID CARD PANEL/.test(f2)&&f0!==f2;
+   out.varied=/option #1/.test(f0)&&/option #3/.test(f2)&&f0!==f2;
 
    // --- per-text scrim: text layers only (no cta) drives shadow; verify draw uses text type ---
    // (indirect) ensure CTA layer exists and is type cta, text layers type text
