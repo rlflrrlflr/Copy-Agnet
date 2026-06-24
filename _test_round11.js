@@ -32,9 +32,9 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
    // number input: typing into the image size 'num' should NOT rebuild panel (focus retained)
    const nums=document.querySelectorAll('#propBody input[type=number]');
    const numEl=nums[0];
-   numEl.focus();numEl.value='150';numEl.dispatchEvent(new Event('input',{bubbles:true}));
+   numEl.focus();numEl.value='50';numEl.dispatchEvent(new Event('input',{bubbles:true})); // 0-centered: +50 => 150%
    const stillFocused=document.activeElement===numEl;        // panel NOT rebuilt
-   const wxChanged=Math.abs(imL.wx-(imL._wx0*1.5))<0.01;     // applied
+   const wxChanged=Math.abs(imL.wx-(imL._wx0*1.5))<0.01;     // applied (150%)
    // flip button toggles flipH
    const before=!!imL.flipH;
    // find the flip button
