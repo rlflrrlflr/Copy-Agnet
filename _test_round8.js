@@ -37,7 +37,7 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
    const fp=Engine._finalPrompt(App.doc,1,{},true);
    out.specJson=/"el":"headline"/.test(fp)&&/"accent":"#e60023"/.test(fp);
    out.noInvent=/render ONLY the elements/i.test(fp)&&/Do NOT invent or add ANY extra badge/i.test(fp);
-   out.logoExact=/brand LOGO/i.test(fp)&&/do NOT redraw, recolor, restyle, distort/i.test(fp);
+   out.logoExact=/Do NOT draw, render, write or invent ANY logo/i.test(fp);
    // variations differ meaningfully
    const f0=Engine._finalPrompt(App.doc,0,{},true),f2=Engine._finalPrompt(App.doc,2,{},true);
    out.varied=/option #1/.test(f0)&&/option #3/.test(f2)&&f0!==f2;
