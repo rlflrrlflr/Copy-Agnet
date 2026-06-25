@@ -16,11 +16,13 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
    // go to stage 3
    Doc.initFromCopy(App.copies[0]);UI.go(3);S3.renderAll();
    const scrimDefault=App.doc.scrim;
-   // scrim control present + works
-   const hasScrim=!!document.getElementById('scrimRange');
-   S3.setScrim(70);
-   const scrimSet=Math.abs(App.doc.scrim-0.7)<0.001 && document.getElementById('scrimNum').value==='70';
-   S3.setScrim(0); const scrimOff=App.doc.scrim===0;
+   // 19차: 전역 배경음영 슬라이더는 삭제됨(레이어별 '글자 음영'으로 대체). 슬라이더가 없어야 한다.
+   const scrimSliderGone=document.getElementById('scrimRange')===null && document.getElementById('scrimNum')===null;
+   // 레이어별 음영(글자 음영) — key 레이어에 scrim override 가 먹는다
+   const keyL=App.doc.layers.filter(l=>l.role==='key')[0];
+   keyL.scrim=0.7;keyL.scrimColor='#ff0000';
+   const perLayerScrim=Math.abs(keyL.scrim-0.7)<0.001 && S3._hexRgb(keyL.scrimColor)==='255,0,0';
+   const drawsOk=(function(){try{S3.draw();return true;}catch(e){return false;}})();
    // CTA bar toggle surfaced in main props (not fold)
    const cta=App.doc.layers.filter(l=>l.type==='cta')[0];
    App.sel=cta.id;App.sels=[cta.id];S3.props();
@@ -31,11 +33,11 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
    const barVisible=!!barBtn && !inFold;
    if(barBtn){barBtn.click();}
    const shapeBar=cta.shape==='bar';
-   return {delay,guide,scrimDefault,hasScrim,scrimSet,scrimOff,barVisible,shapeBar};
+   return {delay,guide,scrimDefault,scrimSliderGone,perLayerScrim,drawsOk,barVisible,shapeBar};
  });
  await b.close();
  console.log(JSON.stringify(out));
  console.log('errors:',errs.length?errs.slice(0,5):'none');
- const ok=out.delay==='0.15s'&&out.guide&&out.scrimDefault===0.45&&out.hasScrim&&out.scrimSet&&out.scrimOff&&out.barVisible&&out.shapeBar&&!errs.length;
+ const ok=out.delay==='0.15s'&&out.guide&&out.scrimDefault===0.45&&out.scrimSliderGone&&out.perLayerScrim&&out.drawsOk&&out.barVisible&&out.shapeBar&&!errs.length;
  console.log(ok?'PASS':'FAIL');process.exit(ok?0:1);
 })().catch(e=>{console.error('FATAL',e.message);process.exit(1);});
