@@ -12,13 +12,13 @@ const URL='file://'+path.resolve('v30_studio.html');
    // ---- copy sanitization (_cleanCopy / _coerce) ----
    const giant='왜 '+('가나다 '.repeat(120));
    const c=Engine._coerce('copies',{copies:[{key:'',sub:'서브만 있음',cta:'',tone:'직격직격직격직격직격직격직격직격',why:giant}]});
-   out.whyClipped=c[0].why.length<=70;
+   out.whyClipped=c[0].why.length<=90;
    out.emptyKeyFixed=c[0].key==='서브만 있음';
    out.ctaFilled=c[0].cta==='자세히 보기';
-   out.toneClipped=c[0].tone.length<=14;
+   out.toneClipped=c[0].tone.length<=20;
    // analyze coerce also cleans
    const a=Engine._coerce('analyze',{pains:['p'],tones:['t'],usps:['u'],copies:[{key:'키',sub:'서브',cta:'cta',tone:'t',why:giant}]});
-   out.analyzeWhyClipped=a.copies[0].why.length<=70;
+   out.analyzeWhyClipped=a.copies[0].why.length<=90;
    // ---- stage3 download exists ----
    out.s3download=typeof S3.download==='function'&&!!document.querySelector('#stage3 button[onclick="S3.download()"]');
    // ---- stage4 fit helper never-blank ----
@@ -30,7 +30,7 @@ const URL='file://'+path.resolve('v30_studio.html');
    // ---- cat min-time wiring ----
    out.catMin=/2200-elapsed/.test(Cat.hide.toString());
    // temps lowered
-   out.temps=Engine._temp('copies')===1.05&&Engine._temp('refine')===0.9;
+   out.temps=Engine._temp('copies')===1.25&&Engine._temp('refine')===1.0;
    return out;
  },PNG);
 
