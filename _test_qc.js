@@ -72,7 +72,7 @@ const PNG='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAA
    const bgSelectedByClick=App.sel==='__bg__';
    // props shows bg panel
    S3.props();
-   const bgPanel=/배경 이미지/.test(document.getElementById('propBody').textContent);
+   const bgPanel=/좌우반전/.test(document.getElementById("propBody").textContent)&&/배경 크기/.test(document.getElementById("propBody").textContent);
    return {fn:typeof S3.selectBg==='function',row,bgSelectedByClick,bgPanel,hasBgLayerOrSelect:true};
  });
 
