@@ -36,7 +36,17 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
    out.specHasPos=/"pos":\{"x":8,"y":46\}/.test(fp);                 // 헤드라인 pos 정확
    out.honorPosY=/HONOR THE VERTICAL POSITION/i.test(fp)&&/'pos'\s*wins|pos'\? wins|pos' wins/i.test(fp||'')||/'pos' wins/.test(fp);
    out.honorPosY=/HONOR THE VERTICAL POSITION/i.test(fp);
-   out.topRightClear=/top-right ~30% width COMPLETELY CLEAR/i.test(fp)&&/TOP ~12% band/i.test(fp);
+   out.topRightClear=/top-right ~30% width COMPLETELY CLEAR/i.test(fp)&&/TOP ~14% band/i.test(fp);
+
+   // 2b) 로고가 있으면 헤드라인을 로고 띠 '아래'로 강제(같은 줄 충돌 방지)
+   App.brand.logo=BG;
+   App.doc.layers=App.doc.layers.filter(l=>l.role!=='logo');
+   App.doc.layers.push({id:'lg',type:'image',role:'logo',src:BG,nx:.74,ny:.05,wx:.20,ar:.35,hidden:false});
+   keyL.ny=0.05; // 마케터/AI가 위로 올려도 로고와 안 붙게
+   const fpC=Engine._finalPrompt(App.doc,0,{},true);
+   const mhl=fpC.match(/"el":"headline"[^}]*"pos":\{"x":\d+,"y":(\d+)\}/);
+   out.headlineBelowLogo = !!mhl && (+mhl[1] >= 15);
+   out.logoSepRule=/LOGO SEPARATION/i.test(fpC)&&/same horizontal line/i.test(fpC);
 
    // 3) 로고/워터마크 금지 — 로고가 없어도(무로고) 무조건 금지(헛로고 ACCIOWORK/Alibaba.com 방지)
    App.brand.logo=null;
@@ -58,7 +68,7 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
  await b.close();
  console.log(JSON.stringify(R,null,1));
  console.log('errors:',errs.length?errs.slice(0,8):'none');
- const keys=['bgSliderSymmetric','bgSliderDefault0','leftShrinks','rightExpands','specHasPos','honorPosY','topRightClear','banWhenNoLogo','banWatermark','cleanCornerWhenLogo','noLogoElement'];
+ const keys=['bgSliderSymmetric','bgSliderDefault0','leftShrinks','rightExpands','specHasPos','honorPosY','topRightClear','headlineBelowLogo','logoSepRule','banWhenNoLogo','banWatermark','cleanCornerWhenLogo','noLogoElement'];
  const ok=keys.every(k=>R[k])&&!errs.length;
  console.log('FAILED:',keys.filter(k=>!R[k]));
  console.log(ok?'PASS':'FAIL');process.exit(ok?0:1);
