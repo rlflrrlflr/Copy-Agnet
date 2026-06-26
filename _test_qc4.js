@@ -56,7 +56,7 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
    App.brand.accent='#e60023';App.doc.ratio='9:16';
    const f1=Engine._finalPrompt(App.doc,0,{},true);
    out.headlineLarge=/headline must be LARGE and dominant/i.test(f1);
-   out.vertSafe=/VERTICAL MEDIA SAFE ZONE/i.test(f1)&&/CENTRAL ~70% vertical/i.test(f1);
+   out.vertSafe=/VERTICAL MEDIA SAFE ZONE/i.test(f1)&&/must stay between/i.test(f1)&&/COMPLETELY free of text/i.test(f1);
    const f2=Engine._finalPrompt(App.doc,1,{},true);
    out.witNoBadge=/Do NOT add any badge, sticker, price tag/i.test(f2);
    out.noBadgeGuard=/is NO badge in the spec/i.test(f1); // doc has no badge layer

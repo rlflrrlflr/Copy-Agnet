@@ -31,7 +31,7 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
 
    App.doc.ratio='16:9';
    const rfWide=Engine._finalPrompt(App.doc,0,{reframe:true},true);
-   out.wideRecompose=/WIDER canvas/i.test(rfWide)&&/keep the person\/product to the RIGHT/i.test(rfWide)&&/do NOT pull the person to dead-center/i.test(rfWide);
+   out.wideRecompose=/WIDER canvas/i.test(rfWide)&&/anchor the COPY block to the LEFT/i.test(rfWide)&&/person\/product on the RIGHT side/i.test(rfWide)&&/do NOT pull the person to dead-center/i.test(rfWide);
 
    // 1:1 은 방향 지시 없이(왜곡금지·아웃페인팅은 유지)
    App.doc.ratio='1:1';
