@@ -1126,9 +1126,20 @@ var Engine={
     // 로고는 spec에서 제외 — AI가 그리지 않고, 앱이 실제 로고를 합성함(동질성 100%)
     // 같은 슬롯이라도 매 생성마다 다른 창의 자극(템플릿 느낌 제거). 면분할/대각선 분할은 금지 목록에서 제외함
     var SEEDS=["airy editorial whitespace","sleek dark premium mood","bright energetic pop palette","magazine-cover hero treatment","minimal type-forward layout","playful sticker/cutout accent","witty highlighter mark on a key word","clean badge-and-callout accents","soft gradient glow behind the headline","confident oversized typography"];
-    // 비율 재구성(전 비율 내보내기): 디자인을 바꾸지 말고 '같은 디자인을 캔버스 크기만' 맞춤
+    // 퍼널 단계 — 구매/전환 소재는 '카피 우선(사람은 보조)' 구도로
+    var funnel=(App.brief&&App.brief.funnel)||(it&&it.funnel)||"";
+    var buyIntent=/전환|구매|구입|판매|conversion|purchase/i.test(funnel);
+    var vert=(ratio==="9:16"||ratio==="4:5");
+    var wide=(ratio==="16:9"||ratio==="2:1"||ratio==="21:9"||ratio==="3:2");
+    // 비율 재구성(전 비율 내보내기): '늘리지 말고' 캔버스 모양에 맞게 재구성(아웃페인팅), 비율 왜곡 금지
     if(p.reframe){
-      var rs="Take the attached approved banner and re-fit it to aspect ratio "+ratio+" WITHOUT changing the design: keep the exact same layout, colors, typography, product, text and all elements. Only extend/outpaint the photographic background as needed to fill the new canvas, and reposition the existing elements to stay fully visible and within ~7% safe margins. Do NOT restyle, do NOT use a split-screen, do NOT add or remove anything. Korean text must stay identical and crisp.";
+      var rs="Take the attached approved banner and RE-FRAME it to aspect ratio "+ratio+": keep the same design language, colors, typography, product/person, Korean text and all elements, but RE-COMPOSE for the new canvas shape — do NOT simply scale or stretch the old frame onto it. ";
+      rs+="ABSOLUTELY CRITICAL: NEVER stretch, squash, distort or change the proportions of the person, product or typography — keep everyone and everything at natural, correct proportions with crisp text (a vertical canvas must NOT look like a squeezed square). ";
+      rs+="Fill the new canvas by OUTPAINTING the real photographic scene (naturally extend the room / window / skyline), never by stretching pixels. Keep all text and the product fully inside ~7% safe margins. ";
+      if(vert)rs+="TALLER vertical canvas: stack the copy block (headline → sub-copy → CTA) in the UPPER-CENTER and let the person/product occupy the LOWER area; keep the copy large and clearly readable, never cramped. ";
+      if(wide)rs+="WIDER canvas: give the COPY more central presence on the left-center third and keep the person/product to the RIGHT side — do NOT pull the person to dead-center; the copy should read first. ";
+      if(buyIntent)rs+="PURCHASE-INTENT creative: the COPY is the hero and must read first and stay visually dominant and reasonably centered; the person/product is a SUPPORTING element shifted to one side, never dead-center covering the copy, never heavier than the copy block. ";
+      rs+="Do NOT restyle, do NOT use a split-screen, do NOT add or remove anything, and do NOT draw or copy any logo, brand name or watermark. ";
       return rs;
     }
     var s;
@@ -1140,6 +1151,7 @@ var Engine={
     }
     s+="DESIGN TREATMENT for this variant: "+dd.s+". ";
     s+="LAYOUT RULE: do NOT use a diagonal split-screen or hard 50/50 color-block split of the image — keep the product photo as the main stage and overlay text in calm areas. ";
+    if(buyIntent)s+="PURCHASE-INTENT COMPOSITION (important): the COPY is the hero — the headline + sub-copy + CTA must read FIRST and hold a dominant, reasonably CENTERED presence (left-center) with a clear calm area around them. Treat the person/product as a SUPPORTING element: shift it toward the RIGHT side (about the right 40~45%), never dead-center over the copy and never visually heavier than the copy. Keep it premium, airy and uncluttered, with the person/product at natural proportions (no stretching). ";
     s+="SAFE AREA (critical): keep EVERY headline, sub-copy, button, badge and the product FULLY inside the frame with at least ~8% margin from all four edges — nothing may be clipped or cut off at the top, bottom or sides. ";
     s+="HEADLINE SIZE: the headline must be LARGE and dominant (a major focal element), never small or timid. ";
     if(ratio==="9:16"||ratio==="4:5"){ // 세로형: 매체 UI(상단/하단 오버레이) 회피 — 핵심을 중앙 세이프존에 모음
@@ -1180,6 +1192,7 @@ var Engine={
     if(it.mood)s+="Mood: "+it.mood+". ";
     s+="STAGING: you are free to STAGE/COMPOSE the scene creatively (different setting, surroundings, props, camera angle of the SCENE, lighting mood) for a fresh, non-generic look — only the PRODUCT itself must stay identical. ";
     s+="Headlines usually sit upper-left, so keep the upper/left area calmer and place the hero product toward the LOWER-RIGHT (not mandatory, but prefer this balance). ";
+    if(/전환|구매|구입|판매|conversion|purchase/i.test((App.brief&&App.brief.funnel)||""))s+="This is a PURCHASE-INTENT creative — leave a generous calm copy zone on the LEFT-CENTER (where the headline/CTA will go) and stage the person/product toward the RIGHT side so the copy can dominate; keep the subject at natural proportions. ";
     s+="2026 top-tier aesthetic (Toss/29CM/Kurly league). Photoreal, crisp, high detail, well-exposed and high-contrast — NOT washed out, NOT foggy/hazy, NOT overexposed, the product clearly visible and in sharp focus. Aspect ratio "+(d.ratio||"1:1")+".";
     var prods=(App.assets&&App.assets.products)||[],refs=(App.assets&&App.assets.refs)||[];
     if(prods.length){s+=" [PRODUCT — IDENTITY LOCKED] The first "+prods.length+" attached image(s) are the ACTUAL product"+(prods.length>1?" (incl. detail close-up shots)":"")+". Recreate the product EXACTLY as shown — identical shape, label, printed text, colors and proportions. Treat every printed character/logo as a locked texture: NEVER redraw, restyle, translate, recolor or invent it. Integrate it naturally as the single focal subject. Do NOT alter or replace the product.";

@@ -82,7 +82,7 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
    const fpEdit=Engine._finalPrompt(App.doc,0,{fb:'텍스트를 조금 더 아래로 내려줘'},true);
    out.editMode=/EDIT MODE/.test(fpEdit)&&/텍스트를 조금 더 아래로 내려줘/.test(fpEdit);
    const fpRef=Engine._finalPrompt(App.doc,0,{reframe:true},true);
-   out.reframeNoEdit=!/EDIT MODE/.test(fpRef)&&/re-fit it to aspect ratio/i.test(fpRef);
+   out.reframeNoEdit=!/EDIT MODE/.test(fpRef)&&/RE-FRAME it to aspect ratio/i.test(fpRef);
    // 로고 합성은 여전히 1회(스펙에 로고 없음 + AI 로고금지)
    out.noAILogo=/Do NOT draw, render, write or invent ANY logo/i.test(fpEdit)&&!/"el":"logo"/.test(fpEdit);
 

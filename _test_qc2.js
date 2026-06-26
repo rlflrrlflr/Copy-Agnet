@@ -62,7 +62,7 @@ const PNG='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAA
    const f0=Engine._finalPrompt(App.doc,0,{seed:0},true);
    out.noSplitRule=/do NOT use a diagonal split-screen/i.test(f0)&&!/diagonal composition/i.test(f0);
    const fr=Engine._finalPrompt(App.doc,0,{reframe:true,baseOverride:PNG},true);
-   out.reframeKeepsDesign=/WITHOUT changing the design/i.test(fr)&&/do NOT use a split-screen/i.test(fr);
+   out.reframeKeepsDesign=/keep the same design language/i.test(fr)&&/do NOT restyle/i.test(fr)&&/do NOT use a split-screen/i.test(fr);
    // wit direction present in option #2
    const f1=Engine._finalPrompt(App.doc,1,{},true);
    out.witTemplate=/WIT/i.test(f1);
