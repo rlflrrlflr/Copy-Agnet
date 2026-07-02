@@ -50,7 +50,7 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
    // 도형 속성 패널: 모양 seg + 불투명도
    App.sel=sh.id;App.sels=[sh.id];S3.props();
    const segBtns=[...document.querySelectorAll('#propBody .seg button')].map(b=>b.textContent).join('');
-   out.shapeProps = /사각/.test(segBtns)&&/화살표/.test(segBtns);
+   out.shapeProps = segBtns.includes('\u25ad')&&segBtns.includes('\u279c'); // 아이콘 전용 seg(▭ ➜)
    // 도형 8방향 리사이즈 분기 + 가이드/스펙 포함
    out.shapeResize = /l\.type==="shape"/.test(S3.onMove.toString());
    out.shapeInGuide = /l\.type==="shape"/.test(Engine._layoutGuide.toString());
