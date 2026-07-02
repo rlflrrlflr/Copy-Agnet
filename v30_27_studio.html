@@ -2774,7 +2774,8 @@ var S4={
   _gemAR:["1:1","2:3","3:2","3:4","4:3","4:5","5:4","9:16","16:9","21:9"],
   _nearestAR(w,h){var t=w/h,best="1:1",bd=1e9;S4._gemAR.forEach(function(a){var p=a.split(":"),r=(+p[0])/(+p[1]),dd=Math.abs(Math.log(r)-Math.log(t));if(dd<bd){bd=dd;best=a;}});return best;},
   _exportItems(){ // 프리셋 4종 + 커스텀(추가된 것)
-    var base=[{k:"1:1",label:"1:1 피드",dims:RATIOS2K["1:1"],ar:"1:1"},{k:"4:5",label:"4:5 피드",dims:RATIOS2K["4:5"],ar:"4:5"},{k:"16:9",label:"16:9 배너",dims:RATIOS2K["16:9"],ar:"16:9"},{k:"9:16",label:"9:16 스토리",dims:RATIOS2K["9:16"],ar:"9:16"}];
+    var base=[{k:"1:1",label:"1:1 피드",dims:RATIOS2K["1:1"],ar:"1:1"},{k:"4:5",label:"4:5 피드",dims:RATIOS2K["4:5"],ar:"4:5"},{k:"16:9",label:"16:9 배너",dims:RATIOS2K["16:9"],ar:"16:9"},{k:"9:16",label:"9:16 스토리",dims:RATIOS2K["9:16"],ar:"9:16"},
+      {k:"bizboard",label:"카카오 비즈보드",dims:[2058,516],ar:"21:9",custom:true}]; // 국내 매체 필수 규격(1029×258의 2배 해상도)
     return base.concat(S4._customs||[]);
   },
   openExport(){ var v=App.final.variants[App.final.pick];if(!v||v.loading){toast("완성본을 먼저 생성하세요");return;}

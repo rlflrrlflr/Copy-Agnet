@@ -52,12 +52,12 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
    App.stage=4;App.final={variants:[{bg:BG,full:true,dir:0,name:'완성안 1',ratio:'1:1'}],pick:0};
    S4.openExport();
    out.modalOpen=!document.getElementById('exportModal').classList.contains('hidden');
-   out.presetCells=document.querySelectorAll('#exportGrid .export-cell').length===4;
-   // custom add -> 5th cell
+   out.presetCells=document.querySelectorAll('#exportGrid .export-cell').length===5; // 표준 4 + 카카오 비즈보드
+   // custom add -> 6th cell
    document.getElementById('cw').value='1200';document.getElementById('ch').value='628';
    S4.genCustom();
    await new Promise(r=>setTimeout(r,300));
-   out.customCellAdded=document.querySelectorAll('#exportGrid .export-cell').length===5;
+   out.customCellAdded=document.querySelectorAll('#exportGrid .export-cell').length===6;
    // a ratio gets cached (fallback fit from v.bg, no key)
    const v=App.final.variants[0];
    out.customCached=!!(v._ratioCache&&Object.keys(v._ratioCache).some(k=>/custom/.test(k)));
