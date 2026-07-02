@@ -66,7 +66,7 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
    const v0=App.final.variants[0];
    out.bgCleanSaved=v0&&v0.bgClean===SCENE;            // 원본(로고X)
    out.bgComposited=v0&&v0.full===true&&v0.bg!==SCENE; // 표시본엔 로고 합성됨
-   out.threeVariants=App.final.variants.length===3&&App.final.variants.every(v=>!v.loading);
+   out.threeVariants=App.final.variants.length===4&&App.final.variants.every(v=>!v.loading)&&App.final.variants[3].lossless===true; // AI 3안 + 무손실 보존안
 
    // 6) 비율 내보내기 reframe 는 bgClean 을 베이스로(로고 1회만 → 겹침 방지)
    genCalls=[];

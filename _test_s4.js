@@ -21,17 +21,18 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
    App.keys.gemini='FAKE';App.final={variants:[],pick:0};
    await S4.generate();
    const liveVariants=App.final.variants.length;
-   const allFull=App.final.variants.every(v=>v.full===true);
+   const allFull=App.final.variants.slice(0,3).every(v=>v.full===true)&&App.final.variants[3]&&App.final.variants[3].lossless===true; // 무손실 보존안 포함
    const names=App.final.variants.map(v=>v.name).join(',');
    // paintFinal draws image (full) — finalCanvas sized to ratio
    S4.paintFinal();
    const fc=document.getElementById('finalCanvas');
    const paintedRatio=fc.width===RATIOS[App.doc.ratio][0];
    // refine path
+   const callsAfterGen=calls;
    await S4.refine.call(S4); // no fb -> should toast and not crash
    document.getElementById('s4fb').value='더 고급스럽게';
    await S4.refine();
-   const refineCalled=calls> liveVariants; // extra gen call
+   const refineCalled=calls>callsAfterGen; // refine이 gen을 추가 호출
    // ---- no-key path -> preview variants (Design overlay) ----
    App.keys.gemini='';App.final={variants:[],pick:0};
    await S4.generate();
@@ -42,6 +43,6 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
  await b.close();
  console.log(JSON.stringify(out));
  console.log('errors:',errs.length?errs.slice(0,5):'none');
- const ok=out.promptOk&&out.liveVariants===3&&out.allFull&&/완성안 1/.test(out.names)&&out.paintedRatio&&out.refineCalled&&out.previewVariants===1&&!out.previewFull&&!errs.length;
+ const ok=out.promptOk&&out.liveVariants===4&&out.allFull&&/완성안 1/.test(out.names)&&out.paintedRatio&&out.refineCalled&&out.previewVariants===1&&!out.previewFull&&!errs.length;
  console.log(ok?'PASS':'FAIL');process.exit(ok?0:1);
 })().catch(e=>{console.error('FATAL',e.message);process.exit(1);});

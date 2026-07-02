@@ -59,7 +59,7 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
    out.slotsLoading=App.final.variants.every(v=>v.loading===true);
    out.exportLockedDuring=document.getElementById('s4dlPng').disabled===true;
    await genP;
-   out.allFull=App.final.variants.length===3&&App.final.variants.every(v=>v.full===true);
+   out.allFull=App.final.variants.length===4&&App.final.variants.slice(0,3).every(v=>v.full===true)&&App.final.variants[3].lossless===true; // AI 3안 + 무손실 보존안
    out.exportUnlocked=document.getElementById('s4dlPng').disabled===false;
    Engine.gen=realGen;
 
