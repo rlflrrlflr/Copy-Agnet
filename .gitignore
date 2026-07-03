@@ -7,3 +7,8 @@ _fx.png
 _guide.png
 _shapes.png
 node_modules/
+_pixcat*.py
+_render_*.js
+_verify.js
+_shot_*.png
+shot_*.png
