@@ -932,7 +932,10 @@ var Brand={
   setLogo(e){Brand.setLogoFiles(e.target.files);if(e&&e.target)e.target.value="";},
   setLogoFiles(fl){if(!fl||!fl.length)return;var f=fl[0];if(!/^image\//.test(f.type||""))return;
     var rd=new FileReader();rd.onload=function(){var orig=rd.result;App.brand.logo=orig;var im=new Image();im.onload=function(){S3._img[orig]=im;
-      var acc=Brand._accentFrom(im);if(acc){App.brand.accent=acc;} // v31: 무음 자동 추출(UI 미노출)
+      var acc=Brand._accentFrom(im);if(acc){App.brand.accent=acc;
+        // 기본색 그대로인 기존 CTA에 추출색 반영(악센트가 UI 없이도 실제로 흐르게)
+        try{if(App.doc)(App.doc.layers||[]).forEach(function(l){if(l.type==="cta"&&l.bg==="#e60023")l.bg=acc;});}catch(e){}
+      } // v31: 무음 자동 추출(UI 미노출)
       var ko=Brand.knockout(im); // 단색 배경이면 누끼따서 투명 PNG로
       if(ko){App.brand.logo=ko;var ki=new Image();ki.onload=function(){S3._img[ko]=ki;Brand._refresh();};ki.src=ko;toast("로고 배경 자동 제거(누끼) 적용");}
       Brand._refresh();};im.src=orig;$("brandLogoName").textContent="✓ "+f.name.slice(0,14);};rd.readAsDataURL(f);},
@@ -1302,15 +1305,20 @@ var Engine={
     if(p.creative){
       var briefB=(App.brief||{}),uspsC=(((App.analysis||{}).usps)||[]).slice(0,4);
       var cs="You are a senior Korean performance-ad ART DIRECTOR. Design a COMPLETELY NEW banner from scratch — FULL creative freedom over layout, composition, scene, graphic devices, decorative elements and typography treatment (text may interact with the scene: dimensional lettering, creative highlights, expressive type — like top-tier Korean commerce/finance ads). Do NOT feel bound by any previous layout. Aspect ratio "+ratio+", 2026 top-tier Korean ad aesthetic. ";
-      cs+="\nPLANNING INTENT — honor the SPIRIT of the plan, not its layout. The marketer planned this creative around: funnel stage="+(funnel||"-")+"; mood="+((it&&it.mood)||"-")+"; the visual should carry=\""+((it&&it.visualCarries)||"-")+"\"; copy tone="+((it&&it.tone)||"-")+"; target=\""+String(briefB.target||"").replace(/\s+/g," ").slice(0,140)+"\"; offer=\""+String(briefB.offer||"").replace(/\s+/g," ").slice(0,180)+"\""+(uspsC.length?("; key USPs(use verbatim where natural)="+uspsC.join(" / ")):"")+". Every design decision should serve this intent. ";
-      cs+="\nMANDATORY CONTENT — render this EXACT Korean text, each EXACTLY once, beautifully integrated: headline=\""+key+"\""+(sub?("; sub-copy=\""+sub+"\""):"")+(cta?("; CTA=\""+cta+"\""):"")+(badges.length?("; badge/offer text=\""+badges.join(" | ")+"\""):"")+". Do NOT invent any other words, numbers, prices, coupons or claims. All Korean text perfectly spelled, crisp, fully opaque (NO gibberish/broken glyphs). ";
+      cs+="\nPLANNING INTENT — honor the SPIRIT of the plan, not its layout. The marketer planned this creative around: funnel stage="+(funnel||"-")+"; mood="+((it&&it.mood)||"-")+"; the visual should carry=\""+((it&&it.visualCarries)||"-")+"\"; copy tone="+((it&&it.tone)||"-")+"; target="+JSON.stringify(String(briefB.target||"").replace(/\s+/g," ").slice(0,140))+"; offer="+JSON.stringify(String(briefB.offer||"").replace(/\s+/g," ").slice(0,180))+(uspsC.length?("; key USPs(use verbatim where natural)="+uspsC.join(" / ")):"")+". Every design decision should serve this intent. ";
+      cs+="Visual format: compose as "+({'product-shot':'a product-hero shot','app-ui-screen':'an app/device UI screen in context','persona-scenario':'a person-in-situation lifestyle scene','data-visual':'a clean data/number-driven visual'}[(it&&it.layoutType)]||"a fitting commercial scene")+". Use brand accent color "+accent+" as the key accent (CTA fill / highlights). ";
+      cs+="\nMANDATORY CONTENT — render this EXACT Korean text, each EXACTLY once, beautifully integrated: "+(key?("headline="+JSON.stringify(key)):"")+(sub?("; sub-copy="+JSON.stringify(sub)):"")+(cta?("; CTA="+JSON.stringify(cta)):"")+(badges.length?("; badge/offer text="+JSON.stringify(badges.join(" | "))):"")+". Do NOT invent any other words, numbers, prices, coupons or claims. All Korean text perfectly spelled, crisp, fully opaque (NO gibberish/broken glyphs). ";
       var prodsC=(App.assets&&App.assets.products)||[];
       if(prodsC.length)cs+="\n[PRODUCT — LOCKED BRAND ASSET] The attached product photo(s) are the actual product: place AS-IS, pixel-faithful label/logo/shape (never re-typeset or redraw printed text); you may stage them creatively (angle of scene, props, lighting) but the product itself must stay identical. ";
-      if(hasLogo)cs+="Do NOT draw, render or invent ANY logo/brand mark/watermark — the real logo is composited on top afterward; keep the top-right corner relatively calm for it. ";
+      if(hasLogo)cs+="Do NOT draw, render or invent ANY logo/brand mark/watermark — the real logo is composited on top afterward around "+Math.round(((logoL&&logoL.nx)!=null?logoL.nx:.74)*100)+"%/"+Math.round(((logoL&&logoL.ny)!=null?logoL.ny:.05)*100)+"% (x/y from top-left); keep that corner area relatively clear for it. ";
       else cs+="Do NOT draw any logo, brand name, watermark, website URL or '.com' text anywhere. ";
       if(isVert)cs+="VERTICAL MEDIA SAFE ZONE (STRICT): all text/CTA/badges and the key subject between "+vTop+"% and "+vBot+"% of the height — top "+vTop+"% and bottom "+(100-vBot)+"% completely clear (platform UI covers them). ";
       cs+="Keep ~7% safe margins — nothing clipped at any edge. ";
-      cs+="This is option #"+(((dir||0)%3)+1)+" of 3 — take a clearly DIFFERENT creative direction (different composition family, different graphic device) from the other options. ";
+      var detC=(d.layers||[]).filter(function(l){return l.role==="detail"&&!l.hidden;})[0];
+      if(detC)cs+="Do NOT draw any photo inset / zoom-detail bubble — a REAL product detail inset (~"+Math.round((detC.wx||.3)*100)+"% width) is composited on top afterward around "+Math.round(((detC.nx!=null?detC.nx:.6))*100)+"%/"+Math.round(((detC.ny!=null?detC.ny:.58))*100)+"% (x/y) — keep that area relatively clear. ";
+      if(p.seed!=null)cs+="Creative seed for THIS option — lean into a "+SEEDS[((p.seed%SEEDS.length)+SEEDS.length)%SEEDS.length]+" (keep the exact copy and brand assets). ";
+      if(p.baseOverride)cs+="\nEDIT MODE: the FIRST attached image is the CURRENT approved creative design — preserve its composition, scene and typography treatment; apply ONLY the requested change, nothing else. ";
+      else cs+="This is option #"+(((dir||0)%3)+1)+" of 3 — take a clearly DIFFERENT creative direction (different composition family, different graphic device) from the other options. ";
       if(p.fb)cs+="Art direction from the user (apply): "+p.fb+". ";
       if(p.chatRefs&&p.chatRefs.length)cs+="The attached STYLE REFERENCE image(s) are our past in-house ads — match their level of density, boldness and creative freedom (never copy their exact text/products/logos). ";
       cs+="RENDER QUALITY: correctly exposed, high-contrast, sharp, rich color; text fully legible. Output ONE finished banner, indistinguishable from a real published Korean ad. No watermark, no mockup frame.";
@@ -1782,7 +1790,7 @@ var Doc={
     size:o.size||40,font:o.font||"Pretendard",weight:o.weight||700,color:o.color||"#ffffff",align:o.align||"left",
     lh:o.lh||1.16,runs:[],z:Doc._z(),hidden:false,locked:false};},
   cta(t,o){o=o||{};return{id:uid(),type:"cta",role:"cta",text:t||"자세히 보기",nx:o.nx!=null?o.nx:.07,ny:o.ny||.85,
-    size:o.size||26,font:"Pretendard",weight:800,color:"#ffffff",bg:"#e60023",align:"left",shape:"pill",z:Doc._z(),hidden:false,locked:false};},
+    size:o.size||26,font:"Pretendard",weight:800,color:"#ffffff",bg:o.bg||(App.brand&&App.brand.accent)||"#e60023",align:"left",shape:"pill",z:Doc._z(),hidden:false,locked:false};},
   image(url,o){o=o||{};return{id:uid(),type:"image",role:"image",src:url,nx:o.nx!=null?o.nx:.32,ny:o.ny!=null?o.ny:.30,wx:o.wx||.42,ar:o.ar||1,rot:0,z:Doc._z(),hidden:false,locked:false};},
   detail(url,o){o=o||{};return{id:uid(),type:"image",role:"detail",shape:"circle",src:url,nx:o.nx!=null?o.nx:.6,ny:o.ny!=null?o.ny:.58,wx:o.wx||.3,ar:1,rot:0,z:Doc._z(),hidden:false,locked:false};},
   shape(kind,o){o=o||{};return{id:uid(),type:"shape",role:"shape",kind:kind||"rect",nx:o.nx!=null?o.nx:.32,ny:o.ny!=null?o.ny:.36,wx:o.wx||.34,hy:o.hy||.16,
@@ -2699,7 +2707,9 @@ var Refs={
 var S4={
   open(){ if(!App.doc){toast("먼저 기획하세요");return;} UI.go(4); },
   /* v31 모드 — precision(기획안 그대로) / creative(의도만 지키고 자유 재해석) */
-  setMode(m,btn){ if(!App.final)App.final={variants:[],pick:0}; App.final.mode=m;
+  setMode(m,btn){
+    var gb=$("s4gen"); if(gb&&gb.dataset.busy==="1"){toast("생성 중에는 모드를 바꿀 수 없어요 — 끝나거나 ESC로 취소 후 변경하세요");return;}
+    if(!App.final)App.final={variants:[],pick:0}; App.final.mode=m;
     var seg=$("s4modeSeg"); if(seg)[].forEach.call(seg.children,function(b){b.classList.toggle("on",b===btn);});
     toast(m==="creative"?"🎨 크리에이티브 모드 — 카피·제품·로고·세이프존만 고정, 나머지는 디자이너처럼 자유롭게. 자사 소재를 📎로 붙이면 그 밀도를 따라가요. ‘생성/다시’를 눌러주세요"
       :"🎯 정밀 모드 — 3단계 기획안의 배치를 그대로 지키며 마감합니다");},
@@ -2715,7 +2725,9 @@ var S4={
     var btn=$("s4gen");if(btn.dataset.busy==="1")return;btn.dataset.busy="1";
     btn.textContent=live?"생성 중…":"미리보기 중…";
     S4._setExport(false); // 생성 동안 내보내기 잠금
-    var names=["완성안 1","완성안 2","완성안 3"];var n=live?3:1;
+    var _creative=(((App.final||{}).mode)||"precision")==="creative"; // 배치 시작 시 1회 캡처(생성 중 토글 영향 차단)
+    var _pre=_creative?"크리에이티브 ":"완성안 ";
+    var names=[_pre+"1",_pre+"2",_pre+"3"];var n=live?3:1;
     // 1) 빈 슬롯(로딩 스켈레톤+스피너)을 먼저 만들어 '3구멍'을 보여줌
     App.final.variants=[];App.final.pick=0;
     for(var s=0;s<n;s++)App.final.variants.push({loading:true,name:names[s]||("완성안 "+(s+1))});
@@ -2735,27 +2747,27 @@ var S4={
     } else {
       // 순차 생성 — 끝난 칸부터 즉시 표시(레이트리밋·품질 안정), ESC로 중간 탈출 가능
       var hasProd=(((App.assets||{}).products)||[]).length>0;
+      var batchRefs=Refs.images(); // 📎 자사 소재 레퍼런스 — 생성/다시 경로에도 전달(밀도 추종 약속 이행)
       for(var i=0;i<n;i++){
         try{
-          var _creative=((App.final&&App.final.mode)||"precision")==="creative";
-          var raw=await Engine.gen("final",{finalDoc:true,dir:dirOf(i),seed:(S4._seedBase||0)+i,creative:_creative,fresh:_creative},true);
+          var raw=await Engine.gen("final",{finalDoc:true,dir:dirOf(i),seed:(S4._seedBase||0)+i,creative:_creative,fresh:_creative,chatRefs:batchRefs},true);
           var ok=(await Engine._imgEdge(raw))>=0.012; // 포그/빈화면이면 3단계 기획안으로 대체
           if(ok&&hasProd){ // 제품 동질성 게이트(커머스는 제품이 생명) — 라벨 왜곡 감지 시 1회 강경 재생성
             try{ var pq=await Engine.productCheck(raw);
               if(!pq.ok){
                 toast("완성안 "+(i+1)+": 제품 라벨 왜곡 감지 → 원본 유지로 재생성 중…");
-                var raw2=await Engine.gen("final",{finalDoc:true,dir:dirOf(i),seed:(S4._seedBase||0)+i,
+                var raw2=await Engine.gen("final",{finalDoc:true,dir:dirOf(i),seed:(S4._seedBase||0)+i,creative:_creative,fresh:_creative,chatRefs:batchRefs,
                   fb:"CRITICAL RETRY: the branded product/label was ALTERED in the previous attempt. The product is LOCKED BRAND PROPERTY — keep every label character pixel-faithful to the base/attached product photo; do NOT re-typeset."},true);
                 if((await Engine._imgEdge(raw2))>=0.012){ var pq2=null;try{pq2=await Engine.productCheck(raw2);}catch(_){} if(!pq2||pq2.ok)raw=raw2; }
               }
             }catch(e2){console.warn("s4 productCheck",e2);}
           }
-          if(ok){ var comp=await S4._compositeExtras(raw); paint(i,{bg:comp,bgClean:raw,full:true,dir:dirOf(i),creative:_creative,name:(_creative?"크리에이티브 ":"완성안 ")+(i+1),ratio:App.doc.ratio}); doneCount++; }
-          else { anyFail=true; paint(i,{bg:fallbackPNG,full:false,fallback:true,dir:dirOf(i),name:names[i],ratio:App.doc.ratio}); }
+          if(ok){ var comp=await S4._compositeExtras(raw); paint(i,{bg:comp,bgClean:raw,full:true,dir:dirOf(i),creative:_creative,name:names[i],ratio:App.doc.ratio}); doneCount++; }
+          else { anyFail=true; paint(i,{bg:fallbackPNG,full:false,fallback:true,creative:_creative,dir:dirOf(i),name:names[i],ratio:App.doc.ratio}); }
         }catch(e){
           if(Engine._isCancel(e)){ cancelled=true; break; } // ESC 취소: 남은 생성 중단
           anyFail=true; lastErr=((e&&e.message)||e+"").slice(0,60);
-          paint(i,{bg:fallbackPNG,full:false,fallback:true,dir:dirOf(i),name:names[i],ratio:App.doc.ratio});
+          paint(i,{bg:fallbackPNG,full:false,fallback:true,creative:_creative,dir:dirOf(i),name:names[i],ratio:App.doc.ratio});
         }
       }
       // ★ 무손실 보존안 — 3단계 기획안을 '2K 네이티브 렌더'(폰트 보장·고해상)로 공식 4번째 안(제품·텍스트 100% 보존)
@@ -2855,7 +2867,7 @@ var S4={
     var h=v.hist.pop(); delete S3._img[v.bg]; v.bg=h.bg;v.bgClean=h.bgClean;v.full=h.full;v.dir=h.dir;v._ratioCache={};
     S4.renderVariants();S4.paintFinal(); toast("↩ 이전 버전으로 되돌렸어요 ("+(v.hist.length)+"단계 더 가능)"); },
   /* "완성안 2만 바꿔줘" / "2안 …" — 대화에서 특정 안 언급 시 그 안만 타게팅 */
-  _variantFromText(t){ var m=/완성안\s*([1-9])/.exec(t||"")||/(?:^|[^가-힣0-9])([1-9])\s*안/.exec(t||"");
+  _variantFromText(t){ var m=/(?:완성안|크리에이티브)\s*([1-9])/.exec(t||"")||/(?:^|[^가-힣0-9])([1-9])\s*안/.exec(t||"");
     if(!m)return -1; var i=parseInt(m[1],10)-1; return (App.final.variants&&App.final.variants[i])?i:-1; },
   async regenBg(){var v=App.final.variants[App.final.pick];if(!v)return;
     if(!App.keys.gemini){toast("이미지 키(Gemini)를 넣으면 다른 버전을 생성할 수 있어요");return;}
@@ -2864,8 +2876,9 @@ var S4={
     S4._seedBase=((S4._seedBase||0)+1);
     S4._pushHist(v); // 되돌리기용
     v.loading=true;S4.renderVariants();S4.paintFinal(); // 뱅글뱅글 생성중 표시
-    try{ var raw=await Engine.gen("final",{finalDoc:true,dir:v.dir,seed:(S4._seedBase||0)+7,creative:!!v.creative,fresh:!!v.creative,fb:"give this a fresh, clearly different design direction"},true);
-      if((await Engine._imgEdge(raw))>=0.012){var url=await S4._compositeExtras(raw);delete S3._img[v.bg];v.bg=url;v.bgClean=raw;v.full=true;delete v.fallback;v._ratioCache={};}
+    var cr=(v.creative!=null)?!!v.creative:((((App.final||{}).mode)||"precision")==="creative"); // 안의 계보 우선, 없으면 현재 모드
+    try{ var raw=await Engine.gen("final",{finalDoc:true,dir:v.dir,seed:(S4._seedBase||0)+7,creative:cr,fresh:cr,chatRefs:Refs.images(),fb:"give this a fresh, clearly different design direction"},true);
+      if((await Engine._imgEdge(raw))>=0.012){var url=await S4._compositeExtras(raw);delete S3._img[v.bg];v.bg=url;v.bgClean=raw;v.full=true;v.creative=cr;delete v.fallback;v._ratioCache={};}
       else { v.hist.pop(); toast("이번엔 품질이 불안정했어요 — 한 번 더 눌러보세요"); } }
     catch(e){ if(v.hist&&v.hist.length)v.hist.pop(); if(Engine._isCancel(e)){toast("⛔ 취소됨");}else toast("재생성 실패: "+((e&&e.message)||e).slice(0,40));}
     finally{ v.loading=false; }
@@ -2892,7 +2905,7 @@ var S4={
       toast("결함: "+rep.defects.slice(0,2).join(" · ").slice(0,54)+" → 보정 재생성 중…");
       if(btn)btn.textContent="보정 재생성 중…";
       var fixHint=" DEFECT REPAIR ONLY: keep the exact same composition, scene, product and layout; fix only these defects: "+(rep.fix||rep.defects.join("; "))+". Ensure all Korean text is crisp, correctly spelled and fully legible; product undistorted; well-exposed and high-contrast.";
-      var raw=await Engine.gen("final",{finalDoc:true,dir:v.dir||0,baseOverride:(v.bgClean||v.bg),fb:fixHint},true);
+      var raw=await Engine.gen("final",{finalDoc:true,dir:v.dir||0,baseOverride:(v.bgClean||v.bg),creative:!!v.creative,fb:fixHint},true);
       if((await Engine._imgEdge(raw))<0.012){ toast("보정본 품질 불안정 — 한 번 더 시도해주세요"); return; }
       var rep2=await Engine.imageCritique(raw,texts);
       if(rep2.ok||rep2.defects.length<rep.defects.length){
@@ -2946,13 +2959,13 @@ var S4={
     var fbFull=fb+Refs.docBlock();
     var imgRefs=Refs.images();
     var keep=(Engine.classifyIntent(fb)==="keep"); // 기존 결 유지 vs 새로 디자인
-    var layoutEdit=(v.full&&keep)?S4._layoutEdit(fb):null; // 위치/크기 수정이면 좌표를 실제로 옮겨 결정적으로 반영
+    var layoutEdit=(v.full&&keep&&!v.creative)?S4._layoutEdit(fb):null; // 위치/크기 수정 좌표 반영 — 크리에이티브 안은 기획 좌표가 무의미하므로 제외
     var vname=v.name||("완성안 "+(App.final.pick+1));
     S4._log("me",fb||"📎 레퍼런스 첨부");
     var hint=S4._log("ai","‘"+vname+"’ "+(layoutEdit?"위치/크기 옮겨 다시 합성 중… 🎨":(keep?"수정 반영 중… 🎨":"새 디자인 재생성 중… 🎨")),true);
     try{
       if(v.full){
-        var payload={finalDoc:true,dir:v.dir,fb:fbFull,chatRefs:imgRefs};
+        var payload={finalDoc:true,dir:v.dir,fb:fbFull,chatRefs:imgRefs,creative:!!v.creative,fresh:!!v.creative&&!keep}; // 크리에이티브 계보 전파(정밀 스펙 뭉갬 방지)
         if(layoutEdit){
           S4._applyLayoutEdit(layoutEdit); // 레이어 좌표 이동(아래/위/좌/우/중앙/크기)
           payload.baseOverride=(App._effBg||App.doc.bgImage||v.bgClean||v.bg); // ★ 글자 없는 '배경'을 베이스로 → 새 좌표대로 텍스트를 다시 얹음(기존 합성본을 베끼지 않게)
@@ -3180,7 +3193,7 @@ var Store={
   KEY:"soszae_v31",
   snap(){return {v:1,stage:App.stage,brief:App.brief,brand:App.brand,assets:App.assets,ctx:App.ctx,copies:App.copies,pick:App.pick,analysis:App.analysis,doc:App.doc};},
   save(){clearTimeout(Store._t);Store._t=setTimeout(function(){try{localStorage.setItem(Store.KEY,JSON.stringify(Store.snap()));}catch(e){try{var s=Store.snap();if(s.doc)s.doc=Object.assign({},s.doc,{bgImage:null});s.assets={products:[],refs:[]};localStorage.setItem(Store.KEY,JSON.stringify(s));}catch(e2){}}},400);},
-  load(){try{var r=localStorage.getItem(Store.KEY);return r?JSON.parse(r):null;}catch(e){return null;}},
+  load(){try{var r=localStorage.getItem(Store.KEY)||localStorage.getItem("soszae_v30");return r?JSON.parse(r):null;}catch(e){return null;}}, // v31: v30 세션 읽기전용 폴백(저장은 v31 키로만 → v30 무손상)
   clear(){try{localStorage.removeItem(Store.KEY);}catch(e){}},
   apply(s){
     App.brief=Object.assign(App.brief,s.brief||{});App.brand=Object.assign(App.brand,s.brand||{});

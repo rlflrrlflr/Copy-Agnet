@@ -63,10 +63,43 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
 
    // ===== 5) 배선 — generate/regenBg/가이드 =====
    out.genWired=/creative:_creative,fresh:_creative/.test(S4.generate.toString());
-   out.regenWired=/creative:!!v\.creative/.test(S4.regenBg.toString());
+   out.regenWired=/creative:cr,fresh:cr/.test(S4.regenBg.toString())&&/chatRefs:Refs\.images\(\)/.test(S4.regenBg.toString());
    out.guideSkip=/!p\.creative\)\?Engine\._layoutGuide/.test(Engine._geminiImageOnce.toString());
    // 정밀 모드는 기존 그대로(스펙 JSON 포함)
    out.precisionIntact=/"el":"headline"/.test(fpP)&&/NO DECORATIVE SHAPES/.test(fpP);
+
+   // ===== 5b) 울트라 검증 수정분 — 21건 확정 결함 배선 =====
+   const gsrc=S4.generate.toString(),rsrc=S4.refine.toString(),qsrc=S4.qcFix.toString();
+   out.fxRetryFlags = /CRITICAL RETRY/.test(gsrc) && /creative:_creative,fresh:_creative,chatRefs:batchRefs,\n/.test(gsrc.replace(/\r/g,'')) || (gsrc.match(/creative:_creative,fresh:_creative/g)||[]).length>=2; // 본호출+재시도 모두
+   out.fxGenChatRefs = /chatRefs:batchRefs/.test(gsrc);
+   out.fxCreativeOnce = /1회 캡처/.test(gsrc) && !/for\(var i=0;i<n;i\+\+\)\{\s*try\{\s*var _creative/.test(gsrc);
+   out.fxFallbackLineage = (gsrc.match(/fallback:true,creative:_creative/g)||[]).length>=2;
+   out.fxRefineCreative = /creative:!!v\.creative,fresh:!!v\.creative&&!keep/.test(rsrc);
+   out.fxLayoutEditSkip = /v\.full&&keep&&!v\.creative/.test(rsrc);
+   out.fxQcCreative = /creative:!!v\.creative/.test(qsrc);
+   out.fxModeLock = /생성 중에는 모드를 바꿀 수 없어요/.test(S4.setMode.toString());
+   App.final.variants=[{bg:'a'},{bg:'b'}]; // 타게팅은 존재하는 안만 반환하므로 더미 시드
+   out.fxMention = S4._variantFromText('크리에이티브 2만 바꿔줘')===1;
+   App.final.variants=[];
+   out.fxStoreFallback = /soszae_v30/.test(Store.load.toString());
+   // CTA 기본색이 브랜드 악센트를 따름
+   App.brand.accent='#22aa66';
+   var c2=Doc.cta('테스트',{});
+   out.fxCtaAccent = c2.bg==='#22aa66';
+   // 크리에이티브 프롬프트 강화: 디테일 예약·시드·EDIT·비주얼포맷·JSON안전
+   App.doc.layers.push({id:'dt',type:'image',role:'detail',shape:'circle',src:BG,nx:.6,ny:.58,wx:.3,ar:1,hidden:false,z:50});
+   const fpD=Engine._finalPrompt(App.doc,0,{creative:true,seed:3},false);
+   out.fxDetailReserve = /REAL product detail inset/.test(fpD)&&/60%\/58%/.test(fpD);
+   out.fxSeedLine = /Creative seed for THIS option/.test(fpD);
+   out.fxVisualFmt = /Visual format: compose as/.test(fpD)&&/brand accent color/.test(fpD);
+   const fpE=Engine._finalPrompt(App.doc,0,{creative:true,baseOverride:'X'},false);
+   out.fxEditMode = /EDIT MODE: the FIRST attached image is the CURRENT approved creative design/.test(fpE)&&!/option #1 of 3/.test(fpE);
+   // JSON 안전: 카피에 큰따옴표 포함돼도 구획 유지
+   var keyL2=App.doc.layers.filter(l=>l.role==='key')[0];var oldKey=keyL2.text;keyL2.text='그는 "최고"라 말했다';
+   const fpQ=Engine._finalPrompt(App.doc,0,{creative:true},false);
+   out.fxJsonSafe = fpQ.indexOf('headline="그는 \\"최고\\"라 말했다"')>=0;
+   keyL2.text=oldKey;
+   App.doc.layers=App.doc.layers.filter(l=>l.id!=='dt');
 
    // ===== 6) 크리에이티브 실행 스모크(모킹) — 3안 + 이름/플래그 + 보존안 =====
    App.keys.gemini='FAKE';
@@ -87,7 +120,7 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
  await b.close();
  console.log(JSON.stringify(R,null,1));
  console.log('errors:',errs.length?errs.slice(0,8):'none');
- const keys=['title','storeKey','noModeSeg','proAlwaysOn','modeNoop','noAccentInput','accentFromCta','modeSeg','modeSet','segToggled','cFree','cIntent','cMandatory','cNoSpec','cNoDecoBan','cNoTreatment','cLogoRule','cVertSafe','cOption','cRefs','genWired','regenWired','guideSkip','precisionIntact','allCreativeCalls','creativeNames','losslessStill'];
+ const keys=['title','storeKey','noModeSeg','proAlwaysOn','modeNoop','noAccentInput','accentFromCta','modeSeg','modeSet','segToggled','cFree','cIntent','cMandatory','cNoSpec','cNoDecoBan','cNoTreatment','cLogoRule','cVertSafe','cOption','cRefs','genWired','regenWired','guideSkip','precisionIntact','fxRetryFlags','fxGenChatRefs','fxCreativeOnce','fxFallbackLineage','fxRefineCreative','fxLayoutEditSkip','fxQcCreative','fxModeLock','fxMention','fxStoreFallback','fxCtaAccent','fxDetailReserve','fxSeedLine','fxVisualFmt','fxEditMode','fxJsonSafe','allCreativeCalls','creativeNames','losslessStill'];
  const ok=keys.every(k=>R[k])&&!errs.length;
  console.log('FAILED:',keys.filter(k=>!R[k]));
  console.log(ok?'PASS':'FAIL');process.exit(ok?0:1);

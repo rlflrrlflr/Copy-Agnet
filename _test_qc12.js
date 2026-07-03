@@ -46,7 +46,7 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
    out.exportCellSpinner = /v\._busyR===it\.k/.test(S4.renderExport.toString())&&/vspin/.test(S4.renderExport.toString());
 
    // 7) 가이드는 reframe(비율 내보내기)엔 안 붙음(디자인 변경 없이 비율만)
-   out.noGuideOnReframe = /isFinal&&!p\.reframe\)\?Engine\._layoutGuide/.test(Engine._geminiImageOnce.toString());
+   out.noGuideOnReframe = /isFinal&&!p\.reframe(&&!p\.creative)?\)\?Engine\._layoutGuide/.test(Engine._geminiImageOnce.toString());
 
    return out;
  });
