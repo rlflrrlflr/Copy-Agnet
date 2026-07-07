@@ -87,6 +87,11 @@ textarea.in{resize:vertical;line-height:1.55}
 .seg{display:flex;gap:5px;background:var(--card);border:1px solid var(--line);border-radius:13px;padding:4px}
 .seg button{flex:1;padding:9px;border-radius:9px;font-weight:800;font-size:12px;color:var(--mute);transition:.12s}
 .seg button.on{background:#fff;color:var(--pin);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+/* v31: 4단계 모드 seg — 2줄(제목+설명) 구조로 어색한 줄바꿈 방지 */
+#s4modeSeg button b{display:block;font-size:12px;line-height:1.3}
+#s4modeSeg button small{display:block;font-size:10px;font-weight:600;opacity:.72;line-height:1.3;margin-top:2px}
+/* v31: 3단계 툴바 그룹 구분선 — 요소 추가 | 배경 | 출력 */
+.tb-sep{width:1px;align-self:stretch;background:var(--line);margin:3px 3px;flex:0 0 auto}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chip{padding:8px 13px;border-radius:11px;border:1px solid var(--line);background:#fff;font-weight:700;font-size:12px;color:var(--body);transition:.12s}
 .chip:hover{border-color:var(--pin)}
@@ -401,7 +406,7 @@ kbd{font-family:ui-monospace,monospace;font-size:10px;background:var(--card);bor
 </header>
 
 <main class="wrap">
-  <div class="statusbar"><span id="statusDot" class="dot"></span><span id="statusText" class="bold">시작해 볼까요?</span><span class="tiny muted" style="margin-left:auto">결과 우선 · 과정은 필요할 때만 · <kbd>←</kbd>/<kbd>→</kbd> 미세이동 · <kbd>Del</kbd> 삭제</span></div>
+  <div class="statusbar"><span id="statusDot" class="dot"></span><span id="statusText" class="bold">시작해 볼까요?</span><span class="tiny muted" style="margin-left:auto">결과 우선 · 과정은 필요할 때만</span></div>
 
   <!-- ===================== STAGE 1 ===================== -->
   <section id="stage1" class="card pad col" style="gap:16px">
@@ -505,10 +510,12 @@ kbd{font-family:ui-monospace,monospace;font-size:10px;background:var(--card);bor
         <button class="btn sm" onclick="S3.addDetail()" title="상품 디테일컷을 '움직이는 원형 인셋'으로 추가(드래그로 위치·모서리로 크기)">＋ 디테일컷</button>
         <input type="file" id="imgLayerUp" class="hidden" accept="image/*" onchange="S3.addImageFile(event)">
         <input type="file" id="logoUp2" class="hidden" accept="image/*" onchange="Brand.setLogo(event)">
-        <button class="btn sm" onclick="document.getElementById('bgUp').click()">🖼 배경</button>
+        <span class="tb-sep"></span>
+        <button class="btn sm" onclick="document.getElementById('bgUp').click()" title="배경 이미지 업로드 (교체)">🖼 배경</button>
         <input type="file" id="bgUp" class="hidden" accept="image/*" onchange="S3.bgUpload(event)">
         <button class="btn sm" onclick="S3.genImage()" title="상품컷을 그대로 합성·보존한 채 어울리는 '새 배경 장면'을 AI로 생성합니다 (상품컷 위에 글씨만 얹는 게 아님)">🔄 상품컷 기반 배경 생성</button>
         <button class="btn sm" onclick="S3.flipBg()" title="배경을 좌우로 뒤집어요 — 제품을 반대쪽으로 옮길 때">⇄ 배경반전</button>
+        <span class="tb-sep"></span>
         <button class="btn sm" onclick="S3.download()" title="지금 기획안(배경+레이어)을 PNG로 바로 저장">⬇ 다운로드</button>
         <button class="btn p" onclick="S4.open()">4단계 · 완성 →</button>
       </div>
@@ -575,22 +582,24 @@ kbd{font-family:ui-monospace,monospace;font-size:10px;background:var(--card);bor
         <div class="s4-side">
           <div class="s4-variants" id="variantList"></div>
           <div class="seg" id="s4modeSeg" style="width:100%">
-            <button class="on" onclick="S4.setMode('precision',this)" title="3단계 기획안의 배치·요소를 그대로 지키며 마감">🎯 정밀 · 기획안 그대로</button>
-            <button onclick="S4.setMode('creative',this)" title="카피·제품·로고·세이프존만 지키고, 레이아웃·구도·장식은 디자이너처럼 자유 재해석 — 자사 소재를 📎레퍼런스로 붙이면 그 자유도를 따라가요">🎨 크리에이티브 · 자유 재해석</button>
+            <button class="on" onclick="S4.setMode('precision',this)" title="3단계 기획안의 배치·요소를 그대로 지키며 마감"><b>🎯 정밀</b><small>기획안 배치 그대로</small></button>
+            <button onclick="S4.setMode('creative',this)" title="카피·제품·로고·세이프존만 지키고, 레이아웃·구도·장식은 디자이너처럼 자유 재해석 — 자사 소재를 📎레퍼런스로 붙이면 그 자유도를 따라가요"><b>🎨 크리에이티브</b><small>자유 재해석 · 새 디자인</small></button>
           </div>
+          <button class="btn p" onclick="S4.generate()" id="s4gen" style="width:100%;padding:12px 16px">완성본 생성 / 다시</button>
           <div class="row" style="gap:7px;flex-wrap:wrap">
-            <button class="btn p sm grow" onclick="S4.generate()" id="s4gen">완성본 생성 / 다시</button>
-            <button class="btn sm" onclick="S4.regenBg()" id="s4regen" title="선택한 안만 다른 디자인 마감으로 다시">🔄 이 안 다른 버전</button>
-            <button class="btn sm" onclick="S4.undoVariant()" id="s4undo" title="선택한 안을 직전 버전으로 되돌리기 (Ctrl+Z)">↩ 이전 버전</button>
+            <button class="btn sm grow" onclick="S4.regenBg()" id="s4regen" title="선택한 안만 다른 디자인 마감으로 다시">🔄 이 안 다른 버전</button>
+            <button class="btn sm" onclick="S4.undoVariant()" id="s4undo" title="선택한 안을 직전 버전으로 되돌리기 (Ctrl+Z)">↩ 이전</button>
             <button class="btn sm" onclick="S4.qcFix()" id="s4qc" title="AI 비전이 완성본의 치명 결함(텍스트 깨짐·오타·과노출·왜곡·중복 오브제)만 점검하고, 발견 시 같은 구도로 보정 재생성">🔍 결함 점검</button>
-            <select id="s4style" class="in" style="width:auto;flex:0 1 auto;font-size:11px;padding:6px 8px" title="완성본 디자인 스타일 — 자동은 3인 3색, 선택하면 그 스타일로 3안(변주)">
+          </div>
+          <div class="row" style="gap:7px;align-items:center">
+            <select id="s4style" class="in grow" style="font-size:11px;padding:6px 8px" title="완성본 디자인 스타일 — 자동은 3안 3색, 선택하면 그 스타일로 3안(변주)">
               <option value="auto" selected>🎨 스타일: 자동(3색)</option>
               <option value="0">클린 히어로</option><option value="1">타이포 위트</option><option value="2">볼드 프로모</option>
               <option value="3">혜택 팩(커머스)</option><option value="4">숫자 소구</option><option value="5">UI 컨텍스트</option>
             </select>
-            <label class="row tiny" style="gap:5px;cursor:pointer" title="체크하면 다음 생성부터 타이포·그래픽 스타일을 더 실험적으로(문구·요소는 그대로)"><input type="checkbox" id="s4free" onchange="S4.setFree(this.checked)"> 자유도↑</label>
+            <label class="row tiny" style="gap:5px;cursor:pointer;flex:0 0 auto" title="체크하면 다음 생성부터 타이포·그래픽 스타일을 더 실험적으로(문구·요소는 그대로)"><input type="checkbox" id="s4free" onchange="S4.setFree(this.checked)"> 자유도↑</label>
           </div>
-          <div class="tiny muted" style="line-height:1.5;margin-top:2px">🔄 <b>다른 버전</b>=선택한 안만 다른 스타일로 재생성 · ↩ <b>이전 버전</b>=방금 수정 되돌리기(Ctrl+Z) · 🔍 <b>결함 점검</b>=AI가 오타·글자깨짐·제품왜곡·중복을 검수하고 발견 시 자동 보정 · <b>스타일</b>=디자인 방향 선택 · <b>자유도↑</b>=타이포 실험적</div>
+          <div class="tiny muted" style="line-height:1.5;margin-top:2px">🔄 <b>다른 버전</b>=선택한 안만 재생성 · ↩ <b>이전</b>=되돌리기(Ctrl+Z) · 🔍 <b>결함 점검</b>=오타·깨짐·왜곡 자동 보정 · 자세한 설명은 버튼에 마우스를 올리세요</div>
           <div class="card pad s4-export">
             <div class="tiny muted" style="font-weight:700;margin-bottom:7px">내보내기 <span id="s4expHint" class="muted" style="font-weight:600"></span></div>
             <div class="tool">
@@ -2329,7 +2338,7 @@ var S3={
     if(l.type!=="image"&&l.type!=="badge"){
       var frow=el("div","col");frow.appendChild(el("label","mini-lab","글꼴"));var fs=el("select","in");FONTS.forEach(function(f){var o=el("option",null,f);o.value=f;if(f===l.font)o.selected=true;fs.appendChild(o);});fs.onchange=function(){l.font=fs.value;S3.renderAll();};frow.appendChild(fs);fb.appendChild(frow);
       var wrow=el("div","col");wrow.appendChild(el("label","mini-lab","두께 (굵기)"));var ws=el("select","in");WEIGHTS.forEach(function(w){var o=el("option",null,w[1]+" ("+w[0]+")");o.value=w[0];if(+w[0]===(+l.weight||700))o.selected=true;ws.appendChild(o);});ws.onchange=function(){l.weight=+ws.value;S3.renderAll();};wrow.appendChild(ws);fb.appendChild(wrow);
-      var arow=el("div","col");arow.appendChild(el("label","mini-lab","정렬"));var seg=el("div","seg");[["left","왼"],["center","가운데"],["right","오른"]].forEach(function(a){var bb=el("button",l.align===a[0]?"on":"",a[1]);bb.onclick=function(){l.align=a[0];[].forEach.call(seg.children,function(x){x.classList.toggle("on",x===bb);});S3.renderAll();};seg.appendChild(bb);});arow.appendChild(seg);fb.appendChild(arow);
+      var arow=el("div","col");arow.appendChild(el("label","mini-lab","글자 정렬 (줄맞춤)"));var seg=el("div","seg");[["left","왼"],["center","가운데"],["right","오른"]].forEach(function(a){var bb=el("button",l.align===a[0]?"on":"",a[1]);bb.onclick=function(){l.align=a[0];[].forEach.call(seg.children,function(x){x.classList.toggle("on",x===bb);});S3.renderAll();};seg.appendChild(bb);});arow.appendChild(seg);fb.appendChild(arow);
     }
     // 캔버스 정렬 + 회전
     var alw=el("div","col");alw.appendChild(el("label","mini-lab","캔버스 정렬 · 회전"));

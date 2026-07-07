@@ -101,6 +101,17 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
    keyL2.text=oldKey;
    App.doc.layers=App.doc.layers.filter(l=>l.id!=='dt');
 
+   // ===== 5c) 35차 UX 정리 — 중복 힌트 제거·4단계 사용성 =====
+   out.uxTopHintClean = !document.querySelector('.statusbar').textContent.includes('미세이동'); // 상단바 중복 힌트 제거(하단 힌트만 유지)
+   out.uxToolbarSep = document.querySelectorAll('.s3-tools .tb-sep').length===2; // 요소|배경|출력 그룹 구분선
+   out.uxAlignLabel = /글자 정렬/.test(S3.props.toString()); // '정렬' 라벨 모호성 해소
+   // mount 부작용(자동 generate) 없이 스테이지 4 표시만 전환해 측정
+   App.stage=4;[1,2,3,4].forEach(s=>document.getElementById('stage'+s).classList.toggle('hidden',s!==4));
+   var _g=document.getElementById('s4gen'),_gr=_g.getBoundingClientRect(),_pr=_g.parentElement.getBoundingClientRect();
+   out.uxGenFullWidth = _gr.width>=250 && Math.abs(_gr.width-_pr.width)<26; // 주 버튼 전폭 — 클리핑 불가
+   var _mb=document.querySelectorAll('#s4modeSeg button');
+   out.uxModeTwoLine = [..._mb].length===2 && [..._mb].every(function(x){return x.querySelector('b')&&x.querySelector('small');}); // 제목+설명 2줄 구조
+
    // ===== 6) 크리에이티브 실행 스모크(모킹) — 3안 + 이름/플래그 + 보존안 =====
    App.keys.gemini='FAKE';
    const realGen=Engine.gen,realEdge=Engine._imgEdge,realPqc=Engine.productCheck;
@@ -120,7 +131,7 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
  await b.close();
  console.log(JSON.stringify(R,null,1));
  console.log('errors:',errs.length?errs.slice(0,8):'none');
- const keys=['title','storeKey','noModeSeg','proAlwaysOn','modeNoop','noAccentInput','accentFromCta','modeSeg','modeSet','segToggled','cFree','cIntent','cMandatory','cNoSpec','cNoDecoBan','cNoTreatment','cLogoRule','cVertSafe','cOption','cRefs','genWired','regenWired','guideSkip','precisionIntact','fxRetryFlags','fxGenChatRefs','fxCreativeOnce','fxFallbackLineage','fxRefineCreative','fxLayoutEditSkip','fxQcCreative','fxModeLock','fxMention','fxStoreFallback','fxCtaAccent','fxDetailReserve','fxSeedLine','fxVisualFmt','fxEditMode','fxJsonSafe','allCreativeCalls','creativeNames','losslessStill'];
+ const keys=['title','storeKey','noModeSeg','proAlwaysOn','modeNoop','noAccentInput','accentFromCta','modeSeg','modeSet','segToggled','cFree','cIntent','cMandatory','cNoSpec','cNoDecoBan','cNoTreatment','cLogoRule','cVertSafe','cOption','cRefs','genWired','regenWired','guideSkip','precisionIntact','fxRetryFlags','fxGenChatRefs','fxCreativeOnce','fxFallbackLineage','fxRefineCreative','fxLayoutEditSkip','fxQcCreative','fxModeLock','fxMention','fxStoreFallback','fxCtaAccent','fxDetailReserve','fxSeedLine','fxVisualFmt','fxEditMode','fxJsonSafe','uxTopHintClean','uxToolbarSep','uxAlignLabel','uxGenFullWidth','uxModeTwoLine','allCreativeCalls','creativeNames','losslessStill'];
  const ok=keys.every(k=>R[k])&&!errs.length;
  console.log('FAILED:',keys.filter(k=>!R[k]));
  console.log(ok?'PASS':'FAIL');process.exit(ok?0:1);

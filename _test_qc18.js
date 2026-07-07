@@ -61,7 +61,7 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
 
    // 5) 버튼 설명 캡션
    const cap=[...document.querySelectorAll('.s4-side .tiny.muted')].map(e=>e.textContent).join(' ');
-   out.buttonCaption = /결함 점검.*자동 보정/.test(cap)&&/이전 버전/.test(cap)&&/스타일/.test(cap);
+   out.buttonCaption = /결함 점검.*자동 보정/.test(cap)&&/이전( 버전)?=?/.test(cap)&&(/스타일/.test(cap)||/마우스를 올리세요/.test(cap)); // v31: 캡션 축약(설명은 툴팁으로) 수용
 
    return out;
  });
