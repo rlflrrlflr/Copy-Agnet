@@ -39,6 +39,7 @@ const URL='file://'+path.resolve('v30_studio.html');
    const snap={v:1,stage:3,brief:{target:'t',offer:'o',funnel:'전환'},brand:{accent:'',logo:null},assets:{products:[],refs:[]},ctx:[],
      copies:[{id:'A',key:'k',sub:'s',cta:'c',tone:'t'}],pick:'A',analysis:{pains:['p'],tones:['t'],usps:['u']},
      doc:{ratio:'1:1',bgImage:null,bgHue:200,scrim:.45,intent:{},layers:[]}};
+   try{localStorage.removeItem('soszae_v31');}catch(e){} // v31 키가 남아 있으면 폴백보다 우선돼 복원 검사가 무의미해짐(결정성)
    localStorage.setItem('soszae_v30',JSON.stringify(snap));
  },PNG);
  await p.goto(URL,{waitUntil:'domcontentloaded'});await wait(400);

@@ -27,7 +27,7 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
    const fp3=Engine._finalPrompt(App.doc,3,{},true),fp4=Engine._finalPrompt(App.doc,4,{},true),fp5=Engine._finalPrompt(App.doc,5,{},true);
    out.newStyles = /PROMO PACK/i.test(fp3)&&/NUMBER\/PRICE CALLOUT/i.test(fp4)&&/UI-IN-CONTEXT/i.test(fp5);
    out.noInventNumbers = /do NOT invent any new numbers/i.test(fp3)&&/Do NOT invent numbers/i.test(fp4);
-   out.styleSelect = !!document.getElementById('s4style')&&document.querySelectorAll('#s4style option').length===7;
+   out.styleSelect = (function(){var e=document.getElementById('s4style');return e?document.querySelectorAll('#s4style option').length===7:true;})(); // v31: 스타일 셀렉터 제거 수용
 
    // ===== 3) 중복 금지 + 기획→퀄업 + 중복 비전점검 =====
    const fp0=Engine._finalPrompt(App.doc,0,{},true);

@@ -112,6 +112,33 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
    var _mb=document.querySelectorAll('#s4modeSeg button');
    out.uxModeTwoLine = [..._mb].length===2 && [..._mb].every(function(x){return x.querySelector('b')&&x.querySelector('small');}); // 제목+설명 2줄 구조
 
+   // ===== 5d) 36차 — z순서·컬러컨트롤·QC조용히·s4정리·워치독 =====
+   App.stage=3;[1,2,3,4].forEach(s=>document.getElementById('stage'+s).classList.toggle('hidden',s!==3));
+   out.zFn = typeof S3.zorder==='function';
+   var keyL3=App.doc.layers.filter(l=>l.role==='key')[0];
+   App.doc.layers.push({id:'shp1',type:'shape',shape:'rect',nx:.1,ny:.25,wx:.6,hy:.2,fill:'#ffffff',alpha:.9,rad:.18,rot:0,z:Doc._z(),hidden:false,locked:false});
+   App.sel=keyL3.id;App.sels=[keyL3.id];
+   var shp=App.doc.layers.filter(l=>l.id==='shp1')[0];
+   out.zBehindBefore = keyL3.z<shp.z; // 도형이 나중 추가라 글자를 가림(사용자 보고 상황)
+   S3.zorder('front');
+   out.zFrontWorks = keyL3.z>shp.z;  // 맨 앞으로 → 도형 위에 글자
+   S3.zorder('down');
+   out.zStepWorks = keyL3.z<shp.z;   // 한 칸 뒤로 → 다시 도형 아래(스왑 동작)
+   S3.zorder('front');
+   S3.props();
+   out.zButtons = /맨 앞/.test($("propBody").textContent)&&/뒤로/.test($("propBody").textContent);
+   out.colorCtlFn = typeof S3._colorCtl==='function';
+   out.noNativeColor = !document.querySelector('input[type="color"]'); // OS 색 대화상자 전면 제거(스포이드 먹통 방지)
+   out.hexInputWorks = (function(){var picked=null;var w=S3._colorCtl('#ffffff',function(v){picked=v;});var hx=w.querySelector('input');hx.value='#123abc';hx.onchange();return picked==='#123abc';})();
+   App.doc.layers=App.doc.layers.filter(l=>l.id!=='shp1');
+   out.qcQuiet = /S2\.render\(true\)/.test(S2.qcPass.toString()) && /noanim/.test(S2.render.toString());
+   out.noStyleSel = !document.getElementById('s4style');
+   out.noFreeChk = !document.getElementById('s4free');
+   out.tfetchFn = typeof Engine._tfetch==='function';
+   out.tfetchWired = /_tfetch/.test(Engine._geminiImageOnce.toString()) && /_tfetch/.test(Engine.productCheck.toString()) && /_tfetch/.test(Engine._geminiText.toString());
+   out.genFinally = /finally/.test(S4.generate.toString()) && /응답하지 않아/.test(S4.generate.toString());
+   out.s1timer = /s1elapsed/.test(S1.analyze.toString());
+
    // ===== 6) 크리에이티브 실행 스모크(모킹) — 3안 + 이름/플래그 + 보존안 =====
    App.keys.gemini='FAKE';
    const realGen=Engine.gen,realEdge=Engine._imgEdge,realPqc=Engine.productCheck;
@@ -131,7 +158,7 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
  await b.close();
  console.log(JSON.stringify(R,null,1));
  console.log('errors:',errs.length?errs.slice(0,8):'none');
- const keys=['title','storeKey','noModeSeg','proAlwaysOn','modeNoop','noAccentInput','accentFromCta','modeSeg','modeSet','segToggled','cFree','cIntent','cMandatory','cNoSpec','cNoDecoBan','cNoTreatment','cLogoRule','cVertSafe','cOption','cRefs','genWired','regenWired','guideSkip','precisionIntact','fxRetryFlags','fxGenChatRefs','fxCreativeOnce','fxFallbackLineage','fxRefineCreative','fxLayoutEditSkip','fxQcCreative','fxModeLock','fxMention','fxStoreFallback','fxCtaAccent','fxDetailReserve','fxSeedLine','fxVisualFmt','fxEditMode','fxJsonSafe','uxTopHintClean','uxToolbarSep','uxAlignLabel','uxGenFullWidth','uxModeTwoLine','allCreativeCalls','creativeNames','losslessStill'];
+ const keys=['title','storeKey','noModeSeg','proAlwaysOn','modeNoop','noAccentInput','accentFromCta','modeSeg','modeSet','segToggled','cFree','cIntent','cMandatory','cNoSpec','cNoDecoBan','cNoTreatment','cLogoRule','cVertSafe','cOption','cRefs','genWired','regenWired','guideSkip','precisionIntact','fxRetryFlags','fxGenChatRefs','fxCreativeOnce','fxFallbackLineage','fxRefineCreative','fxLayoutEditSkip','fxQcCreative','fxModeLock','fxMention','fxStoreFallback','fxCtaAccent','fxDetailReserve','fxSeedLine','fxVisualFmt','fxEditMode','fxJsonSafe','uxTopHintClean','uxToolbarSep','uxAlignLabel','uxGenFullWidth','uxModeTwoLine','zFn','zBehindBefore','zFrontWorks','zStepWorks','zButtons','colorCtlFn','noNativeColor','hexInputWorks','qcQuiet','noStyleSel','noFreeChk','tfetchFn','tfetchWired','genFinally','s1timer','allCreativeCalls','creativeNames','losslessStill'];
  const ok=keys.every(k=>R[k])&&!errs.length;
  console.log('FAILED:',keys.filter(k=>!R[k]));
  console.log(ok?'PASS':'FAIL');process.exit(ok?0:1);

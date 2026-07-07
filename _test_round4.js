@@ -35,7 +35,7 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
    const imgClick=hitId===imL.id;
    // 5) stage4 UI: fold removed, new elements present
    const foldRemoved=!document.getElementById('s4arch');
-   const chatUI=!!document.getElementById('s4fb')&&!!document.getElementById('s4free')&&!!document.querySelector('.s4-flow');
+   const chatUI=!!document.getElementById('s4fb')&&!!document.querySelector('.s4-flow'); // v31: 자유도 체크 제거 수용(정밀/크리에이티브 모드로 대체)
    // 6) setFree
    S4.setFree(true);const freeSet=App.final.free===true;
    // 7) _finalPrompt base branch keeps composition
