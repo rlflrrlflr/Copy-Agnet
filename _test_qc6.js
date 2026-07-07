@@ -34,7 +34,7 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
    const ranges=[...document.querySelectorAll('#propBody input[type=range]')];
    out.shadowSlider=ranges.length>=2; // size + shadow
    const colors=[...document.querySelectorAll('#propBody input[type=color]')];
-   out.shadowColorPicker=colors.length>=2; // text color + shadow color
+   out.shadowColorPicker=colors.length>=2||document.querySelectorAll('#propBody button[title="팔레트 열기"]').length>=2; // v31: 커스텀 컬러 컨트롤(팔레트+스포이드) 수용
    // set per-layer scrim + color, draw uses hexRgb
    keyL.scrim=0.7;keyL.scrimColor='#ff0000';
    out.hexRgb=S3._hexRgb('#ff0000')==='255,0,0'&&S3._hexRgb('#000')==='0,0,0';

@@ -109,6 +109,8 @@ textarea.in{resize:vertical;line-height:1.55}
 .s4-group-lab{font-size:10.5px;font-weight:800;color:var(--mute);letter-spacing:.4px;margin:2px 0 -5px}
 /* v31: 3단계 툴바 그룹 구분선 — 요소 추가 | 배경 | 출력 */
 .tb-sep{width:1px;align-self:stretch;background:var(--line);margin:3px 3px;flex:0 0 auto}
+/* v31 37차: 세이프존 상시 가이드(편집 중 표시·내보내기 미포함) */
+.safe-band{position:absolute;background:rgba(230,0,35,.055);border:1.5px dashed rgba(230,0,35,.34);pointer-events:none;z-index:5;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:rgba(230,0,35,.5)}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chip{padding:8px 13px;border-radius:11px;border:1px solid var(--line);background:#fff;font-weight:700;font-size:12px;color:var(--body);transition:.12s}
 .chip:hover{border-color:var(--pin)}
@@ -543,7 +545,18 @@ kbd{font-family:ui-monospace,monospace;font-size:10px;background:var(--card);bor
         <div class="panel" style="min-width:0"><div class="panel-h">🗂 레이어</div><div class="panel-b col" id="layerList" style="gap:4px"></div></div>
         <div class="panel" style="min-width:0"><div class="panel-h">📐 비율</div><div class="panel-b">
           <div class="seg" id="ratioSeg"><button data-r="1:1" class="on" onclick="S3.ratio('1:1')">1:1<span class="tiny" style="display:block;font-size:8px;opacity:.6">피드</span></button><button data-r="4:5" onclick="S3.ratio('4:5')">4:5<span class="tiny" style="display:block;font-size:8px;opacity:.6">피드</span></button><button data-r="16:9" onclick="S3.ratio('16:9')">16:9<span class="tiny" style="display:block;font-size:8px;opacity:.6">배너</span></button><button data-r="9:16" onclick="S3.ratio('9:16')">9:16<span class="tiny" style="display:block;font-size:8px;opacity:.6">스토리</span></button></div>
+          <label class="row tiny" style="gap:5px;cursor:pointer;margin-top:8px"><input type="checkbox" id="safeTgl" checked onchange="S3.toggleSafe(this.checked)"> 세이프존 가이드 표시 (세로형)</label>
           <div class="tiny muted" style="margin-top:8px;line-height:1.4">🌓 글자 가독성 음영은 각 텍스트 레이어 속성의 <b>‘글자 음영’</b>에서 레이어별로 조절하세요.</div>
+        </div></div>
+        <div class="panel" style="min-width:0"><div class="panel-h">🎨 스타일</div><div class="panel-b col" style="gap:8px">
+          <div class="tool" id="presetBox" style="gap:6px"></div>
+          <button class="btn sm" onclick="S3.aiStyles()" title="AI가 현재 카피·악센트에 맞는 타이포 스타일 3안을 제안 — 픽셀 재생성 없이 즉시 적용·수정 가능">✨ AI 스타일 3안</button>
+          <div class="row" id="aiStyleOut" style="gap:6px;flex-wrap:wrap"></div>
+        </div></div>
+        <div class="panel" style="min-width:0"><div class="panel-h">📁 템플릿 (소재 DNA)</div><div class="panel-b col" style="gap:8px">
+          <button class="btn sm" onclick="Tpl.save()">💾 현재 디자인을 템플릿으로</button>
+          <div class="row" id="tplBox" style="gap:6px;flex-wrap:wrap"></div>
+          <span class="tiny muted">구조·스타일을 저장해 다음 캠페인에서 재사용 — 적용 시 카피는 현재 선택안으로 치환</span>
         </div></div>
         <div class="panel" style="min-width:0"><div class="panel-h">📎 상품컷 · 레퍼런스</div><div class="panel-b col" style="gap:8px;min-width:0">
           <div class="row" style="gap:6px;min-width:0"><div id="dzProduct3" class="dropzone" style="flex:1;min-width:0;padding:9px 4px;font-size:11px" onclick="document.getElementById('upProduct3').click()">🛍 상품<br><span class="tiny muted">놓기/클릭</span></div><div id="dzRef3" class="dropzone" style="flex:1;min-width:0;padding:9px 4px;font-size:11px" onclick="document.getElementById('upRef3').click()">🎨 참고<br><span class="tiny muted">놓기/클릭</span></div>
@@ -992,6 +1005,31 @@ var Brand={
 };
 
 /* ============================================================
+   Tpl — 템플릿(소재 DNA) 저장/적용: 이긴 소재의 구조·스타일을 다음 캠페인에서 재사용
+   ============================================================ */
+var Tpl={KEY:"soszae_v31_tpl",
+  list(){try{return JSON.parse(localStorage.getItem(Tpl.KEY)||"[]");}catch(e){return[];}},
+  save(name){if(!App.doc){toast("저장할 기획안이 없어요 — 먼저 기획을 시작하세요");return;}
+    name=name||prompt("템플릿 이름","템플릿 "+(Tpl.list().length+1));if(!name)return;
+    var d=JSON.parse(JSON.stringify(App.doc));delete d.bgImage; // 용량 절약 — 구조·스타일이 핵심(배경은 캠페인마다 새로)
+    var l=Tpl.list();l.unshift({name:(name+"").slice(0,20),doc:d,at:Date.now()});
+    try{localStorage.setItem(Tpl.KEY,JSON.stringify(l.slice(0,6)));}catch(e){toast("저장 공간 부족 — 오래된 템플릿을 지워주세요");return;}
+    Tpl.render();toast("💾 템플릿 저장 — 새 캠페인 3단계에서 눌러 적용");},
+  apply(i){var t=Tpl.list()[i];if(!t||!App.doc){toast("먼저 카피를 골라 기획을 시작하세요");return;}
+    var d=JSON.parse(JSON.stringify(t.doc));d.bgImage=App.doc.bgImage;d.ratio=App.doc.ratio; // 현재 배경·비율 유지
+    var cur=(App.copies||[]).filter(function(c){return c.id===App.pick;})[0]||(App.copies||[])[0];
+    if(cur)d.layers.forEach(function(l){if(l.role==="key")l.text=cur.key;else if(l.role==="sub")l.text=cur.sub;else if(l.type==="cta")l.text=cur.cta;});
+    App.doc=d;App.sel=null;App.sels=[];S3.renderAll();toast("📁 템플릿 적용 — 카피는 현재 선택안으로 치환(Ctrl+Z 복구)");},
+  del(i){var l=Tpl.list();l.splice(i,1);localStorage.setItem(Tpl.KEY,JSON.stringify(l));Tpl.render();},
+  render(){var host=$("tplBox");if(!host)return;host.innerHTML="";var l=Tpl.list();
+    if(!l.length){host.innerHTML='<span class="tiny muted">아직 없음</span>';return;}
+    l.forEach(function(t,i){var w=el("span");w.style.cssText="display:inline-flex;align-items:center;gap:3px";
+      var b=el("button","btn sm","📁 "+t.name);b.style.fontSize="10.5px";b.onclick=function(){Tpl.apply(i);};
+      var xx=el("button",null,"×");xx.style.cssText="font-size:11px;color:var(--mute)";xx.onclick=function(){Tpl.del(i);};
+      w.appendChild(b);w.appendChild(xx);host.appendChild(w);});}
+};
+
+/* ============================================================
    Engine — 시뮬레이터 + Gemini 훅(한 곳)
    ============================================================ */
 var Engine={
@@ -1336,12 +1374,15 @@ var Engine={
     if(p.creative){
       var briefB=(App.brief||{}),uspsC=(((App.analysis||{}).usps)||[]).slice(0,4);
       var cs="You are a senior Korean performance-ad ART DIRECTOR. Design a COMPLETELY NEW banner from scratch — FULL creative freedom over layout, composition, scene, graphic devices, decorative elements and typography treatment (text may interact with the scene: dimensional lettering, creative highlights, expressive type — like top-tier Korean commerce/finance ads). Do NOT feel bound by any previous layout. Aspect ratio "+ratio+", 2026 top-tier Korean ad aesthetic. ";
+      cs+="TASTE GUARDRAIL — premium restraint: this must look like an official campaign from a top-tier brand, not a cheap flyer. Use AT MOST ONE signature typographic effect, on the headline only; sub-copy, badges and CTA stay clean and flat. Do NOT stack glow + bevel + 3D extrusion + heavy outline on the same text; NO cheesy airbrush glow, NO neon rainbow gradients, NO tacky starbursts or lens flares. Effects exist to serve readability and polish — when in doubt, use LESS. ";
       cs+="\nPLANNING INTENT — honor the SPIRIT of the plan, not its layout. The marketer planned this creative around: funnel stage="+(funnel||"-")+"; mood="+((it&&it.mood)||"-")+"; the visual should carry=\""+((it&&it.visualCarries)||"-")+"\"; copy tone="+((it&&it.tone)||"-")+"; target="+JSON.stringify(String(briefB.target||"").replace(/\s+/g," ").slice(0,140))+"; offer="+JSON.stringify(String(briefB.offer||"").replace(/\s+/g," ").slice(0,180))+(uspsC.length?("; key USPs(use verbatim where natural)="+uspsC.join(" / ")):"")+". Every design decision should serve this intent. ";
       cs+="Visual format: compose as "+({'product-shot':'a product-hero shot','app-ui-screen':'an app/device UI screen in context','persona-scenario':'a person-in-situation lifestyle scene','data-visual':'a clean data/number-driven visual'}[(it&&it.layoutType)]||"a fitting commercial scene")+". Use brand accent color "+accent+" as the key accent (CTA fill / highlights). ";
       cs+="\nMANDATORY CONTENT — render this EXACT Korean text, each EXACTLY once, beautifully integrated: "+(key?("headline="+JSON.stringify(key)):"")+(sub?("; sub-copy="+JSON.stringify(sub)):"")+(cta?("; CTA="+JSON.stringify(cta)):"")+(badges.length?("; badge/offer text="+JSON.stringify(badges.join(" | "))):"")+". Do NOT invent any other words, numbers, prices, coupons or claims. All Korean text perfectly spelled, crisp, fully opaque (NO gibberish/broken glyphs). ";
       var prodsC=(App.assets&&App.assets.products)||[];
       if(prodsC.length)cs+="\n[PRODUCT — LOCKED BRAND ASSET] The attached product photo(s) are the actual product: place AS-IS, pixel-faithful label/logo/shape (never re-typeset or redraw printed text); you may stage them creatively (angle of scene, props, lighting) but the product itself must stay identical. ";
-      if(hasLogo)cs+="Do NOT draw, render or invent ANY logo/brand mark/watermark — the real logo is composited on top afterward around "+Math.round(((logoL&&logoL.nx)!=null?logoL.nx:.74)*100)+"%/"+Math.round(((logoL&&logoL.ny)!=null?logoL.ny:.05)*100)+"% (x/y from top-left); keep that corner area relatively clear for it. ";
+      cs+="ABSOLUTE LOGO BAN — ZERO EXCEPTIONS: draw ZERO logos, wordmarks, brand emblems or watermarks ANYWHERE on the canvas (all four corners included). Do NOT extract, enlarge, re-draw or copy the logo/brand name printed on the product's own label into a standalone logo element — that is also drawing a logo. If the layout feels like it needs a logo, it does NOT: the ONE AND ONLY logo is composited pixel-perfect by the app afterwards"+(hasLogo?(" around "+Math.round(((logoL&&logoL.nx)!=null?logoL.nx:.74)*100)+"%/"+Math.round(((logoL&&logoL.ny)!=null?logoL.ny:.05)*100)+"% (x/y from top-left) — keep that corner area relatively clear"):"")+". ";
+      var _plC=(d.layers||[]).filter(function(q){return q.role==="product"&&!q.hidden;})[0];
+      if(_plC)cs+="PRODUCT SLOT (COMPOSITED LATER): do NOT draw the product/bottle/package yourself — the REAL product photo is composited pixel-perfect by the app afterwards around "+Math.round(_plC.nx*100)+"%/"+Math.round(_plC.ny*100)+"% (width ~"+Math.round(_plC.wx*100)+"%); stage a natural landing area there and keep it clear of text. ";
       else cs+="Do NOT draw any logo, brand name, watermark, website URL or '.com' text anywhere. ";
       if(isVert)cs+="VERTICAL MEDIA SAFE ZONE (STRICT): all text/CTA/badges and the key subject between "+vTop+"% and "+vBot+"% of the height — top "+vTop+"% and bottom "+(100-vBot)+"% completely clear (platform UI covers them). ";
       cs+="Keep ~7% safe margins — nothing clipped at any edge. ";
@@ -1386,7 +1427,9 @@ var Engine={
     s+="NO DUPLICATES — render each element EXACTLY ONCE: one headline, one sub-copy, one CTA button, each badge once. Never repeat the same text, badge, button or mark twice anywhere in the image. ";
     s+="NO DECORATIVE SHAPES — do NOT add any empty circle, ring, frame, outline, pill, box, swoosh, blob or abstract graphic shape that is not listed in the spec. Every visual element must have a purpose defined by the spec. ";
     s+="PLAN vs FINISH: the layout spec (and the attached layout guide, if any) is a rough PLANNING mock by a marketer — badges, plain boxes and shapes in it are placeholders. You are the finishing designer: ELEVATE them into polished, professional promo graphics (refined badge design, cards/shapes with tasteful depth and finish) while keeping their text, position and approximate size. ";
-    s+="ABSOLUTELY NO LOGOS OR WATERMARKS: do NOT draw, render, write or invent ANY logo, brand name, brand mark, wordmark, watermark, website URL, '.com' / domain text, or source/attribution mark anywhere in the image (e.g. no 'ACCIOWORK', no 'Alibaba.com', nothing copied from reference photos). "+(hasLogo?"The real brand logo is composited on top afterward by the app — keep the TOP-RIGHT corner clean and empty for it. ":"Keep the top-right corner clean. ");
+    s+="ABSOLUTELY NO LOGOS OR WATERMARKS: do NOT draw, render, write or invent ANY logo, brand name, brand mark, wordmark, watermark, website URL, '.com' / domain text, or source/attribution mark anywhere in the image (e.g. no 'ACCIOWORK', no 'Alibaba.com', nothing copied from reference photos). NEVER extract, enlarge or re-draw the logo printed on the product's own label as a standalone logo element — that counts as drawing a logo. "+(hasLogo?"The real brand logo is composited on top afterward by the app — keep the TOP-RIGHT corner clean and empty for it. ":"Keep the top-right corner clean. ");
+    var _plP=((App.doc&&App.doc.layers)||[]).filter(function(q){return q.role==="product"&&!q.hidden;})[0];
+    if(_plP)s+="PRODUCT SLOT (COMPOSITED LATER): do NOT draw the product/bottle/package yourself — the REAL product photo is composited pixel-perfect by the app afterwards around "+Math.round(_plP.nx*100)+"%/"+Math.round(_plP.ny*100)+"% (width ~"+Math.round(_plP.wx*100)+"%); keep that area clear of text and busy objects (a natural surface / soft shadow zone is good). ";
     if(it.mood)s+="Mood: "+it.mood+". ";
     s+="Use brand accent color "+accent+" for accents/button. Keep ~7% safe margins so nothing is clipped. ";
     if(p.fb&&hasBase&&!p.reframe)s+="EDIT MODE — this is a small TARGETED revision of the attached approved banner: APPLY EXACTLY this change and nothing else, while keeping the design, colors, product, composition and all OTHER text/positions identical: \""+p.fb+"\". If it asks to move/resize/recolor text, actually move/resize/recolor THAT text accordingly (e.g. '텍스트를 아래로 내려줘' → place the text noticeably lower). ";
@@ -1413,7 +1456,9 @@ var Engine={
     if(/전환|구매|구입|판매|conversion|purchase/i.test((App.brief&&App.brief.funnel)||""))s+="This is a PURCHASE-INTENT creative — leave a generous calm copy zone on the LEFT-CENTER (where the headline/CTA will go) and stage the person/product toward the RIGHT side so the copy can dominate; keep the subject at natural proportions. ";
     s+="2026 top-tier aesthetic (Toss/29CM/Kurly league). Photoreal, crisp, high detail, well-exposed and high-contrast — NOT washed out, NOT foggy/hazy, NOT overexposed, the product clearly visible and in sharp focus. Aspect ratio "+(d.ratio||"1:1")+".";
     var prods=(App.assets&&App.assets.products)||[],refs=(App.assets&&App.assets.refs)||[];
-    if(prods.length){s+=" [PRODUCT — IDENTITY LOCKED, THIS IS AN EDIT NOT A REDRAW] The first "+prods.length+" attached image(s) are the ACTUAL branded product"+(prods.length>1?" (incl. detail close-up shots)":"")+". Treat this as a PHOTO-COMPOSITING/EDIT task: PLACE the attached product photo into the new scene AS-IS — the product is a LOCKED, unmodifiable asset (brand property). Its label, every printed character, logo, typography, colors, cap and proportions must remain PIXEL-FAITHFUL to the attachment. NEVER re-render, re-typeset, translate, restyle or 'improve' the label — if any label text cannot be reproduced perfectly it must look exactly like the photo, not like new text. Only adjust global lighting/shadow/reflection so it sits naturally in the scene. Do NOT alter or replace the product.";
+    if(prods.length&&p.sceneOnly){var sl=p.slot||{nx:.52,ny:.34,wx:.42};
+      s+=" [PRODUCT SLOT — COMPOSITED LATER, DO NOT DRAW] Do NOT render the product/bottle/package into the scene at all — the REAL product photo is composited pixel-perfect on top by the app afterwards, around "+Math.round(sl.nx*100)+"%/"+Math.round(sl.ny*100)+"% (x/y from top-left, width ~"+Math.round(sl.wx*100)+"%). Stage a natural landing area there (clean surface / podium / negative space, soft ambient shadow zone OK) and keep it clear of props and busy detail. The attached product photo(s) are CONTEXT ONLY — match their lighting, palette and mood, but NEVER draw the product or its label anywhere.";}
+    else if(prods.length){s+=" [PRODUCT — IDENTITY LOCKED, THIS IS AN EDIT NOT A REDRAW] The first "+prods.length+" attached image(s) are the ACTUAL branded product"+(prods.length>1?" (incl. detail close-up shots)":"")+". Treat this as a PHOTO-COMPOSITING/EDIT task: PLACE the attached product photo into the new scene AS-IS — the product is a LOCKED, unmodifiable asset (brand property). Its label, every printed character, logo, typography, colors, cap and proportions must remain PIXEL-FAITHFUL to the attachment. NEVER re-render, re-typeset, translate, restyle or 'improve' the label — if any label text cannot be reproduced perfectly it must look exactly like the photo, not like new text. Only adjust global lighting/shadow/reflection so it sits naturally in the scene. Do NOT alter or replace the product.";
       s+=" Do NOT add any circular inset/callout or zoomed detail bubble — a separate movable detail layer is composited on top by the app.";}
     if(refs.length){s+=" [STYLE REFERENCE] The remaining attached image(s) are mood/style references only — match their color grading, lighting and composition feel; never copy their text, logos or products.";}
     if(p.idx)s+=" Variation "+p.idx+": shift composition/lighting (keep the product identical).";
@@ -1835,7 +1880,7 @@ var Doc={
   _z(){var m=0;if(App.doc)App.doc.layers.forEach(function(l){if(l.z>m)m=l.z;});return m+1;},
   byId(id){return App.doc.layers.filter(function(l){return l.id===id;})[0];},
   add(l){App.doc.layers.push(l);App.sel=l.id;App.sels=[l.id];},
-  remove(id){var t=Doc.byId(id);if(t&&t.role==="logo")App.doc._logoDeleted=true; // 사용자가 지운 로고는 자동 재생성 금지(+로고 버튼으로만)
+  remove(id){var t=Doc.byId(id);if(t&&t.role==="logo")App.doc._logoDeleted=true;if(t&&t.role==="product")App.doc._prodLayerDeleted=true; // 지운 제품 레이어 자동 재생성 금지 // 사용자가 지운 로고는 자동 재생성 금지(+로고 버튼으로만)
     App.doc.layers=App.doc.layers.filter(function(l){return l.id!==id;});App.sels=(App.sels||[]).filter(function(s){return s!==id;});if(App.sel===id)App.sel=App.sels.length?App.sels[App.sels.length-1]:null;},
   dup(id){var s=Doc.byId(id);if(!s)return null;var n=JSON.parse(JSON.stringify(s));n.id=uid();n.nx=clamp(n.nx+.03,0,.95);n.ny=clamp(n.ny+.03,0,.95);n.z=Doc._z();App.doc.layers.push(n);App.sel=n.id;App.sels=[n.id];return n.id;}
 };
@@ -1845,7 +1890,7 @@ var Doc={
    ============================================================ */
 var S3={
   _img:{}, drag:null,
-  mount(){ S3.ensureLogo(); /* 디테일컷 자동 생성 제거 — '＋디테일컷' 버튼을 눌렀을 때만(진입 시마다 되살아나던 문제) */ if(History._last==null){try{History.reset();}catch(e){}} S3.renderAll(); try{Assets.render();Refs.render();}catch(e){}
+  mount(){ S3.ensureLogo(); try{S3.renderPresets();Tpl.render();}catch(e){} /* 디테일컷 자동 생성 제거 — '＋디테일컷' 버튼을 눌렀을 때만(진입 시마다 되살아나던 문제) */ if(History._last==null){try{History.reset();}catch(e){}} S3.renderAll(); try{Assets.render();Refs.render();}catch(e){}
     // 기존처럼 진입 시 배경 이미지 자동 생성(키 있을 때 1회). 상품컷 있으면 동일성 유지 합성.
     if(App.doc&&!App.doc._autogen&&App.keys.gemini){App.doc._autogen=true;S3.genImage();}
   },
@@ -2006,9 +2051,15 @@ var S3={
       var lw=x.measureText(line).width;
       var ax=bx; if(l.align==="center")ax=bx+(boxW-lw)/2; else if(l.align==="right")ax=bx+boxW-lw;
       var yy=l.ny*H+m.lh*(li+1)-l.size*.24;
+      // 타이포 스타일 엔진 — 하이라이트 박스(글자 뒤, 줄 단위)
+      if(l.hl&&line.trim()){var hpx=l.size*.2,hpy=m.lh*.1;x.save();x.fillStyle=l.hl;x.globalAlpha=(l.hlA!=null?l.hlA:.94);S3.roundRect(x,ax-hpx,yy-l.size*.92-hpy,lw+hpx*2,l.size*1.18+hpy*2,l.size*.16);x.fill();x.restore();}
       // 부분색 세그먼트 — 렌더문자→소스인덱스 매핑(줄바꿈/워드랩 넘어가도 정합)
       var cx=ax, idxRow=m.srcIdx[li]||[];
-      for(var k=0;k<line.length;k++){var si=idxRow[k];var col=(si!=null?S3.runColor(l,si):null)||l.color;x.fillStyle=col;var ch=line[k];x.fillText(ch,cx,yy);cx+=x.measureText(ch).width;}
+      for(var k=0;k<line.length;k++){var si=idxRow[k];var col=(si!=null?S3.runColor(l,si):null)||l.color;var ch=line[k];
+        if(l.strokeW){x.save();x.lineJoin="round";x.miterLimit=2;x.lineWidth=l.strokeW*(l.size/40);x.strokeStyle=l.strokeC||"#111111";x.strokeText(ch,cx,yy);x.restore();}
+        x.fillStyle=col;x.fillText(ch,cx,yy);cx+=x.measureText(ch).width;}
+      // 곡선 밑줄(손그림 느낌)
+      if(l.und&&line.trim()){x.save();x.strokeStyle=l.und;x.lineWidth=Math.max(2.5,l.size*.09);x.lineCap="round";x.beginPath();var uy=yy+l.size*.16;x.moveTo(ax,uy);x.quadraticCurveTo(ax+lw*.5,uy+l.size*.14,ax+lw,uy-l.size*.02);x.stroke();x.restore();}
     });
   },
   drawBadge(x,l){
@@ -2060,10 +2111,54 @@ var S3={
   },
 
   /* ---------- 선택 오버레이(핸들) ---------- */
+  /* 스타일 프리셋 6종 — 원클릭 레퍼런스급 마감(타이포 엔진 조합) */
+  PRESETS:[
+    {n:"🧼 클린",p:{key:{color:"#ffffff",strokeW:0,hl:null,und:null},sub:{color:"#ffffff",strokeW:0,hl:null,und:null}}},
+    {n:"🖤 볼드 임팩트",p:{key:{color:"#ffffff",strokeW:5,strokeC:"#111111",hl:null,und:null},sub:{color:"#ffffff",strokeW:0,hl:null,und:null}}},
+    {n:"🟨 형광 하이라이트",p:{key:{color:"#111111",hl:"#ffe14d",strokeW:0,und:null},sub:{color:"#ffffff",hl:null}}},
+    {n:"⬜ 박스 팩",p:{key:{color:"#111111",hl:"#ffffff",strokeW:0,und:null},sub:{color:"#111111",hl:"#ffffff",strokeW:0,und:null}}},
+    {n:"➰ 악센트 밑줄",p:{key:{color:"#ffffff",und:"__ACCENT__",hl:null,strokeW:0}}},
+    {n:"🩷 악센트 키컬러",p:{key:{color:"__ACCENT__",hl:null,strokeW:0,und:null}}}],
+  renderPresets(){var host=$("presetBox");if(!host)return;host.innerHTML="";S3.PRESETS.forEach(function(pr,i){var b=el("button","btn sm",pr.n);b.style.cssText="flex:1 0 44%;font-size:10.5px";b.onclick=function(){S3.applyPreset(i);};host.appendChild(b);});},
+  _accent(){return (((App.doc||{}).layers||[]).filter(function(q){return q.type==="cta";})[0]||{}).bg||(App.brand&&App.brand.accent)||"#e60023";},
+  applyPreset(i){var pr=S3.PRESETS[i];if(!App.doc||!pr){toast("먼저 기획을 시작하세요");return;}
+    var st=JSON.parse(JSON.stringify(pr.p).replace(/__ACCENT__/g,S3._accent()));
+    S3._applyPatch(st);toast(pr.n+" 적용 — Ctrl+Z로 되돌릴 수 있어요");},
+  _applyPatch(st){if(!App.doc)return;
+    App.doc.layers.forEach(function(l){var p2=(l.role==="key"&&st.key)||(l.role==="sub"&&st.sub)||null;if(!p2)return;
+      ["color","strokeW","strokeC","hl","hlA","und","font","weight"].forEach(function(k2){if(p2[k2]!==undefined)l[k2]=p2[k2];});});
+    S3.renderAll();},
+  /* AI 스타일 패스 — 텍스트 모델이 '레이어 스타일 JSON' 3안 제안 → 캔버스가 결정적으로 렌더(무손실·즉시) */
+  async aiStyles(){
+    if(!App.doc){toast("먼저 기획을 시작하세요");return;}
+    var acc=S3._accent();
+    if(!App.keys.gemini){ var sel=[0,1,2].map(function(i){var pp=JSON.parse(JSON.stringify(S3.PRESETS[i].p).replace(/__ACCENT__/g,acc));return {name:S3.PRESETS[i].n,key:pp.key,sub:pp.sub};});
+      S3._renderStyleProps(sel);toast("키가 없어 프리셋 3종을 제안했어요 — 키를 넣으면 AI가 카피에 맞춰 제안");return; }
+    var keyL=(App.doc.layers||[]).filter(function(l){return l.role==="key";})[0]||{},subL=(App.doc.layers||[]).filter(function(l){return l.role==="sub";})[0]||{};
+    Cat.show("analyze");
+    try{
+      var q="너는 한국 DA 배너 시니어 아트디렉터다. 아래 배너 헤드라인/서브에 어울리는 '타이포 스타일' 3안을 서로 다른 방향(클린/볼드/하이라이트 등)으로 제안하라. 가능한 속성만 사용: color(hex), strokeW(0~8 숫자), strokeC(hex), hl(hex 또는 null — 글자 뒤 하이라이트 박스), und(hex 또는 null — 곡선 밑줄). 촌스러운 조합(과한 다색) 금지, 프리미엄 절제. 헤드라인: "+JSON.stringify(keyL.text||"")+" / 서브: "+JSON.stringify(subL.text||"")+" / 브랜드 악센트: "+acc+"\nJSON으로만: {\"styles\":[{\"name\":\"이름\",\"key\":{...},\"sub\":{...}},x3]}";
+      var url="https://generativelanguage.googleapis.com/v1beta/models/"+MODELS.geminiText+":generateContent?key="+encodeURIComponent(App.keys.gemini);
+      var res=await Engine._tfetch(url,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({contents:[{role:"user",parts:[{text:q}]}],generationConfig:{responseMimeType:"application/json",temperature:1.0}})});
+      if(!res.ok)throw new Error("HTTP "+res.status);
+      var data=await res.json();var parts=(((data.candidates||[])[0]||{}).content||{}).parts||[];
+      var js=Engine._json(parts.map(function(pp){return pp.text||"";}).join(""));
+      var arr=(js&&js.styles)||[];if(!arr.length)throw new Error("빈 응답");
+      S3._renderStyleProps(arr);toast("AI 스타일 3안 — 눌러서 적용(즉시·무손실), Ctrl+Z 복구");
+    }catch(e){toast("스타일 제안 실패: "+((e&&e.message)||e+"").slice(0,40));}
+    finally{Cat.hide();}
+  },
+  _renderStyleProps(arr){var host=$("aiStyleOut");if(!host)return;host.innerHTML="";
+    arr.slice(0,3).forEach(function(st,i){var b=el("button","btn sm","✨ "+(st.name||("스타일 "+(i+1))));b.style.fontSize="10.5px";b.onclick=function(){S3._applyPatch(st);toast((st.name||"스타일")+" 적용 — Ctrl+Z 복구");};host.appendChild(b);});},
+  toggleSafe(on){S3._safeOff=!on;S3.overlay();},
   overlay(){
     var ov=$("overlay");ov.innerHTML="";
     var cv=$("editCanvas");var cr=cv.getBoundingClientRect(),orr=ov.getBoundingClientRect();
     var sc=cr.width/cv.width,offX=cr.left-orr.left,offY=cr.top-orr.top;
+    // 세이프존 상시 가이드 — 세로형 어글리존을 편집 중에 바로 보이게(내보내기엔 미포함)
+    if(!S3._safeOff&&App.doc){var arv=cv.height/cv.width,bands=null;
+      if(arv>=1.5)bands=[[0,.16],[.80,1]];else if(arv>=1.12)bands=[[0,.12],[.86,1]];
+      if(bands)bands.forEach(function(bd){var sb=el("div","safe-band");sb.style.left=offX+"px";sb.style.width=(cv.width*sc)+"px";sb.style.top=(offY+cv.height*sc*bd[0])+"px";sb.style.height=(cv.height*sc*(bd[1]-bd[0]))+"px";sb.textContent="세이프존 밖 — 매체 UI에 가려질 수 있어요";ov.appendChild(sb);});}
     if(App.sel==="__bg__"){ // 배경 선택: 전체 프레임 + 크기 핸들(드래그=이동)
       var bx=el("div","selbox");bx.style.left=offX+"px";bx.style.top=offY+"px";bx.style.width=(cv.width*sc)+"px";bx.style.height=(cv.height*sc)+"px";bx.style.borderStyle="dashed";
       var k=el("div","hdl");k.style.left="100%";k.style.top="100%";k.style.pointerEvents="auto";k.title="드래그로 배경 크기";k.addEventListener("pointerdown",function(e){S3.startHandle(e,"bgse");});bx.appendChild(k);
@@ -2381,7 +2476,26 @@ var S3={
     if(l.type!=="image"&&l.type!=="badge"){
       var frow=el("div","col");frow.appendChild(el("label","mini-lab","글꼴"));var fs=el("select","in");FONTS.forEach(function(f){var o=el("option",null,f);o.value=f;if(f===l.font)o.selected=true;fs.appendChild(o);});fs.onchange=function(){l.font=fs.value;S3.renderAll();};frow.appendChild(fs);fb.appendChild(frow);
       var wrow=el("div","col");wrow.appendChild(el("label","mini-lab","두께 (굵기)"));var ws=el("select","in");WEIGHTS.forEach(function(w){var o=el("option",null,w[1]+" ("+w[0]+")");o.value=w[0];if(+w[0]===(+l.weight||700))o.selected=true;ws.appendChild(o);});ws.onchange=function(){l.weight=+ws.value;S3.renderAll();};wrow.appendChild(ws);fb.appendChild(wrow);
-      var arow=el("div","col");arow.appendChild(el("label","mini-lab","글자 정렬 (줄맞춤)"));var seg=el("div","seg");[["left","왼"],["center","가운데"],["right","오른"]].forEach(function(a){var bb=el("button",l.align===a[0]?"on":"",a[1]);bb.onclick=function(){l.align=a[0];[].forEach.call(seg.children,function(x){x.classList.toggle("on",x===bb);});S3.renderAll();};seg.appendChild(bb);});arow.appendChild(seg);fb.appendChild(arow);
+      var arow=el("div","col");arow.appendChild(el("label","mini-lab","글자 정렬 (줄맞춤)"));var seg=el("div","seg");[["left","왼"],["center","가운데"],["right","오른"]].forEach(function(a){var bb=el("button",l.align===a[0]?"on":"",a[1]);bb.onclick=function(){l.align=a[0];[].forEach.call(seg.children,function(x){x.classList.toggle("on",x===bb);});S3.renderAll();};arow.appendChild(seg);seg.appendChild(bb);});fb.appendChild(arow);
+      // 타이포 스타일 엔진 — 외곽선/하이라이트 박스/곡선 밑줄(레퍼런스급 마감)
+      if(l.type==="text"){
+        var stw=el("div","col");stw.appendChild(el("label","mini-lab","외곽선 (스트로크) 두께·색"));
+        var str=el("div","row");str.style.cssText="gap:7px;align-items:center;flex-wrap:wrap";
+        var sr=el("input");sr.type="range";sr.min=0;sr.max=8;sr.step=.5;sr.value=l.strokeW||0;sr.style.flex="1";sr.oninput=function(){l.strokeW=+sr.value;S3.draw();};
+        str.appendChild(sr);str.appendChild(S3._colorCtl(l.strokeC||"#111111",function(v){l.strokeC=v;if(!l.strokeW){l.strokeW=4;sr.value=4;}S3.draw();}));
+        stw.appendChild(str);fb.appendChild(stw);
+        var hlw=el("div","col");hlw.appendChild(el("label","mini-lab","하이라이트 박스 (형광펜)"));
+        var hlr=el("div","row");hlr.style.cssText="gap:7px;align-items:center;flex-wrap:wrap";
+        var hoff=el("button","btn sm","없음");hoff.onclick=function(){l.hl=null;S3.draw();};hlr.appendChild(hoff);
+        hlr.appendChild(S3._colorCtl(l.hl||"#ffe14d",function(v){l.hl=v;S3.draw();}));
+        hlw.appendChild(hlr);fb.appendChild(hlw);
+        var unw=el("div","col");unw.appendChild(el("label","mini-lab","곡선 밑줄"));
+        var unr=el("div","row");unr.style.cssText="gap:7px;align-items:center;flex-wrap:wrap";
+        var uoff=el("button","btn sm","없음");uoff.onclick=function(){l.und=null;S3.draw();};unr.appendChild(uoff);
+        var accU=((App.doc.layers||[]).filter(function(q){return q.type==="cta";})[0]||{}).bg||(App.brand&&App.brand.accent)||"#e60023";
+        unr.appendChild(S3._colorCtl(l.und||accU,function(v){l.und=v;S3.draw();}));
+        unw.appendChild(unr);fb.appendChild(unw);
+      }
     }
     // 캔버스 정렬 + 회전
     var alw=el("div","col");alw.appendChild(el("label","mini-lab","캔버스 정렬 · 회전"));
@@ -2494,10 +2608,21 @@ var S3={
     try{var a=el("a");a.href=c.toDataURL("image/png");a.download="소재냥인_기획안_"+(App.doc.ratio||"1:1").replace(":","x")+"_2K.png";document.body.appendChild(a);a.click();setTimeout(function(){a.remove();},100);toast("기획안 2K PNG 저장 ("+c.width+"×"+c.height+")");}
     catch(e){toast("저장 실패: "+((e&&e.message)||e).slice(0,40));}
   },
-  async genImage(){var hasP=(App.assets&&App.assets.products&&App.assets.products.length);toast(App.live?(hasP?"상품컷을 합성한 새 배경 생성 중…":"배경 생성 중…(상품컷을 넣으면 합성해줘요)"):"시뮬 배경(키 입력 시 실제 합성)");
-    var url=await Engine.gen("image",{layoutType:App.doc.intent.layoutType,seedHue:App.doc.bgHue+30});
-    // 제품 동질성 게이트 — 상품컷이 있으면 비전으로 원본 대비 검수, 왜곡 시 1회 강제 재생성(브랜드 자산 보호)
-    if(hasP&&App.keys.gemini&&url){
+  /* 제품=항상 레이어(P3 공식화) — 상품컷은 원본 픽셀 그대로 레이어 합성, AI는 '씬만' 생성 → 라벨 깨짐 구조적 근절 */
+  _ensureProductLayer(){ if(!App.doc)return; var prods=(App.assets&&App.assets.products)||[]; if(!prods.length)return;
+    if(App.doc._prodLayerDeleted)return; // 사용자가 지웠으면 존중(+이미지 버튼으로만)
+    if((App.doc.layers||[]).some(function(l){return l.role==="product"&&!l.hidden;}))return;
+    var u=prods[0].url;
+    var add=function(src,ar){App.doc.layers.push({id:uid(),type:"image",role:"product",src:src,nx:.52,ny:.34,wx:.42,ar:ar||1,rot:0,z:Doc._z(),hidden:false,locked:false});try{S3.renderAll();}catch(e){}};
+    var go=function(img){add(u,(img&&img.width)?(img.height/img.width):1);}; // 원본 픽셀 그대로(누끼 미적용 — 흰 라벨이 뚫리는 사고 방지, 누끼컷은 그대로 살음)
+    if(S3._img[u])go(S3._img[u]);else{var n=new Image();n.onload=function(){S3._img[u]=n;go(n);};n.onerror=function(){add(u,1);};n.src=u;}},
+  async genImage(){var hasP=(App.assets&&App.assets.products&&App.assets.products.length);
+    if(hasP)S3._ensureProductLayer(); // 제품은 레이어로 — 씬만 생성해 라벨 훼손 원천 차단
+    var pl=(App.doc.layers||[]).filter(function(l){return l.role==="product"&&!l.hidden;})[0];
+    toast(App.live?(pl?"제품 자리를 비워둔 새 배경(씬) 생성 중… — 제품은 원본 레이어로 100% 보존":"배경 생성 중…(상품컷을 넣으면 레이어로 보존해줘요)"):"시뮬 배경(키 입력 시 실제 생성)");
+    var url=await Engine.gen("image",{layoutType:App.doc.intent.layoutType,seedHue:App.doc.bgHue+30,sceneOnly:!!pl,slot:pl?{nx:pl.nx,ny:pl.ny,wx:pl.wx}:null});
+    // 제품 동질성 게이트 — 제품이 '씬 안에' 그려지는 레거시 경로(제품 레이어를 지운 경우)에만 필요
+    if(hasP&&App.keys.gemini&&url&&!pl){
       try{
         var pq=await Engine.productCheck(url);
         if(!pq.ok){
@@ -2882,7 +3007,7 @@ var S4={
   /* 완성본(AI)에 3단계 디테일컷(원형 인셋)을 '같은 위치'로 합성 — 4단계에서 디테일컷 실종/위치 어긋남 방지 */
   /* 완성본(AI)에 3단계 '정밀 자산'(디테일컷 원형 + 로고)을 같은 위치로 합성 — AI가 로고를 멋대로 그리는 문제 방지 */
   _compositeExtras(url){
-    var extras=((App.doc&&App.doc.layers)||[]).filter(function(l){return (l.role==="detail"||l.role==="logo")&&!l.hidden&&l.src;});
+    var extras=((App.doc&&App.doc.layers)||[]).filter(function(l){return (l.role==="detail"||l.role==="logo"||l.role==="product")&&!l.hidden&&l.src;});
     if(!extras.length||!url)return Promise.resolve(url);
     return new Promise(function(res){
       var base=new Image();base.onload=function(){
@@ -2894,7 +3019,7 @@ var S4={
         var pending=extras.length;
         extras.forEach(function(l){var im=new Image();im.onload=function(){
           try{
-            if(l.role==="logo"){ // 로고: 원본 비율 그대로 사각 합성(변형 금지) + 세이프 밴드 클램프
+            if(l.role==="logo"||l.role==="product"){ // 로고·제품: 원본 비율 그대로 합성(변형 금지 — P3 자산 불가침) + 세이프 밴드 클램프
               var lw=l.wx*W,lh=lw*(l.ar||(im.height/im.width)||0.4);
               var ly=Math.min(Math.max(l.ny,sTop),Math.max(sTop,sBot-lh/H));
               x.drawImage(im,l.nx*W,ly*H,lw,lh);
@@ -3142,12 +3267,18 @@ var S4={
         try{ var url=await Engine.gen("final",{finalDoc:true,dir:v.dir,baseOverride:(v.bgClean||v.bg),reframe:true},true); // 로고없는 clean 베이스로 리프레임 → 합성으로 로고 1회만(겹침 방지)
           if((await Engine._imgEdge(url))>=0.012){ url=await S4._compositeExtras(url); dataUrl=await S4._fitCanvasSafe(url,it.dims).then(function(c){return c?c.toDataURL("image/png"):null;}); } }catch(e){if(Engine._isCancel(e))throw e;}
       }
+      if(!dataUrl&&!v.full&&RATIOS[it.k]){ try{var rf=await S4._reflowPNG(it.k); if(rf){var c4=await S4._fitCanvasSafe(rf,it.dims); dataUrl=c4?c4.toDataURL("image/png"):rf;} }catch(e){} } // 보존안·미리보기: AI 없이 규칙 기반 리플로우(레이어 재배치) — 즉시·무손실
       if(!dataUrl){ var c2=await S4._fitCanvasSafe(v.bg,it.dims); dataUrl=c2?c2.toDataURL("image/png"):null; } // 폴백: 승인본 무손실 맞춤(잘림·빈화면 방지)
       if(dataUrl){ v._ratioCache=v._ratioCache||{};v._ratioCache[it.k]=dataUrl; toast(it.label+" 생성 완료 — 확인 후 저장"); }
       else toast(it.label+" 생성 실패 — 다시 시도");
     }catch(e){ if(Engine._isCancel(e)){toast("⛔ 취소됨");}else toast("생성 오류: "+((e&&e.message)||e+"").slice(0,40)); }
     finally{ App.doc.ratio=orig; delete v._busyR; S4.renderExport(); }
   },
+  /* 아트보드 리플로우 — 문서(레이어)를 목표 비율 캔버스에 재배치해 네이티브 렌더(정규화 좌표 덕분에 규칙 기반·AI 불필요) */
+  async _reflowPNG(k){ if(!RATIOS[k]||!App.doc)return null; var d=App.doc,o=d.ratio,ec=$("editCanvas"),ow=ec.width,oh=ec.height;
+    try{ d.ratio=k; ec.width=RATIOS[k][0]; ec.height=RATIOS[k][1];
+      var c=await S3._exportCanvas(); return c?c.toDataURL("image/png"):null; }
+    finally{ d.ratio=o; ec.width=ow; ec.height=oh; try{S3.draw();}catch(e){} } },
   genCustom(){ var w=Math.round(+($("cw").value)||0),h=Math.round(+($("ch").value)||0);
     if(w<200||h<200||w>5000||h>5000){toast("가로·세로를 200~5000 사이로 입력하세요");return;}
     var k="custom-"+w+"x"+h;S4._customs=(S4._customs||[]).filter(function(c){return c.k!==k;});

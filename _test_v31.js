@@ -51,7 +51,7 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
    out.cNoDecoBan=!/NO DECORATIVE SHAPES/.test(fpC);
    out.cNoTreatment=!/DESIGN TREATMENT/.test(fpC)&&!/LAYOUT RULE/.test(fpC);
    // 자산·세이프존은 유지
-   out.cLogoRule=/real logo is composited/i.test(fpC);
+   out.cLogoRule=/ONE AND ONLY logo is composited/i.test(fpC); // 37차: 로고 절대 금지 문구로 강화
    App.doc.ratio='9:16';
    const fpCV=Engine._finalPrompt(App.doc,0,{creative:true},false);
    out.cVertSafe=/VERTICAL MEDIA SAFE ZONE \(STRICT\)/.test(fpCV)&&/between 16% and 80%/.test(fpCV);
@@ -139,6 +139,58 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
    out.genFinally = /finally/.test(S4.generate.toString()) && /응답하지 않아/.test(S4.generate.toString());
    out.s1timer = /s1elapsed/.test(S1.analyze.toString());
 
+   // ===== 5e) 37차 — 제품=레이어·타이포엔진·프리셋·AI스타일·세이프존·리플로우·템플릿·절제·로고금지 =====
+   // 세이프존 가이드(세로형에서 밴드 2개, 토글 오프 시 0)
+   App.doc.ratio='9:16';$('editCanvas').width=1080;$('editCanvas').height=1920;S3.overlay();
+   out.safeBands = document.querySelectorAll('.safe-band').length===2;
+   S3.toggleSafe(false); out.safeOff = document.querySelectorAll('.safe-band').length===0; S3.toggleSafe(true);
+   App.doc.ratio='1:1';$('editCanvas').width=1080;$('editCanvas').height=1080;
+   // 타이포 엔진 — 렌더 코드 배선 + 실렌더 무에러
+   var dl=S3.drawLayer.toString();
+   out.typoWired = /strokeText/.test(dl)&&/quadraticCurveTo/.test(dl)&&/l\.hl&&/.test(dl);
+   var keyL5=App.doc.layers.filter(l=>l.role==='key')[0];
+   keyL5.strokeW=4;keyL5.strokeC='#111111';keyL5.hl='#ffe14d';keyL5.und='#e60023';
+   try{S3.draw();out.typoRenders=true;}catch(e){out.typoRenders=false;}
+   keyL5.strokeW=0;keyL5.hl=null;keyL5.und=null;
+   // 프리셋 6종 + 적용
+   out.presets6 = S3.PRESETS.length===6;
+   S3.applyPreset(2); out.presetApplies = keyL5.hl==='#ffe14d'&&keyL5.color==='#111111';
+   keyL5.hl=null;keyL5.color='#ffffff';
+   // AI 스타일 패스 — 함수·패치 적용·시뮬 3안
+   out.aiStyleFn = typeof S3.aiStyles==='function'&&typeof S3._applyPatch==='function';
+   S3._applyPatch({key:{color:'#123123'}}); out.patchApplies = keyL5.color==='#123123'; keyL5.color='#ffffff';
+   App.keys.gemini=''; await S3.aiStyles(); out.aiStyleSim = document.querySelectorAll('#aiStyleOut button').length===3;
+   // 제품=레이어 공식화
+   App.assets={products:[{id:'p1',url:BG,name:'p'}],refs:[]};
+   S3._ensureProductLayer(); await new Promise(r=>setTimeout(r,150));
+   var prodL=App.doc.layers.filter(l=>l.role==='product')[0];
+   out.prodLayer = !!prodL;
+   out.prodComposite = /product/.test(S4._compositeExtras.toString());
+   var ip=Engine._imagePrompt({sceneOnly:true,slot:{nx:.5,ny:.3,wx:.4}});
+   out.sceneOnly = /COMPOSITED LATER, DO NOT DRAW/.test(ip)&&!/PLACE the attached product photo/.test(ip);
+   out.genImageWired = /sceneOnly:!!pl/.test(S3.genImage.toString())&&/_ensureProductLayer/.test(S3.genImage.toString());
+   var fpP2=Engine._finalPrompt(App.doc,0,{},true);
+   out.slotPrecision = /PRODUCT SLOT \(COMPOSITED LATER\)/.test(fpP2);
+   var fpC2=Engine._finalPrompt(App.doc,0,{creative:true},false);
+   out.slotCreative = /PRODUCT SLOT \(COMPOSITED LATER\)/.test(fpC2);
+   // 크리에이티브 절제 + 로고 절대 금지(라벨 추출 금지 포함)
+   out.tasteGuard = /TASTE GUARDRAIL/.test(fpC2)&&/AT MOST ONE signature/.test(fpC2)&&/NO cheesy airbrush glow/.test(fpC2);
+   out.logoBanC = /ABSOLUTE LOGO BAN/.test(fpC2)&&/product's own label/.test(fpC2);
+   out.logoBanP = /NEVER extract, enlarge or re-draw the logo printed on the product's own label/.test(fpP2);
+   // 아트보드 리플로우
+   out.reflowFn = typeof S4._reflowPNG==='function';
+   var rf=await S4._reflowPNG('16:9');
+   out.reflowRuns = typeof rf==='string'&&rf.indexOf('data:image')===0&&$('editCanvas').width===1080;
+   out.reflowWired = /_reflowPNG/.test(S4.genRatio.toString());
+   // 템플릿(소재 DNA)
+   try{localStorage.removeItem('soszae_v31_tpl');}catch(e){}
+   Tpl.save('테스트DNA'); out.tplSaved = Tpl.list().length===1&&Tpl.list()[0].name==='테스트DNA';
+   var preLayers=App.doc.layers.length; Tpl.apply(0);
+   out.tplApplies = App.doc.layers.length>0&&!!App.doc;
+   out.tplPanel = !!document.getElementById('tplBox')&&!!document.getElementById('presetBox');
+   App.doc.layers=App.doc.layers.filter(l=>l.role!=='product');App.assets={products:[],refs:[]};App.doc._prodLayerDeleted=false;
+   try{localStorage.removeItem('soszae_v31_tpl');}catch(e){}
+
    // ===== 6) 크리에이티브 실행 스모크(모킹) — 3안 + 이름/플래그 + 보존안 =====
    App.keys.gemini='FAKE';
    const realGen=Engine.gen,realEdge=Engine._imgEdge,realPqc=Engine.productCheck;
@@ -158,7 +210,7 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
  await b.close();
  console.log(JSON.stringify(R,null,1));
  console.log('errors:',errs.length?errs.slice(0,8):'none');
- const keys=['title','storeKey','noModeSeg','proAlwaysOn','modeNoop','noAccentInput','accentFromCta','modeSeg','modeSet','segToggled','cFree','cIntent','cMandatory','cNoSpec','cNoDecoBan','cNoTreatment','cLogoRule','cVertSafe','cOption','cRefs','genWired','regenWired','guideSkip','precisionIntact','fxRetryFlags','fxGenChatRefs','fxCreativeOnce','fxFallbackLineage','fxRefineCreative','fxLayoutEditSkip','fxQcCreative','fxModeLock','fxMention','fxStoreFallback','fxCtaAccent','fxDetailReserve','fxSeedLine','fxVisualFmt','fxEditMode','fxJsonSafe','uxTopHintClean','uxToolbarSep','uxAlignLabel','uxGenFullWidth','uxModeTwoLine','zFn','zBehindBefore','zFrontWorks','zStepWorks','zButtons','colorCtlFn','noNativeColor','hexInputWorks','qcQuiet','noStyleSel','noFreeChk','tfetchFn','tfetchWired','genFinally','s1timer','allCreativeCalls','creativeNames','losslessStill'];
+ const keys=['title','storeKey','noModeSeg','proAlwaysOn','modeNoop','noAccentInput','accentFromCta','modeSeg','modeSet','segToggled','cFree','cIntent','cMandatory','cNoSpec','cNoDecoBan','cNoTreatment','cLogoRule','cVertSafe','cOption','cRefs','genWired','regenWired','guideSkip','precisionIntact','fxRetryFlags','fxGenChatRefs','fxCreativeOnce','fxFallbackLineage','fxRefineCreative','fxLayoutEditSkip','fxQcCreative','fxModeLock','fxMention','fxStoreFallback','fxCtaAccent','fxDetailReserve','fxSeedLine','fxVisualFmt','fxEditMode','fxJsonSafe','uxTopHintClean','uxToolbarSep','uxAlignLabel','uxGenFullWidth','uxModeTwoLine','zFn','zBehindBefore','zFrontWorks','zStepWorks','zButtons','colorCtlFn','noNativeColor','hexInputWorks','qcQuiet','noStyleSel','noFreeChk','tfetchFn','tfetchWired','genFinally','s1timer','safeBands','safeOff','typoWired','typoRenders','presets6','presetApplies','aiStyleFn','patchApplies','aiStyleSim','prodLayer','prodComposite','sceneOnly','genImageWired','slotPrecision','slotCreative','tasteGuard','logoBanC','logoBanP','reflowFn','reflowRuns','reflowWired','tplSaved','tplApplies','tplPanel','allCreativeCalls','creativeNames','losslessStill'];
  const ok=keys.every(k=>R[k])&&!errs.length;
  console.log('FAILED:',keys.filter(k=>!R[k]));
  console.log(ok?'PASS':'FAIL');process.exit(ok?0:1);
