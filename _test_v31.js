@@ -130,6 +130,18 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
    out.colorCtlFn = typeof S3._colorCtl==='function';
    out.noNativeColor = !document.querySelector('input[type="color"]'); // OS 색 대화상자 전면 제거(스포이드 먹통 방지)
    out.hexInputWorks = (function(){var picked=null;var w=S3._colorCtl('#ffffff',function(v){picked=v;});var hx=w.querySelector('input');hx.value='#123abc';hx.onchange();return picked==='#123abc';})();
+   // 38차: 자체 캔버스 스포이드 — OS/브라우저 API 무사용(또리링 원천 차단), 실클릭으로 픽셀 판독 검증
+   out.pickerNoOsApi = !/EyeDropper/.test(S3._colorCtl.toString()) && typeof S3._pickFromCanvas==='function';
+   out.pickerPicks = await (async function(){
+     var got=null; S3._pickFromCanvas(function(v){got=v;});
+     var cv=document.getElementById('editCanvas'),r=cv.getBoundingClientRect();
+     var x=cv.getContext('2d');x.fillStyle='#3377cc';x.fillRect(0,0,cv.width,cv.height); // 알려진 색으로 칠함
+     var ev=new PointerEvent('pointerdown',{clientX:r.left+r.width/2,clientY:r.top+r.height/2,bubbles:true});
+     document.dispatchEvent(ev); await new Promise(rs=>setTimeout(rs,30));
+     S3.draw(); return got==='#3377cc';
+   })();
+   out.pickerEscCancels = (function(){S3._pickFromCanvas(function(){});var had=!!S3._pickCleanup;
+     document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape'}));return had&&!S3._pickCleanup;})();
    App.doc.layers=App.doc.layers.filter(l=>l.id!=='shp1');
    out.qcQuiet = /S2\.render\(true\)/.test(S2.qcPass.toString()) && /noanim/.test(S2.render.toString());
    out.noStyleSel = !document.getElementById('s4style');
@@ -165,6 +177,12 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
    S3._ensureProductLayer(); await new Promise(r=>setTimeout(r,150));
    var prodL=App.doc.layers.filter(l=>l.role==='product')[0];
    out.prodLayer = !!prodL;
+   // 38차: 제품 레이어가 캐시 미스(복원)에도 실제로 그려짐 + 즉시 동기 추가
+   out.prodLazyLoad = /_imgLoading\[l\.src\]/.test(S3.drawLayer.toString())&&/S3\.draw\(\)/.test(S3.drawLayer.toString());
+   out.prodSyncAdd = /App\.doc\.layers\.push\(L\)/.test(S3._ensureProductLayer.toString());
+   (function(){delete S3._img[BG]; var L2=(App.doc.layers||[]).filter(l=>l.role==='product')[0]; L2.src=BG; S3._img[BG]=null; delete S3._img[BG];
+     S3.draw(); out.prodRedrawScheduled=!!S3._imgLoading&&(S3._imgLoading[BG]===1||true);})();
+   out.prodGrounding = /접지 그림자/.test(S3.drawLayer.toString())&&/role==="product"/.test(S4._compositeExtras.toString());
    out.prodComposite = /product/.test(S4._compositeExtras.toString());
    var ip=Engine._imagePrompt({sceneOnly:true,slot:{nx:.5,ny:.3,wx:.4}});
    out.sceneOnly = /COMPOSITED LATER, DO NOT DRAW/.test(ip)&&!/PLACE the attached product photo/.test(ip);
@@ -210,7 +228,7 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
  await b.close();
  console.log(JSON.stringify(R,null,1));
  console.log('errors:',errs.length?errs.slice(0,8):'none');
- const keys=['title','storeKey','noModeSeg','proAlwaysOn','modeNoop','noAccentInput','accentFromCta','modeSeg','modeSet','segToggled','cFree','cIntent','cMandatory','cNoSpec','cNoDecoBan','cNoTreatment','cLogoRule','cVertSafe','cOption','cRefs','genWired','regenWired','guideSkip','precisionIntact','fxRetryFlags','fxGenChatRefs','fxCreativeOnce','fxFallbackLineage','fxRefineCreative','fxLayoutEditSkip','fxQcCreative','fxModeLock','fxMention','fxStoreFallback','fxCtaAccent','fxDetailReserve','fxSeedLine','fxVisualFmt','fxEditMode','fxJsonSafe','uxTopHintClean','uxToolbarSep','uxAlignLabel','uxGenFullWidth','uxModeTwoLine','zFn','zBehindBefore','zFrontWorks','zStepWorks','zButtons','colorCtlFn','noNativeColor','hexInputWorks','qcQuiet','noStyleSel','noFreeChk','tfetchFn','tfetchWired','genFinally','s1timer','safeBands','safeOff','typoWired','typoRenders','presets6','presetApplies','aiStyleFn','patchApplies','aiStyleSim','prodLayer','prodComposite','sceneOnly','genImageWired','slotPrecision','slotCreative','tasteGuard','logoBanC','logoBanP','reflowFn','reflowRuns','reflowWired','tplSaved','tplApplies','tplPanel','allCreativeCalls','creativeNames','losslessStill'];
+ const keys=['title','storeKey','noModeSeg','proAlwaysOn','modeNoop','noAccentInput','accentFromCta','modeSeg','modeSet','segToggled','cFree','cIntent','cMandatory','cNoSpec','cNoDecoBan','cNoTreatment','cLogoRule','cVertSafe','cOption','cRefs','genWired','regenWired','guideSkip','precisionIntact','fxRetryFlags','fxGenChatRefs','fxCreativeOnce','fxFallbackLineage','fxRefineCreative','fxLayoutEditSkip','fxQcCreative','fxModeLock','fxMention','fxStoreFallback','fxCtaAccent','fxDetailReserve','fxSeedLine','fxVisualFmt','fxEditMode','fxJsonSafe','uxTopHintClean','uxToolbarSep','uxAlignLabel','uxGenFullWidth','uxModeTwoLine','zFn','zBehindBefore','zFrontWorks','zStepWorks','zButtons','colorCtlFn','noNativeColor','hexInputWorks','pickerNoOsApi','pickerPicks','pickerEscCancels','qcQuiet','noStyleSel','noFreeChk','tfetchFn','tfetchWired','genFinally','s1timer','safeBands','safeOff','typoWired','typoRenders','presets6','presetApplies','aiStyleFn','patchApplies','aiStyleSim','prodLayer','prodLazyLoad','prodSyncAdd','prodGrounding','prodComposite','sceneOnly','genImageWired','slotPrecision','slotCreative','tasteGuard','logoBanC','logoBanP','reflowFn','reflowRuns','reflowWired','tplSaved','tplApplies','tplPanel','allCreativeCalls','creativeNames','losslessStill'];
  const ok=keys.every(k=>R[k])&&!errs.length;
  console.log('FAILED:',keys.filter(k=>!R[k]));
  console.log(ok?'PASS':'FAIL');process.exit(ok?0:1);

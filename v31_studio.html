@@ -1889,7 +1889,7 @@ var Doc={
    STAGE 3 — 에디터 (렌더 + 변형 + 패널)
    ============================================================ */
 var S3={
-  _img:{}, drag:null,
+  _img:{}, _imgLoading:{}, drag:null,
   mount(){ S3.ensureLogo(); try{S3.renderPresets();Tpl.render();}catch(e){} /* 디테일컷 자동 생성 제거 — '＋디테일컷' 버튼을 눌렀을 때만(진입 시마다 되살아나던 문제) */ if(History._last==null){try{History.reset();}catch(e){}} S3.renderAll(); try{Assets.render();Refs.render();}catch(e){}
     // 기존처럼 진입 시 배경 이미지 자동 생성(키 있을 때 1회). 상품컷 있으면 동일성 유지 합성.
     if(App.doc&&!App.doc._autogen&&App.keys.gemini){App.doc._autogen=true;S3.genImage();}
@@ -2002,7 +2002,15 @@ var S3={
       x.fillStyle=l.color;x.font=S3.fontSpec(l);x.textBaseline="middle";x.textAlign="left";
       x.fillText(l.text||"",b.x+l.size*.85*(l.cpadX||1),b.y+b.h/2+1);return;
     }
-    if(l.type==="image"){var im=S3._img[l.src];if(im){try{var b=S3.bbox(l);
+    if(l.type==="image"){var im=S3._img[l.src];
+      if(!im){ if(l.src&&!S3._imgLoading[l.src]){S3._imgLoading[l.src]=1;var _ni=new Image();_ni.onload=function(){S3._img[l.src]=_ni;delete S3._imgLoading[l.src];try{S3.draw();}catch(e){}};_ni.onerror=function(){delete S3._imgLoading[l.src];};_ni.src=l.src;} return; }
+      if(im){try{var b=S3.bbox(l);
+      if(l.role==="product"&&l.shape!=="circle"){ // 제품 레이어 — 접지 그림자(붙여넣은 느낌 완화) 후 원본 그대로
+        var pcx=b.x+b.w/2,pby=b.y+b.h*0.99;x.save();x.fillStyle="rgba(0,0,0,.20)";x.filter="blur("+Math.max(3,b.w*0.03)+"px)";
+        try{x.beginPath();x.ellipse(pcx,pby,b.w*0.40,b.h*0.055,0,0,7);x.fill();}catch(_e){x.filter="none";}x.restore();
+        if(l.flipH){x.save();x.translate(b.x+b.w,b.y);x.scale(-1,1);x.drawImage(im,0,0,b.w,b.h);x.restore();}else x.drawImage(im,b.x,b.y,b.w,b.h);
+        return;
+      }
       if(l.shape==="circle"){ // 디테일컷 — 모양 선택(원/둥근네모/각진네모) 클립 + 흰 테두리 인셋
         var ccx=b.x+b.w/2,ccy=b.y+b.h/2,crr=Math.min(b.w,b.h)/2,side=crr*2;
         var sc=Math.max(side/im.width,side/im.height),dw=im.width*sc,dh=im.height*sc;
@@ -2366,9 +2374,33 @@ var S3={
       pop=el("div","pal-pop");S3._PAL.forEach(function(c){var b=el("button");b.type="button";b.style.background=c;b.title=c;b.onclick=function(ev){ev.stopPropagation();apply(c);close();};pop.appendChild(b);});
       wrap.appendChild(pop);setTimeout(function(){document.addEventListener("click",close);},0);};
     wrap.appendChild(sw);wrap.appendChild(hex);
-    if(window.EyeDropper){var edb=el("button","btn sm","🎯 스포이드");edb.type="button";edb.title="화면(캔버스 포함)에서 색을 바로 찍어요 — 모달 없이";edb.style.cssText="padding:5px 9px;font-size:10.5px";
-      edb.onclick=async function(e){e.stopPropagation();try{var r=await (new window.EyeDropper()).open();apply(r.sRGBHex);}catch(err){}};wrap.appendChild(edb);}
+    // 스포이드 — 자체 캔버스 픽커(브라우저/OS API 완전 배제: 어떤 환경에서도 소리·모달·먹통 불가능)
+    var edb=el("button","btn sm","🎯 스포이드");edb.type="button";edb.title="캔버스를 클릭해 그 자리 색을 찍어요 (ESC 취소)";edb.style.cssText="padding:5px 9px;font-size:10.5px";
+    edb.onclick=function(e){e.stopPropagation();S3._pickFromCanvas(apply);};wrap.appendChild(edb);
     return wrap;},
+  /* 캔버스 스포이드 — 클릭한 픽셀을 getImageData로 직접 판독. OS 대화상자·화면권한 일절 사용 안 함 */
+  _pickCancel(){ if(S3._pickCleanup){S3._pickCleanup();S3._pickCleanup=null;} },
+  _pickFromCanvas(cb){
+    var cv=$("editCanvas");if(!cv){toast("3단계 캔버스에서 사용할 수 있어요");return;}
+    S3._pickCancel();
+    cv.style.cursor="crosshair";toast("🎯 캔버스에서 원하는 색을 클릭하세요 (ESC·캔버스 밖 클릭=취소)");
+    var onDown=function(e){
+      var r=cv.getBoundingClientRect();
+      if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom){S3._pickCancel();toast("스포이드 취소");return;}
+      e.preventDefault();e.stopPropagation();
+      try{
+        var px=Math.max(0,Math.min(cv.width-1,Math.round((e.clientX-r.left)/r.width*cv.width)));
+        var py=Math.max(0,Math.min(cv.height-1,Math.round((e.clientY-r.top)/r.height*cv.height)));
+        var d=cv.getContext("2d").getImageData(px,py,1,1).data;
+        var hx="#"+[d[0],d[1],d[2]].map(function(v){return ("0"+v.toString(16)).slice(-2);}).join("");
+        S3._pickCancel();cb(hx);toast("🎯 "+hx+" 적용");
+      }catch(err){S3._pickCancel();toast("색을 읽지 못했어요 — 다시 시도해주세요");}
+    };
+    var onKey=function(e){ if(e.key==="Escape"){e.stopPropagation();S3._pickCancel();toast("스포이드 취소");} };
+    S3._pickCleanup=function(){cv.style.cursor="";document.removeEventListener("pointerdown",onDown,true);document.removeEventListener("keydown",onKey,true);};
+    document.addEventListener("pointerdown",onDown,true); // 캡처 단계 — 레이어 선택/드래그보다 먼저 가로챔
+    document.addEventListener("keydown",onKey,true);
+  },
   props(){
     var body=$("propBody");body.innerHTML="";
     if(App.sel==="__bg__"){ S3.bgProps(body); return; } // 배경 선택 시 배경 패널
@@ -2611,14 +2643,17 @@ var S3={
   /* 제품=항상 레이어(P3 공식화) — 상품컷은 원본 픽셀 그대로 레이어 합성, AI는 '씬만' 생성 → 라벨 깨짐 구조적 근절 */
   _ensureProductLayer(){ if(!App.doc)return; var prods=(App.assets&&App.assets.products)||[]; if(!prods.length)return;
     if(App.doc._prodLayerDeleted)return; // 사용자가 지웠으면 존중(+이미지 버튼으로만)
-    if((App.doc.layers||[]).some(function(l){return l.role==="product"&&!l.hidden;}))return;
-    var u=prods[0].url;
-    var add=function(src,ar){App.doc.layers.push({id:uid(),type:"image",role:"product",src:src,nx:.52,ny:.34,wx:.42,ar:ar||1,rot:0,z:Doc._z(),hidden:false,locked:false});try{S3.renderAll();}catch(e){}};
-    var go=function(img){add(u,(img&&img.width)?(img.height/img.width):1);}; // 원본 픽셀 그대로(누끼 미적용 — 흰 라벨이 뚫리는 사고 방지, 누끼컷은 그대로 살음)
-    if(S3._img[u])go(S3._img[u]);else{var n=new Image();n.onload=function(){S3._img[u]=n;go(n);};n.onerror=function(){add(u,1);};n.src=u;}},
+    if((App.doc.layers||[]).some(function(l){return l.role==="product"&&!l.hidden;}))return null;
+    var u=prods[0].url,cached=S3._img[u];
+    // 하단중앙 히어로 배치(생성 시 AI에 예약시킬 슬롯과 동일 좌표 → 빈 자리에 그대로 안착)
+    var ar=(cached&&cached.width)?(cached.height/cached.width):1, wx=.46, hx=wx*ar;
+    var L={id:uid(),type:"image",role:"product",src:u,nx:.5-wx/2,ny:.96-hx,wx:wx,ar:ar,rot:0,z:Doc._z(),hidden:false,locked:false};
+    App.doc.layers.push(L); // 동기 추가(이미지는 drawLayer 지연 로딩이 처리)
+    if(!cached){var n=new Image();n.onload=function(){S3._img[u]=n;L.ar=(n.height/n.width)||1;L.ny=.96-L.wx*L.ar;try{S3.renderAll();}catch(e){}};n.src=u;}
+    try{S3.renderAll();}catch(e){} return L;},
   async genImage(){var hasP=(App.assets&&App.assets.products&&App.assets.products.length);
     if(hasP)S3._ensureProductLayer(); // 제품은 레이어로 — 씬만 생성해 라벨 훼손 원천 차단
-    var pl=(App.doc.layers||[]).filter(function(l){return l.role==="product"&&!l.hidden;})[0];
+    var pl=(App.doc.layers||[]).filter(function(l){return l.role==="product"&&!l.hidden&&l.role!=="detail";})[0];
     toast(App.live?(pl?"제품 자리를 비워둔 새 배경(씬) 생성 중… — 제품은 원본 레이어로 100% 보존":"배경 생성 중…(상품컷을 넣으면 레이어로 보존해줘요)"):"시뮬 배경(키 입력 시 실제 생성)");
     var url=await Engine.gen("image",{layoutType:App.doc.intent.layoutType,seedHue:App.doc.bgHue+30,sceneOnly:!!pl,slot:pl?{nx:pl.nx,ny:pl.ny,wx:pl.wx}:null});
     // 제품 동질성 게이트 — 제품이 '씬 안에' 그려지는 레거시 경로(제품 레이어를 지운 경우)에만 필요
@@ -3022,6 +3057,7 @@ var S4={
             if(l.role==="logo"||l.role==="product"){ // 로고·제품: 원본 비율 그대로 합성(변형 금지 — P3 자산 불가침) + 세이프 밴드 클램프
               var lw=l.wx*W,lh=lw*(l.ar||(im.height/im.width)||0.4);
               var ly=Math.min(Math.max(l.ny,sTop),Math.max(sTop,sBot-lh/H));
+              if(l.role==="product"){var gcx=l.nx*W+lw/2,gby=ly*H+lh*0.99;x.save();x.fillStyle="rgba(0,0,0,.22)";try{x.filter="blur("+Math.max(4,lw*0.03)+"px)";x.beginPath();x.ellipse(gcx,gby,lw*0.40,lh*0.05,0,0,7);x.fill();}catch(_g){}x.restore();}
               x.drawImage(im,l.nx*W,ly*H,lw,lh);
             } else { // 디테일컷: 모양(원/둥근네모/각진네모) 클립 + 흰 테두리 + 세이프 밴드 클램프
               var bw=l.wx*W,dyN=Math.min(Math.max(l.ny,sTop),Math.max(sTop,sBot-bw/H));
