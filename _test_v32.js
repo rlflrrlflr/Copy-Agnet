@@ -47,12 +47,10 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
    // ===== P0 배선) 제품 레이어 생성 시 자동 누끼 =====
    out.koWired=/floodKnockout/.test(S3._ensureProductLayer.toString())&&/knock\(/.test(S3._ensureProductLayer.toString());
 
-   // ===== P1) 융합 프롬프트 + 배선 =====
-   const fp=Engine._imagePrompt({fuse:true});
-   out.fusePrompt=/HARMONIZE PASS/.test(fp)&&/pixel-identical/.test(fp)&&/contact shadow/.test(fp)&&/No new objects/.test(fp);
-   out.fuseS4Wired=/fuse:true/.test(S4.generate.toString())&&/_compositeExtras\(fused\)/.test(S4.generate.toString());
-   out.fuseS3Fn=typeof S3.fuseProduct==='function';
-   out.fuseRestamp=/재스탬프|그 위에/.test(S3.fuseProduct.toString()); // 레이어가 위에 그려져 재스탬프 성립(설계 주석)
+   // ===== 40차) 융합 제거 + 기본 경로 복귀 =====
+   out.fuseRemoved=!/fuse:true/.test(S4.generate.toString())&&/제거됐어요/.test(S3.fuseProduct.toString());
+   out.legacyDefault=!/_ensureProductLayer\(\); \/\/ 제품은 레이어로/.test(S3.genImage.toString()); // 자동 레이어 생성 없음
+   out.optInBtn=[...document.querySelectorAll('button')].some(b=>/제품을 레이어로/.test(b.textContent));
 
    // ===== P1 모킹) 3단계 융합 — 배경 교체 + 제품 레이어 유지 =====
    function solid(c){var cv=document.createElement('canvas');cv.width=cv.height=200;var x=cv.getContext('2d');x.fillStyle=c;x.fillRect(0,0,200,200);return cv.toDataURL();}
@@ -64,24 +62,23 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
    App.assets={products:[{id:'p1',url:BG,name:'p'}],refs:[]};
    Doc.initFromCopy(App.copies[0]);App.doc.bgImage=BG;
    App.stage=3;UI.go(3);S3._ensureProductLayer();await new Promise(r=>setTimeout(r,120));
+   // 기본 생성 경로: 자동 제품 레이어가 생기지 않음(사용자가 버튼 눌러야만)
+   App.doc.layers=App.doc.layers.filter(l=>l.role!=='product');App.doc._prodLayerDeleted=false;
    App.keys.gemini='FAKE';
-   const realGen=Engine.gen,realEdge=Engine._imgEdge;
-   let fuseCalled=false;
-   Engine.gen=async(kind,payload)=>{if(payload&&payload.fuse){fuseCalled=true;return FUSED;}return BG;};
-   Engine._imgEdge=async()=>1;
-   await S3.fuseProduct();
-   out.fuseCalled=fuseCalled;
-   out.fuseBgSwapped=App.doc.bgImage===FUSED;
-   out.fuseProductKept=(App.doc.layers||[]).some(l=>l.role==='product'&&!l.hidden); // 레이어(원본)가 위에 남아 재스탬프
-   Engine.gen=realGen;Engine._imgEdge=realEdge;App.keys.gemini='';
+   const realGen=Engine.gen,realEdge=Engine._imgEdge,realPqc=Engine.productCheck;
+   let sceneOnlySent=null;Engine.gen=async(kind,payload)=>{if(kind==='image')sceneOnlySent=!!payload.sceneOnly;return BG;};
+   Engine._imgEdge=async()=>1;Engine.productCheck=async()=>({ok:true,issues:[]});
+   await S3.genImage();
+   out.legacyInScene=sceneOnlySent===false&&!(App.doc.layers||[]).some(l=>l.role==='product'); // 씬에 그림(기존)·레이어 자동생성 없음
+   Engine.gen=realGen;Engine._imgEdge=realEdge;Engine.productCheck=realPqc;App.keys.gemini='';
 
    // ===== P3) 기획안 시트 =====
    out.planFn=typeof S3.exportPlan==='function';
    out.planBtn=[...document.querySelectorAll('.s3-tools button')].some(b=>/기획안 시트/.test(b.textContent));
-   let dlName=null;const realDl=S4._dl;S4._dl=(url,name)=>{dlName=name;out.planPng=typeof url==='string'&&url.indexOf('data:image/png')===0;};
-   await S3.exportPlan();
-   out.planDl=/기획안시트/.test(dlName||'');
-   S4._dl=realDl;
+   // PPTX: zip 시그니처(PK) + 슬라이드 XML에 편집 가능 텍스트 포함
+   const zres=S3._zip([['t.xml','<a>hi</a>']]);
+   out.planZipPK=zres[0]===0x50&&zres[1]===0x4b;
+   out.planPptx=/pptx/.test(S3.exportPlan.toString())&&/slide1\.xml/.test(S3.exportPlan.toString())&&/<a:t>/.test(S3.exportPlan.toString());
 
    return out;
  });
@@ -89,7 +86,7 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
  await b.close();
  console.log(JSON.stringify(R,null,1));
  console.log('errors:',errs.length?errs.slice(0,8):'none');
- const keys=['title','storeKey','fallbackChain','koReturns','koCornerTransparent','koLabelKept','koBodyKept','koSkipsTransparent','koSkipsPhoto','koWired','fusePrompt','fuseS4Wired','fuseS3Fn','fuseRestamp','fuseCalled','fuseBgSwapped','fuseProductKept','planFn','planBtn','planPng','planDl'];
+ const keys=['title','storeKey','fallbackChain','koReturns','koCornerTransparent','koLabelKept','koBodyKept','koSkipsTransparent','koSkipsPhoto','koWired','fuseRemoved','legacyDefault','optInBtn','legacyInScene','planFn','planBtn','planZipPK','planPptx'];
  const ok=keys.every(k=>R[k])&&!errs.length;
  console.log('FAILED:',keys.filter(k=>!R[k]));
  console.log(ok?'PASS':'FAIL');process.exit(ok?0:1);
