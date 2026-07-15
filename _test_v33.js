@@ -62,6 +62,27 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
    // ===== 7) 워치독 — OpenAI 이미지도 180초 =====
    out.watchdog=/\/images\//.test(Engine._tfetch.toString());
 
+   // ===== 42차) 융합 부활 — 마스크 인페인팅 =====
+   const fu=S3.fuseProduct.toString();
+   out.fuseReal=!/제거됐어요/.test(fu)&&/images\/edits/.test(fu)&&/"mask"/.test(fu.replace(/'/g,'"'));
+   out.fusePolarity=/dd\[i\]>10/.test(fu)&&/255/.test(fu); // 제품 알파=불투명 보존, 나머지 투명=편집
+   out.fuseVerify=/보존 검증/.test(fu)&&/avg>30/.test(fu);
+   out.fuseRestamp=/재스탬프/.test(fu)&&/vx\.drawImage\(pim/.test(fu)&&fu.indexOf('vx.drawImage(pim')>fu.indexOf('avg>30'); // AI 결과 위에 원본 재스탬프(게이트 이후)
+   out.fuseDedup=/hidden=true/.test(fu)&&/_prodLayerDeleted=true/.test(fu); // 융합 후 레이어 숨김(중복 방지)
+   out.fuseGuards=/OpenAI 키가 필요/.test(fu)&&/배경 이미지를 먼저/.test(fu);
+   out.fuseBtn=[...document.querySelectorAll('button')].some(b=>/제품 융합/.test(b.textContent));
+
+   // ===== 42차) 키 저장·복원(HTML 단독) + 로컬 서버 자동 주입 =====
+   out.keysSaved=(function(){try{var k=JSON.parse(localStorage.getItem('soszae_keys'));return k&&typeof k.openai==='string';}catch(e){return false;}})();
+   localStorage.setItem('soszae_keys',JSON.stringify({gemini:'g-persist',claude:'',openai:'o-persist',provider:'gemini',imgEngine:'openai'}));
+   document.getElementById('geminiKey').value='';document.getElementById('openaiKey').value='';
+   UI.restoreKeys();
+   out.keysRestored=document.getElementById('geminiKey').value==='g-persist'&&document.getElementById('openaiKey').value==='o-persist'&&document.getElementById('imgEngine').value==='openai';
+   out.serverAutofill=typeof UI.fetchLocalKeys==='function'&&/\/keys/.test(UI.fetchLocalKeys.toString())&&/file:/.test(UI.fetchLocalKeys.toString());
+   // 복원 후 원상복구(아래 회귀는 무키 시뮬 경로)
+   localStorage.removeItem('soszae_keys');
+   document.getElementById('imgEngine').value='gemini';
+
    // ===== 8) 회귀 — 시뮬 폴백/카피 흐름 무손상 스모크 =====
    document.getElementById('openaiKey').value='';document.getElementById('geminiKey').value='';UI.onKey();
    document.getElementById('inTarget').value='테스트 타겟';document.getElementById('inOffer').value='나파가죽 트렁크매트';

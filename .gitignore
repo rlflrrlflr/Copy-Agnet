@@ -13,3 +13,5 @@ _verify.js
 _shot_*.png
 shot_*.png
 _v32t/
+_dbg_*
+_live_*.png
