@@ -1,0 +1,6 @@
+[
+  {"id":"headline-1x1","ratio":"1:1","size":"1024x1024",
+   "prompt":"Premium Korean commerce DA banner, 2026 top-tier aesthetic. Render EXACT Korean text, each once, crisp and perfectly spelled: headline=\"매일 상큼하게 채우는 활력\"; sub=\"1일 권장량 620% 충족! 네이처메이드 비타민C 구미\"; CTA button=\"마그네슘 추가 증정\". Bright citrus scene, tangerines, sunlight. No logos, no watermarks. All Korean glyphs must be perfectly legible."},
+  {"id":"small-label-9x16","ratio":"9:16","size":"1024x1536",
+   "prompt":"Korean vertical story ad. Render EXACT Korean text: headline=\"입 심심할 때 비타민 구미\"; small sub-copy=\"하루 2구미로 식약처 비타민C 영양성분 기준치 620% 충족!\" (SMALL size but perfectly legible); CTA=\"고함량 확인하기\". A vitamin gummy bottle with a tiny Korean label \"비타민C 구미 620mg\" printed on it — every label character crisp. No logos."}
+]
