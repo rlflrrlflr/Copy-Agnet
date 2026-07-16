@@ -83,6 +83,15 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
    localStorage.removeItem('soszae_keys');
    document.getElementById('imgEngine').value='gemini';
 
+   // ===== 43차) 생성 출처 표기 + 에코 가드 =====
+   out.provSet=/lastProv="🍌 Nano Banana Pro/.test(Engine._geminiImageOnce.toString())&&/lastProv="🧠 GPT-Image 2/.test(Engine._openaiImageOnce.toString());
+   out.provCard=/v\.prov\|\|"모델 미기록"/.test(S4.renderVariants.toString().replace(/\s/g,'').replace(/\|\|/g,'||'))||/모델 미기록/.test(S4.renderVariants.toString());
+   out.provGen=/prov:Engine\.lastProv/.test(S4.generate.toString());
+   out.provRegen=(document.documentElement.outerHTML.match(/v\.prov=Engine\.lastProv/g)||[]).length>=3; // 다른 버전·결함 보정·말로 고치기 경로도 갱신
+   out.provHint=/배경 생성 완료 · /.test(S3.genImage.toString())&&/Engine\.lastProv/.test(S3.chat.toString());
+   const oa2=Engine._openaiImageOnce.toString();
+   out.echoGuard=/REFERENCE ONLY/.test(oa2)&&/!job\.base/.test(oa2); // 베이스 없을 때만 '새 구성' 강제(베이스 편집은 유지)
+
    // ===== 8) 회귀 — 시뮬 폴백/카피 흐름 무손상 스모크 =====
    document.getElementById('openaiKey').value='';document.getElementById('geminiKey').value='';UI.onKey();
    document.getElementById('inTarget').value='테스트 타겟';document.getElementById('inOffer').value='나파가죽 트렁크매트';
