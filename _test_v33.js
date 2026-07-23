@@ -84,7 +84,7 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
    document.getElementById('imgEngine').value='gemini';
 
    // ===== 43차) 생성 출처 표기 + 에코 가드 =====
-   out.provSet=/lastProv="🍌 Nano Banana Pro/.test(Engine._geminiImageOnce.toString())&&/lastProv="🧠 GPT-Image 2/.test(Engine._openaiImageOnce.toString());
+   out.provSet=/lastProv=\(_gm===MODELS\.geminiImageFlash\?"🍌 Nano Banana 2/.test(Engine._geminiImageOnce.toString())&&/lastProv="🧠 GPT-Image 2/.test(Engine._openaiImageOnce.toString());
    out.provCard=/v\.prov\|\|"모델 미기록"/.test(S4.renderVariants.toString().replace(/\s/g,'').replace(/\|\|/g,'||'))||/모델 미기록/.test(S4.renderVariants.toString());
    out.provGen=/prov:Engine\.lastProv/.test(S4.generate.toString());
    out.provRegen=(document.documentElement.outerHTML.match(/v\.prov=Engine\.lastProv/g)||[]).length>=3; // 다른 버전·결함 보정·말로 고치기 경로도 갱신
