@@ -16,7 +16,7 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
 
    // ===== 1) 모델·기본 셋팅 상수 =====
    out.modelOai=MODELS.openaiImage==='gpt-image-2';
-   out.modelGemKeep=MODELS.geminiText==='gemini-3.1-pro-preview'&&MODELS.geminiImage==='gemini-3-pro-image-preview';
+   out.modelGemKeep=MODELS.geminiText==='gemini-3.1-pro-preview'&&MODELS.geminiImage==='gemini-3.1-flash-image'&&!IMG_PREF.some(m=>m.id==='gemini-3-pro-image-preview'); // 51차: 은퇴(2026-06-25)한 preview ID 제거
    out.effortDefaults=(typeof GEM_EFFORT!=='undefined'&&GEM_EFFORT==='medium')&&(typeof OAI_QUALITY!=='undefined'&&OAI_QUALITY==='low');
    out.oaiSizes=OAI_SIZE['1:1']==='1024x1024'&&OAI_SIZE['4:5']==='1024x1280'&&OAI_SIZE['16:9']==='1536x864'&&OAI_SIZE['9:16']==='864x1536';
    out.gemEffortWired=/thinkingLevel:GEM_EFFORT/.test(Engine._geminiText.toString())&&/thinkingLevel:GEM_EFFORT/.test(Engine._geminiResearch.toString());
@@ -32,7 +32,7 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
    out.stateWired=App.imgProvider==='openai'&&App.keys.openai==='sk-test';
    out.badgeOai=/GPT-Image 2 이미지/.test(document.getElementById('modeBadge').textContent);
    document.getElementById('imgEngine').value='gemini';UI.onKey();
-   out.badgeGem=/Nano Banana Pro 이미지/.test(document.getElementById('modeBadge').textContent);
+   out.badgeGem=/이미지 자동|Nano Banana/.test(document.getElementById('modeBadge').textContent); // 51차: 기본은 '자동'(계정 최강 모델 확정 후 이름 표기)
 
    // ===== 3) Engine 분기 — _run이 imgProvider로 라우팅 =====
    const runSrc=Engine._run.toString();

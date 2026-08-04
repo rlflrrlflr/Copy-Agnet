@@ -25,12 +25,12 @@ const puppeteer=require('puppeteer'),path=require('path');
    out.presetsKept=pop?pop.querySelectorAll('button').length>=8:false; // 프리셋 스와치 유지
    // ── 모델 선택자: Nano Banana 2 옵션 + 배선 ──
    const ie=document.getElementById('imgEngine');
-   out.nb2Option=!!ie&&[...ie.options].some(o=>o.value==='gemini-flash'&&/Nano Banana 2/.test(o.text));
+   out.nb2Option=!!ie&&[...ie.options].some(o=>o.value==='gemini-flash'&&/Nano Banana 2/.test(o.text))&&[...ie.options].some(o=>o.value==='gemini'&&/자동/.test(o.text));
    out.gptOption=!!ie&&[...ie.options].some(o=>o.value==='openai');
    ie.value='gemini-flash';UI.onKey();
    out.flashWired=App.imgProvider==='gemini'&&App.geminiImgModel==='gemini-3.1-flash-image';
    ie.value='gemini';UI.onKey();
-   out.proWired=App.geminiImgModel==='gemini-3-pro-image-preview';
+   out.proWired=App._imgModelPinned===false&&App.geminiImgModel==='gemini-3.1-flash-image'; // 51차: '자동'은 고정 해제 + 계정 최강 모델 확정에 위임
    out.provKnowsFlash=/geminiImgModel/.test(Engine._geminiImageOnce.toString())&&/gemini-3\.1-flash-image/.test(JSON.stringify(MODELS));
    // ── 3단계 버튼 정리: 기획안 시트 제거 ──
    out.planBtnGone=![...document.querySelectorAll('.s3-tools button')].some(b=>/기획안 시트/.test(b.textContent));

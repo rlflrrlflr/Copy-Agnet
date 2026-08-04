@@ -29,7 +29,7 @@ const puppeteer=require('puppeteer'),path=require('path');
    App.keys.gemini='FAKE';App.geminiImgModel=MODELS.geminiImage;
    const realT=Engine._tfetch;
    Engine._tfetch=async(url)=>{
-     if(/\/models\?key=/.test(url))return {ok:true,status:200,text:async()=>JSON.stringify({models:[{name:'models/'+MODELS.geminiText},{name:'models/gemini-3.1-flash-image'}]})};
+     if(/\/models\?key=/.test(url))return {ok:true,status:200,text:async()=>JSON.stringify({models:[{name:'models/'+MODELS.geminiText}]}),json:async()=>({models:[{name:'models/'+MODELS.geminiText}]})}; // 이미지 모델 없음 → '접근 불가'가 떠야
      if(url.indexOf(MODELS.geminiText)>=0)return {ok:true,status:200,text:async()=>'{"candidates":[]}'};
      return {ok:false,status:429,text:async()=>'{"error":{"status":"FAILED_PRECONDITION","message":"This model is only accessible to billed users"}}'};
    };
