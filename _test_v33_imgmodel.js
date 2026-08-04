@@ -8,15 +8,16 @@ const puppeteer=require('puppeteer'),path=require('path');
    const out={};
    // 은퇴한 preview ID가 기본에서 제거됐는지
    out.retiredGone=MODELS.geminiImage!=='gemini-3-pro-image-preview'&&!IMG_PREF.some(m=>m.id==='gemini-3-pro-image-preview');
-   out.prefOrder=IMG_PREF[0].id==='gemini-3-pro-image'&&IMG_PREF[1].id==='gemini-3.1-flash-image';
+   out.prefOrder=IMG_PREF[0].id==='nano-banana-pro-preview'&&IMG_PREF.some(m=>m.id==='gemini-3.1-flash-image');
    App.keys.gemini='GK';
    const realOnce=Engine._tfetchOnce;
    const list=(ids)=>({ok:true,status:200,json:async()=>({models:ids.map(i=>({name:'models/'+i}))}),text:async()=>''});
    // ① Pro가 있으면 Pro 선택
    Engine._imgResolved=null;
-   Engine._tfetchOnce=async()=>list(['gemini-3.1-pro-preview','gemini-3.1-flash-image','gemini-3-pro-image']);
+   // 실계정 목록(2026-08 실측)에서 Pro 별칭을 최우선 선택
+   Engine._tfetchOnce=async()=>list(['nano-banana-pro-preview','gemini-3.1-flash-image-preview','gemini-3.1-flash-image','gemini-3.1-flash-lite-image','imagen-4.0-ultra-generate-001']);
    let r1=await Engine.resolveImageModel(true);
-   out.picksPro=r1&&r1.id==='gemini-3-pro-image';
+   out.picksPro=r1&&r1.id==='nano-banana-pro-preview';
    // ② Pro가 없으면 Nano Banana 2로
    Engine._tfetchOnce=async()=>list(['gemini-3.1-flash-image','gemini-2.5-flash-image']);
    let r2=await Engine.resolveImageModel(true);
@@ -25,6 +26,10 @@ const puppeteer=require('puppeteer'),path=require('path');
    Engine._tfetchOnce=async()=>list(['some-future-image-model']);
    let r3=await Engine.resolveImageModel(true);
    out.picksFuture=r3&&r3.id==='some-future-image-model';
+   // imagen 계열만 있으면 채택하지 않음(엔드포인트가 달라 404 유발)
+   Engine._tfetchOnce=async()=>list(['imagen-4.0-generate-001','imagen-4.0-ultra-generate-001']);
+   let r4=await Engine.resolveImageModel(true);
+   out.skipsImagen=r4===null;
    // ④ 404 자가치유: 은퇴 모델 호출 → 재확정 후 자동 전환
    App.geminiImgModel='gemini-3-pro-image-preview';App._imgModelPinned=true;Engine._imgResolved=null;
    let calls=[];
@@ -48,7 +53,7 @@ const puppeteer=require('puppeteer'),path=require('path');
  });
  await b.close();
  console.log(JSON.stringify(R,null,1));console.log('errors:',errs.length?errs.slice(0,6):'none');
- const keys=['retiredGone','prefOrder','picksPro','picksNB2','picksFuture','healed404','switched','autoLabel','autoNotPinned','flashPinned'];
+ const keys=['retiredGone','prefOrder','picksPro','picksNB2','picksFuture','skipsImagen','healed404','switched','autoLabel','autoNotPinned','flashPinned'];
  const ok=keys.every(k=>R[k])&&!errs.length;
  console.log('FAILED:',keys.filter(k=>!R[k]));console.log(ok?'PASS':'FAIL');process.exit(ok?0:1);
 })().catch(e=>{console.error('FATAL',e.message);process.exit(1);});
