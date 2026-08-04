@@ -23,8 +23,8 @@ const puppeteer=require('puppeteer'),path=require('path');
    out.diagBtn=[...document.querySelectorAll('header button')].some(b=>/진단/.test(b.textContent));
    // 키 없을 때 안내
    let alerted='';window.alert=m=>alerted=m;
-   App.keys.gemini='';await Engine.diagnose();
-   out.noKeyGuide=/키가 비어/.test(alerted);
+   App.keys.gemini='';App.keys.claude='';App.keys.openai='';await Engine.diagnose();
+   out.noKeyGuide=/키가 하나도 없습니다/.test(alerted); // 49차: 진단이 3사 전체로 확장 — Gemini만 비어도 Claude로 진단 가능
    // 모킹 진단: 키 유효+모델 목록에 이미지 모델 없음 + 이미지 호출 결제오류 → 정확히 짚는지
    App.keys.gemini='FAKE';App.geminiImgModel=MODELS.geminiImage;
    const realT=Engine._tfetch;
