@@ -11,13 +11,13 @@ const puppeteer=require('puppeteer'),path=require('path');
    out.whyKey=/키가 유효하지 않음/.test(Engine._why('{"error":{"message":"API key not valid. Please pass a valid API key.","status":"INVALID_ARGUMENT"}}'));
    out.whyRef=/사이트 제한/.test(Engine._why('Requests from referer <empty> are blocked.'));
    out.whyBill=/결제/.test(Engine._why('{"error":{"status":"FAILED_PRECONDITION","message":"billed users only"}}'));
-   out.whyQuota=/할당량/.test(Engine._why('RESOURCE_EXHAUSTED quota exceeded'));
+   out.whyQuota=/속도 제한|할당량/.test(Engine._why('RESOURCE_EXHAUSTED quota exceeded')); // 50차: 유료 티어엔 '결제' 대신 속도제한으로 안내
    out.why404=/못 씀/.test(Engine._why('models/x is not found for API version v1beta'));
    out.whyNet=/네트워크 차단/.test(Engine._why('Failed to fetch'));
    // 에러 전문 보존(40자 절단 제거) + lastError 저장
    out.noTrunc=!/slice\(0,40\)/.test(Engine._run.toString())&&/Engine\.lastError=/.test(Engine._run.toString());
    // 워치독: flash 모델도 180초
-   out.flashTimeout=/geminiImageFlash/.test(Engine._tfetch.toString());
+   out.flashTimeout=/geminiImageFlash/.test(Engine._tfetchOnce.toString()); // 50차: 워치독은 _tfetchOnce로 분리
    // 진단 버튼 + 함수
    out.diagFn=typeof Engine.diagnose==='function';
    out.diagBtn=[...document.querySelectorAll('header button')].some(b=>/진단/.test(b.textContent));

@@ -60,7 +60,7 @@ const wait=ms=>new Promise(r=>setTimeout(r,ms));
    out.oaBlob=blob instanceof Blob&&blob.size===3&&blob.type==='image/png';
 
    // ===== 7) 워치독 — OpenAI 이미지도 180초 =====
-   out.watchdog=/\/images\//.test(Engine._tfetch.toString());
+   out.watchdog=/\/images\//.test(Engine._tfetchOnce.toString())&&/429/.test(Engine._tfetch.toString()); // 50차: 워치독은 _tfetchOnce, _tfetch는 429 백오프 래퍼
 
    // ===== 42차) 융합 부활 — 마스크 인페인팅 =====
    const fu=S3.fuseProduct.toString();
